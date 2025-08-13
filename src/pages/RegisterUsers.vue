@@ -26,10 +26,25 @@
             />
           </div>
           <div class="col-12 col-md-3 q-mx-sm">
-            <q-input filled v-model="form.middle_name" label="Middle Name"
-            class="q-mb-md text-uppercase" />
+            <q-input
+              filled
+              v-model="form.middle_name"
+              label="Middle Name"
+              class="q-mb-md text-uppercase"
+            />
           </div>
         </div>
+
+        <q-select
+          filled
+          label="Role"
+          v-model="form.role_id"
+          :options="roleStore.roles"
+          option-label="label"
+          option-value="value"
+          :rules="[(val) => !!val || 'Role is required']"
+          class="q-mb-md text-uppercase"
+        />
 
         <q-input
           filled
@@ -60,7 +75,7 @@
           :rules="[
             (val) => !!val || 'Password is required',
             (val) => val.length >= 8 || 'Password must be at least 8 characters',
-            (val) => val.length <= 16 || 'Password must be at least 16 characters',
+            (val) => val.length <= 16 || 'Password must be at most 16 characters',
           ]"
           class="q-mb-md"
         />
@@ -76,7 +91,7 @@
         />
 
         <div class="row q-mt-lg flex justify-end">
-          <q-btn flat label="Cancel" type="submit" color="grey" class="q-mr-md" @click="oncancel()"/>
+          <q-btn flat label="Cancel" type="button" color="grey" class="q-mr-md" @click="oncancel" />
           <q-btn label="Register" type="submit" color="primary" />
         </div>
       </q-form>
@@ -85,23 +100,26 @@
 </template>
 
 <script>
-
 import { useUserStore } from 'src/stores/userStore'
+import { useRoleStore } from 'src/stores/roleStore'
+
 export default {
   name: 'UserRegistrationForm',
   setup() {
     const userStore = useUserStore()
+    const roleStore = useRoleStore()
     return {
       userStore,
+      roleStore,
     }
   },
   data() {
     return {
-
       form: {
         first_name: '',
         last_name: '',
         middle_name: '',
+        role_id: null,
         position: '',
         office: '',
         username: '',
@@ -115,47 +133,51 @@ export default {
       this.resetForm()
       this.$router.go(-1)
     },
-   async onSubmit() {
-     await this.$refs.registrationForm.validate().then((success) => {
-        if (success) {
+    async onSubmit() {
+      const valid = await this.$refs.registrationForm.validate()
+      if (valid) {
+        if (typeof this.form.role_id === 'object' && this.form.role_id !== null) {
+          this.form.role_id = this.form.role_id.value
+        }
 
-          this.insertNewUser(this.form)
-          // Handle successful registration here
+        try {
+          await this.insertNewUser(this.form)
           console.log('Registration successful:', this.form)
-          // Optionally clear form
           this.resetForm()
           this.$router.go(-1)
-        } else {
-          // Validation errors are shown automatically
+        } catch (error) {
           this.$q.notify({
             type: 'negative',
-            message: 'Please fill in all required fields.',
+            message: error.message || 'Failed to register user.',
           })
         }
-      })
+      } else {
+        this.$q.notify({
+          type: 'negative',
+          message: 'Please fill in all required fields.',
+        })
+      }
     },
     resetForm() {
       this.form = {
         first_name: '',
         last_name: '',
         middle_name: '',
+        role_id: null,
         position: '',
         office: '',
         username: '',
         password: '',
         confirm_password: '',
       }
-
       this.$refs.registrationForm.resetValidation()
     },
-
     async insertNewUser(payload) {
-      try {
-        await this.userStore.newUser(payload)
-      } catch (error) {
-        console.log(error)
-      }
+      return await this.userStore.newUser(payload)
     },
+  },
+  mounted() {
+    this.roleStore.fetchRoles()
   },
 }
 </script>

@@ -1,5 +1,5 @@
 <template>
-  <q-layout view="hHh lpR fFf">
+  <q-layout view="hHh Lpr lFf">
     <q-header elevated class="bg-white text-grey-8 q-py-xs" height-hint="58">
       <q-toolbar>
         <q-btn flat dense round @click="toggleLeftDrawer()" aria-label="Menu" icon="menu" />
@@ -48,49 +48,65 @@
         <q-item clickable v-ripple to="/dashboard">
           <div class="row items-center">
             <q-icon name="dashboard" size="24px" class="q-mr-md" />
-            <span class="text-sm">Dashboard</span>
+            <span class="text-sm" style="padding-left: 16px">Dashboard</span>
           </div>
         </q-item>
 
         <q-item clickable v-ripple to="/customers">
           <div class="row items-center">
             <q-icon name="person" size="24px" class="q-mr-md" />
-            <span class="text-sm">Patient Info</span>
+            <span class="text-sm" style="padding-left: 16px">Patient Info</span>
           </div>
         </q-item>
 
-        <q-item clickable v-ripple to="">
-          <div class="row items-center">
-            <q-icon name="assignment" size="24px" class="q-mr-md" />
-            <span class="text-sm">Assessment</span>
-          </div>
-        </q-item>
+        <q-expansion-item
+          label="MAIFIP"
+          icon="volunteer_activism"
+          icon-class="q-mr-xs"
+          header-class="row items-center"
+          v-model="expanded"
+        >
+          <q-item clickable v-ripple to="">
+            <q-item-section class="q-ml-sm">
+              <q-item-label class="text-caption">
+                <q-icon name="assignment" class="q-ml-md q-mr-lg" size="24px" />Assessment
+              </q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item clickable v-ripple to="/libraries/list">
+            <q-item-section class="q-ml-sm">
+              <q-item-label class="text-caption">
+                <q-icon name="category" class="q-ml-md q-mr-lg" size="24px" />Guaranteed Letter
+              </q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-expansion-item>
 
         <q-item clickable v-ripple to="">
           <div class="row items-center">
             <q-icon name="forum" size="24px" class="q-mr-md" />
-            <span class="text-sm">Consultation</span>
+            <span class="text-sm" style="padding-left: 16px">Consultation</span>
           </div>
         </q-item>
 
         <q-item clickable v-ripple to="">
           <div class="row items-center">
             <q-icon name="science" size="24px" class="q-mr-md" />
-            <span class="text-sm">Laboratory</span>
+            <span class="text-sm" style="padding-left: 16px">Laboratory</span>
           </div>
         </q-item>
 
         <q-item clickable v-ripple to="">
           <div class="row items-center">
             <q-icon name="receipt_long" size="24px" class="q-mr-md" />
-            <span class="text-sm">Billing</span>
+            <span class="text-sm" style="padding-left: 16px">Billing</span>
           </div>
         </q-item>
 
         <q-item clickable v-ripple to="/users/list">
           <div class="row items-center">
             <q-icon name="supervisor_account" size="24px" class="q-mr-md" />
-            <span class="text-sm">User Management</span>
+            <span class="text-sm" style="padding-left: 16px">User Management</span>
           </div>
         </q-item>
       </q-list>

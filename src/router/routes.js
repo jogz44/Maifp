@@ -16,7 +16,7 @@ const routes = [
         meta: { requiresAuth: true },
       }, //customers
 
-         {
+      {
         path: '/customer/releasing',
         component: () => import('pages/NewClientsReleasing.vue'),
         meta: { requiresAuth: true },
@@ -53,19 +53,17 @@ const routes = [
         meta: { requiresAuth: true },
       },
 
-        {
+      {
         path: '/ris/orders',
         component: () => import('pages/RISListing.vue'),
         meta: { requiresAuth: true },
       },
 
-
-        {
+      {
         path: '/ris/orders/info',
         component: () => import('pages/RISinfo.vue'),
         meta: { requiresAuth: true },
       },
-
 
       {
         path: '/customers/orders/transaction',
@@ -89,7 +87,6 @@ const routes = [
         component: () => import('pages/NewItemsBatchUpload.vue'),
         meta: { requiresAuth: true },
       }, //get all items
-
 
       {
         path: '/items/po',
@@ -154,8 +151,6 @@ const routes = [
         component: () => import('pages/ItemsStockCard.vue'),
         meta: { requiresAuth: true },
       }, //get all items
-
-
 
       {
         path: '/reports/dispense/monthly',

@@ -7,7 +7,7 @@ export const useUserStore = defineStore('users', {
     user: {},
     users: [],
     selected_id: null,
-    authenticatedUser:0,
+    authenticatedUser: 0,
   }),
 
   actions: {
@@ -70,7 +70,6 @@ export const useUserStore = defineStore('users', {
         // Add password_confirmation if password is being updated
         if (payload.password) {
           payload.password_confirmation = payload.confirm_password
-
         }
         // Remove confirm_password from payload before sending to API
 
@@ -121,7 +120,7 @@ export const useUserStore = defineStore('users', {
         })
       }
     },
-   async deactivateUser(id){
+    async deactivateUser(id) {
       try {
         const response = await api.put('/system/user/profile-deactivate/' + id)
         // console.log(response.data.success)
@@ -141,9 +140,9 @@ export const useUserStore = defineStore('users', {
           timeout: 5000,
         })
       }
-   },
+    },
 
-   async activateUser(id){
+    async activateUser(id) {
       try {
         const response = await api.put('/system/user/profile-activate/' + id)
         // console.log(response.data.success)
@@ -163,7 +162,7 @@ export const useUserStore = defineStore('users', {
           timeout: 5000,
         })
       }
-   },
+    },
 
     async loginUser(payload) {
       try {
@@ -171,16 +170,16 @@ export const useUserStore = defineStore('users', {
         const response = await api.post('/user/login', payload)
         console.log(response.data)
 
-          if (response.data.success) {
-                // Store token in localStorage
-                LocalStorage.set('auth_token', response.data.data.token)
-                LocalStorage.set('user', response.data.data.user)
+        if (response.data.success) {
+          // Store token in localStorage
+          LocalStorage.set('auth_token', response.data.data.token)
+          LocalStorage.set('user', response.data.data.user)
 
-                // Set default authorization header
-                this.setAuthHeader(response.data.data.token)
+          // Set default authorization header
+          this.setAuthHeader(response.data.data.token)
 
-                return response.data
-              }
+          return response.data
+        }
         if (response.data.Login_Status) {
           Notify.create({
             type: 'positive',

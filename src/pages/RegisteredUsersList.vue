@@ -175,7 +175,6 @@
 </template>
 
 <script>
-
 import { useUserStore } from 'src/stores/userStore'
 import { useUserCredentialstore } from 'src/stores/userCredentialStore'
 export default {
@@ -209,7 +208,7 @@ export default {
     // Define any methods you need for your component
     getUser(id) {
       this.userStore.selected_id = id
-      this.UserCredentialstore.selected_id=id
+      this.UserCredentialstore.selected_id = id
       console.log(id)
       console.log(this.userStore.selected_id)
     },
