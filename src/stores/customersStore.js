@@ -41,7 +41,7 @@ export const useCustomerStore = defineStore('customers', {
       }
     },
 
-     async getCustomersByDate(payload) {
+    async getCustomersByDate(payload) {
       console.log(payload)
       try {
         const response = await api.post('/customers/list/dates', payload)
@@ -78,7 +78,7 @@ export const useCustomerStore = defineStore('customers', {
 
     async newCustomer(payload) {
       try {
-        if (!payload.contact_number){
+        if (!payload.contact_number) {
           payload.contact_number = 'N/A'
         }
         const response = await api.post('/customers', payload)
@@ -89,13 +89,12 @@ export const useCustomerStore = defineStore('customers', {
         // Set customer_id from response
         this.customer_id = response.data.customers.id
 
-         Notify.create({
+        Notify.create({
           type: 'positive',
           message: 'Customer registration successful: ',
           position: 'center',
           timeout: 1200,
         })
-
       } catch (error) {
         // Get a safe error message
         const message = error.response?.data?.message || error.message || 'Unknown error'

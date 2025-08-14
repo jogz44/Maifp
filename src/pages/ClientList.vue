@@ -3,7 +3,7 @@
     <div class="q-pa-md flex justify-center">
       <q-card class="q-pa-sm" style="max-width: 1820px; width: 100%">
         <q-card-section>
-          <q-input filled v-model="search" label="Search Clients" class="text-h11">
+          <q-input filled v-model="search" label="Search Patients" class="text-h11">
             <template v-slot:append>
               <q-icon name="search" />
             </template>
@@ -14,28 +14,20 @@
           <q-table
             flat
             bordered
-
             :filter="search"
             :rows="rows"
             :columns="columns"
             row-key="id"
             binary-state-sort
             no-data-label="No data available"
-            title="Client Logs/ History"
-            title-class="text-bold text-subtitle1 text-primary"
+            title="Patient Logs/ History"
+            title-class="text-bold text-subtitle1 text-green-9"
             square
             :rows-per-page-options="[0]"
-            style="height: 600px;"
+            style="height: 600px"
           >
-
             <template v-slot:top-right>
-              <q-btn
-                color="primary"
-                label="New Customer"
-                to="/customer"
-                icon="add"
-                flat
-              />
+              <q-btn color="green-9" label="New Patient" to="/customer" icon="add" flat />
             </template>
 
             <template #body="props">
@@ -111,9 +103,8 @@
   </q-page>
 </template>
 <script>
-import { useCustomerStore } from '../stores/customersStore'
+import { usePatientStore } from '../stores/patientStore'
 export default {
-
   setup() {
     return {
       columns: [
@@ -207,7 +198,7 @@ export default {
 
   data() {
     return {
-      Selected_ID:0,
+      Selected_ID: 0,
       DeleteClient: false,
       search: '',
       rows: [],
@@ -234,53 +225,52 @@ export default {
       },
     }
   },
-  methods:{
-
+  methods: {
+    async getPatients() {
+      try {
+        await this.Patients.fetchPatients()
+        this.rows = this.Patients.patients
+      } catch (error) {
+        console.error('Error fetching patients:', error)
+      }
+    },
 
     showDeletepage(id) {
-      this.Customers.customer_id = id
-      this.DeleteClient = !this.DeleteClient
+      this.Patients.patient_id = id
+      this.DeleteClient = true
     },
 
     showClient(id) {
-      this.Customers.isEdit = true
-      this.Customers.isSave = false
-      this.Customers.customer_id = id
-    },
-
-
-    async get_clients() {
-      try {
-        await this.Customers.getCustomers()
-        this.rows = this.Customers.customers //fetch all clients from array
-        //console.log(this.rows)
-      } catch (error) {
-        console.log(error)
-      }
-
+      this.Patients.isEdit = true
+      this.Patients.isSave = false
+      this.Patients.patient_id = id
     },
 
     async remove_client() {
       try {
-        // await this.ClientStore.removeClient(this.Selected_ID)
-        await this.Customers.removeCustomer( this.Customers.customer_id)
-        this.$q.notify({ type: 'positive', message: 'Deleting record successful!', position: 'center', timeout:1200 });
-        this.get_clients();
+        await this.Patients.removePatient(this.Patients.patient_id)
+        this.$q.notify({
+          type: 'positive',
+          message: 'Deleting record successful!',
+          position: 'center',
+          timeout: 1200,
+        })
+        this.getPatients()
         this.DeleteClient = false
       } catch (error) {
-
-        console.error(error)
+        console.error('Error deleting patient:', error)
       }
-    }
+    },
   },
-  computed:{
-    Customers(){
-      return useCustomerStore();
-    }
 
+  computed: {
+    Patients() {
+      return usePatientStore()
+    },
   },
-  mounted(){
-    this.get_clients();
-  }
+
+  mounted() {
+    this.getPatients()
+  },
 }
 </script>

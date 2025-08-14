@@ -5,7 +5,7 @@
         <q-card-section>
           <div class="q-pa-sm flex justify-center">
             <q-card class="q-pa-sm" style="max-width: 1000px; width: 100%">
-              <div class="text-h6 text-blue text-weight-bolder">Customer Name</div>
+              <div class="text-h6 text-blue text-weight-bolder">Patient Name</div>
               <q-separator></q-separator>
               <div class="row q-gutter-sm">
                 <div class="col-12 col-md-3 q-pa-sm">
@@ -55,7 +55,7 @@
                     readonly
                   />
                 </div>
-                <div class="col-12 col-md-1 q-pa-sm ">
+                <div class="col-12 col-md-1 q-pa-sm">
                   <q-input
                     dense
                     v-model="costumer.age"
@@ -79,7 +79,6 @@
         </q-card-section>
 
         <q-card-section>
-
           <div class="q-pa-sm flex justify-center">
             <q-card class="q-pa-sm" style="max-width: 1000px; width: 100%">
               <div class="text-h6 text-blue text-weight-bolder">Orders</div>
@@ -95,7 +94,7 @@
               >
                 <template v-slot:top-left>
                   <!-- <q-btn color="primary" label="Add Order" icon="add" flat @click="getAvailableMedList()"/> -->
-                   <!-- <q-select :options="transactionIDList" label="Transaction ID" v-model="selectedTransactionID" @click="getOrders(selectedTransactionID)" style="width: 200px;"></q-select> -->
+                  <!-- <q-select :options="transactionIDList" label="Transaction ID" v-model="selectedTransactionID" @click="getOrders(selectedTransactionID)" style="width: 200px;"></q-select> -->
                 </template>
                 <template #body="props">
                   <q-tr :v-bind="props">
@@ -113,7 +112,7 @@
                     </q-td>
                     <q-td key="unit" style="font-size: 11px" align="left">
                       <!-- {{ props.row.unit }} -->
-                        pcs
+                      pcs
                     </q-td>
                   </q-tr>
                 </template>
@@ -121,17 +120,15 @@
             </q-card>
           </div>
         </q-card-section>
-        <div  align="right">
-        <q-btn color="grey" label="Back" @click="$router.go(-1)" />
-      </div>
+        <div align="right">
+          <q-btn color="grey" label="Back" @click="$router.go(-1)" />
+        </div>
       </q-card>
-
     </div>
   </q-page>
 </template>
 
 <script>
-
 import { useCustomerStore } from 'src/stores/customersStore'
 import { useItemStore } from 'src/stores/itemsStore'
 import { useTransactionStore } from 'src/stores/transactionStore'
@@ -185,16 +182,13 @@ export default {
           headerClasses: 'bg-grey-7 text-white',
           headerStyle: 'font-size: 1.2 em',
         },
-
       ],
-
-
     }
   },
   data() {
     return {
-      selectedTransactionID:'',
-      transactionIDList:[],
+      selectedTransactionID: '',
+      transactionIDList: [],
       rows: [],
       costumer: {
         firstname: '',
@@ -217,16 +211,14 @@ export default {
         user_id: 0,
       },
 
-      transactionDetails:{
-        transaction_id:'',
-        customer_id:0,
-        transaction_date:0,
-        item_id:0,
-        quantity:0,
-        user_id:0,
-      }
-
-
+      transactionDetails: {
+        transaction_id: '',
+        customer_id: 0,
+        transaction_date: 0,
+        item_id: 0,
+        quantity: 0,
+        user_id: 0,
+      },
     }
   },
   mounted() {
@@ -236,21 +228,17 @@ export default {
     this.getOrders(this.customerStore.transactions_id)
   },
   methods: {
-
-
-    async getTransactionIds(id){
+    async getTransactionIds(id) {
       await this.transactionStore.getTransactionID(id)
       // console.log( this.transactionStore.customerTransactionsIdList)
-
 
       this.transactionIDList = this.transactionStore.customerTransactionsIdList
     },
 
-    async getOrders(transaction_id){
+    async getOrders(transaction_id) {
       await this.transactionStore.getTransactionOrders(transaction_id)
       this.rows = this.transactionStore.customerTransactions
     },
-
 
     async get_client(id) {
       await this.customerStore.getCustomer(id)
@@ -267,27 +255,23 @@ export default {
       console.log(id)
       this.searchTerm = ''
     },
-
-
   },
 
   watch: {
-    'selectedTransactionID' (newvalue){
-    this.getOrders(newvalue)
-
-    }
-
+    selectedTransactionID(newvalue) {
+      this.getOrders(newvalue)
+    },
   },
   computed: {
     customerStore() {
       return useCustomerStore()
     },
-    itemStore(){
+    itemStore() {
       return useItemStore()
     },
-    transactionStore(){
+    transactionStore() {
       return useTransactionStore()
-    }
+    },
   },
 }
 </script>
