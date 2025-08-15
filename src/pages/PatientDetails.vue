@@ -22,7 +22,28 @@
 
         <!-- Transaction Information Section -->
         <q-card-section v-if="!loading">
-          <div class="text-subtitle2 q-mb-sm">Transaction Information</div>
+          <div class="row items-center justify-between">
+            <div class="text-subtitle2 q-mb-sm">Transaction Information</div>
+            <div class="row q-gutter-sm">
+              <q-btn
+                v-if="!isTransactionEditMode"
+                color="orange"
+                label="Edit"
+                @click="toggleTransactionEditMode"
+                :loading="patientStore.loading"
+              />
+              <template v-else>
+                <q-btn
+                  color="green"
+                  label="Save"
+                  @click="saveTransactionChanges"
+                  :loading="patientStore.loading"
+                />
+                <q-btn color="grey" label="Cancel" @click="cancelTransactionEdit" />
+              </template>
+            </div>
+          </div>
+
           <div class="row q-col-gutter-md q-mt-sm">
             <div class="col-12 col-md-4">
               <q-input
@@ -32,11 +53,21 @@
                 type="date"
                 label="Date"
                 class="text-caption"
-                readonly
+                :readonly="!isTransactionEditMode"
               />
             </div>
             <div class="col-12 col-md-4">
+              <q-select
+                v-if="isTransactionEditMode"
+                outlined
+                dense
+                v-model="transaction.transaction_mode"
+                :options="patientStore.transactionModes"
+                label="Mode of Transaction"
+                class="text-caption"
+              />
               <q-input
+                v-else
                 outlined
                 dense
                 v-model="transaction.transaction_mode"
@@ -46,7 +77,17 @@
               />
             </div>
             <div class="col-12 col-md-4">
+              <q-select
+                v-if="isTransactionEditMode"
+                outlined
+                dense
+                v-model="transaction.transaction_type"
+                :options="patientStore.transaction_type"
+                label="Type of Transaction"
+                class="text-caption"
+              />
               <q-input
+                v-else
                 outlined
                 dense
                 v-model="transaction.transaction_type"
@@ -63,7 +104,7 @@
                 label="Purpose"
                 type="textarea"
                 class="text-caption"
-                readonly
+                :readonly="!isTransactionEditMode"
                 autogrow
               />
             </div>
@@ -74,7 +115,27 @@
 
         <!-- Vital Signs Section -->
         <q-card-section v-if="!loading && vitalSigns">
-          <div class="text-subtitle2 q-mb-sm">Vital Signs</div>
+          <div class="row items-center justify-between">
+            <div class="text-subtitle2 q-mb-sm">Vital Signs</div>
+            <div class="row q-gutter-sm">
+              <q-btn
+                v-if="!isVitalSignsEditMode"
+                color="orange"
+                label="Edit"
+                @click="toggleVitalSignsEditMode"
+                :loading="patientStore.loading"
+              />
+              <template v-else>
+                <q-btn
+                  color="green"
+                  label="Save"
+                  @click="saveVitalSignsChanges"
+                  :loading="patientStore.loading"
+                />
+                <q-btn color="grey" label="Cancel" @click="cancelVitalSignsEdit" />
+              </template>
+            </div>
+          </div>
 
           <!-- Basic measurements -->
           <div class="row q-col-gutter-md q-mt-sm">
@@ -85,7 +146,9 @@
                 v-model="vitalSigns.height"
                 label="Height (cm)"
                 class="text-caption"
-                readonly
+                type="number"
+                :readonly="!isVitalSignsEditMode"
+                @update:model-value="updateBMI"
               />
             </div>
             <div class="col-12 col-md-3">
@@ -95,7 +158,9 @@
                 v-model="vitalSigns.weight"
                 label="Weight (kg)"
                 class="text-caption"
-                readonly
+                type="number"
+                :readonly="!isVitalSignsEditMode"
+                @update:model-value="updateBMI"
               />
             </div>
             <div class="col-12 col-md-3">
@@ -121,7 +186,8 @@
                 v-model="vitalSigns.waist"
                 label="Waist Circumference (cm)"
                 class="text-caption"
-                readonly
+                type="number"
+                :readonly="!isVitalSignsEditMode"
               />
             </div>
 
@@ -133,7 +199,8 @@
                 v-model="vitalSigns.heart_rate"
                 label="Heart Rate (bpm)"
                 class="text-caption"
-                readonly
+                type="number"
+                :readonly="!isVitalSignsEditMode"
               />
             </div>
             <div class="col-12 col-md-2">
@@ -143,7 +210,8 @@
                 v-model="vitalSigns.blood_pressure"
                 label="Blood Pressure (mmHg)"
                 class="text-caption"
-                readonly
+                :readonly="!isVitalSignsEditMode"
+                placeholder="120/80"
               />
             </div>
             <div class="col-12 col-md-2">
@@ -153,7 +221,8 @@
                 v-model="vitalSigns.respiratory_rate"
                 label="Respiratory Rate"
                 class="text-caption"
-                readonly
+                type="number"
+                :readonly="!isVitalSignsEditMode"
               />
             </div>
             <div class="col-12 col-md-2">
@@ -163,7 +232,8 @@
                 v-model="vitalSigns.pulse_rate"
                 label="Pulse Rate"
                 class="text-caption"
-                readonly
+                type="number"
+                :readonly="!isVitalSignsEditMode"
               />
             </div>
             <div class="col-12 col-md-2">
@@ -173,7 +243,9 @@
                 v-model="vitalSigns.temperature"
                 label="Temperature (°C)"
                 class="text-caption"
-                readonly
+                type="number"
+                step="0.1"
+                :readonly="!isVitalSignsEditMode"
               />
             </div>
             <div class="col-12 col-md-2">
@@ -183,7 +255,8 @@
                 v-model="vitalSigns.sp02"
                 label="SpO2 (%)"
                 class="text-caption"
-                readonly
+                type="number"
+                :readonly="!isVitalSignsEditMode"
               />
             </div>
 
@@ -196,7 +269,7 @@
                 label="Last Menstrual Period (LMP)"
                 type="date"
                 class="text-caption"
-                readonly
+                :readonly="!isVitalSignsEditMode"
               />
             </div>
             <div class="col-12 col-md-6">
@@ -207,7 +280,7 @@
                 label="Maintenance Medicine"
                 class="text-caption"
                 type="textarea"
-                readonly
+                :readonly="!isVitalSignsEditMode"
                 autogrow
               />
             </div>
@@ -232,6 +305,14 @@ export default {
       patient: {},
       vitalSigns: {},
       loading: true,
+
+      // Separate edit modes for transaction and vital signs
+      isTransactionEditMode: false,
+      isVitalSignsEditMode: false,
+
+      // Backup data for cancellation
+      originalTransactionData: null,
+      originalVitalSigns: null,
     }
   },
 
@@ -311,6 +392,196 @@ export default {
         })
       } finally {
         this.loading = false
+      }
+    },
+
+    // Transaction Edit Methods
+    toggleTransactionEditMode() {
+      this.isTransactionEditMode = true
+      // Store original data for potential cancellation
+      this.originalTransactionData = { ...this.transaction }
+    },
+
+    async saveTransactionChanges() {
+      try {
+        // Validate required fields
+        if (!this.transaction.transaction_date || !this.transaction.transaction_type) {
+          this.$q.notify({
+            type: 'negative',
+            message: 'Transaction date and type are required',
+            position: 'top',
+            timeout: 2000,
+          })
+          return
+        }
+
+        // Prepare the transaction data (exclude vital signs)
+        const transactionDataToUpdate = {
+          id: this.transaction.id,
+          transaction_date: this.transaction.transaction_date,
+          transaction_type: this.transaction.transaction_type,
+          transaction_mode: this.transaction.transaction_mode,
+          purpose: this.transaction.purpose,
+          patient_id: this.transaction.patient_id,
+          // Include any other transaction-specific fields but exclude vital
+        }
+
+        console.log('Updating transaction with data:', transactionDataToUpdate)
+
+        // Update the transaction using the store action
+        const updatedTransaction = await this.patientStore.updateTransaction(
+          this.transaction.id,
+          transactionDataToUpdate,
+        )
+
+        if (updatedTransaction) {
+          this.$q.notify({
+            type: 'positive',
+            message: 'Transaction updated successfully',
+            position: 'top',
+            timeout: 2000,
+          })
+
+          // Update local transaction data with the response
+          this.transaction = { ...this.transaction, ...updatedTransaction }
+
+          // Exit edit mode
+          this.isTransactionEditMode = false
+          this.originalTransactionData = null
+        }
+      } catch (error) {
+        console.error('Error updating transaction:', error)
+        this.$q.notify({
+          type: 'negative',
+          message: 'Failed to update transaction',
+          position: 'top',
+          timeout: 2000,
+        })
+      }
+    },
+
+    cancelTransactionEdit() {
+      // Restore original transaction data
+      if (this.originalTransactionData) {
+        this.transaction = { ...this.originalTransactionData }
+      }
+
+      this.isTransactionEditMode = false
+      this.originalTransactionData = null
+    },
+
+    // Vital Signs Edit Methods
+    toggleVitalSignsEditMode() {
+      this.isVitalSignsEditMode = true
+      // Store original data for potential cancellation
+      this.originalVitalSigns = { ...this.vitalSigns }
+    },
+
+    async saveVitalSignsChanges() {
+      try {
+        // Validate vital signs if needed
+        // You can add validation here for specific vital sign requirements
+
+        // Prepare the vital signs data
+        const vitalDataToUpdate = {
+          ...this.vitalSigns,
+          transaction_id: this.transactionId, // Ensure transaction_id is included
+        }
+
+        console.log('Updating vital signs with data:', vitalDataToUpdate)
+        console.log('Current vital signs before update:', this.vitalSigns)
+
+        // Check if vital signs already exist (has an ID) or need to be created
+        let updatedVital
+        if (this.vitalSigns.id) {
+          // Update existing vital signs using the updateVital action
+          updatedVital = await this.patientStore.updateVital(this.vitalSigns.id, vitalDataToUpdate)
+        } else {
+          // If no vital signs exist, you might need to create new ones
+          // This depends on your API structure - you may need to add a createVital method
+          console.log('No vital signs ID found, may need to create new vital record')
+          // For now, we'll assume updateVital can handle both cases
+          updatedVital = await this.patientStore.updateVital(
+            this.transactionId, // Use transaction ID if no vital ID exists
+            vitalDataToUpdate,
+          )
+        }
+
+        console.log('Updated vital signs response:', updatedVital)
+
+        if (updatedVital) {
+          this.$q.notify({
+            type: 'positive',
+            message: 'Vital signs updated successfully',
+            position: 'top',
+            timeout: 2000,
+          })
+
+          // Update local vital signs data with the response
+          // Make sure to preserve the structure
+          this.vitalSigns = { ...this.vitalSigns, ...updatedVital }
+
+          // Also update the transaction's vital property to keep data in sync
+          if (this.transaction && this.transaction.vital) {
+            this.transaction.vital = { ...this.vitalSigns }
+          }
+
+          console.log('Local vital signs after update:', this.vitalSigns)
+
+          // Exit edit mode
+          this.isVitalSignsEditMode = false
+          this.originalVitalSigns = null
+
+          // Optional: Refresh the entire transaction data to ensure consistency
+          // Uncomment the line below if the vital signs still don't display properly
+          // await this.refreshTransactionData()
+        }
+      } catch (error) {
+        console.error('Error updating vital signs:', error)
+        this.$q.notify({
+          type: 'negative',
+          message: 'Failed to update vital signs',
+          position: 'top',
+          timeout: 2000,
+        })
+      }
+    },
+
+    cancelVitalSignsEdit() {
+      // Restore original vital signs data
+      if (this.originalVitalSigns) {
+        this.vitalSigns = { ...this.originalVitalSigns }
+      }
+
+      this.isVitalSignsEditMode = false
+      this.originalVitalSigns = null
+    },
+
+    // Method to refresh transaction data after updates
+    async refreshTransactionData() {
+      try {
+        console.log('Refreshing transaction data...')
+        const transactionData = await this.patientStore.getTransactionDetails(this.transactionId)
+
+        if (transactionData) {
+          console.log('Refreshed transaction data:', transactionData)
+          this.transaction = transactionData
+          this.vitalSigns = transactionData.vital || {}
+          console.log('Refreshed vital signs:', this.vitalSigns)
+        }
+      } catch (error) {
+        console.error('Error refreshing transaction data:', error)
+      }
+    },
+
+    updateBMI() {
+      if (this.vitalSigns.height && this.vitalSigns.weight) {
+        this.vitalSigns.bmi = this.patientStore.calculateBMI(
+          parseFloat(this.vitalSigns.height),
+          parseFloat(this.vitalSigns.weight),
+        )
+      } else {
+        this.vitalSigns.bmi = ''
       }
     },
 

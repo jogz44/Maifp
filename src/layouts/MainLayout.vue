@@ -66,7 +66,7 @@
           header-class="row items-center"
           v-model="expanded"
         >
-          <q-item clickable v-ripple to="">
+          <q-item clickable v-ripple to="/assessment">
             <q-item-section class="q-ml-sm">
               <q-item-label class="text-caption">
                 <q-icon name="assignment" class="q-ml-md q-mr-lg" size="24px" />Assessment
@@ -77,6 +77,13 @@
             <q-item-section class="q-ml-sm">
               <q-item-label class="text-caption">
                 <q-icon name="category" class="q-ml-md q-mr-lg" size="24px" />Guaranteed Letter
+              </q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item clickable v-ripple to="/fundings">
+            <q-item-section class="q-ml-sm">
+              <q-item-label class="text-caption">
+                <q-icon name="wallet" class="q-ml-md q-mr-lg" size="24px" />Fundings
               </q-item-label>
             </q-item-section>
           </q-item>

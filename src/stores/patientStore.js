@@ -33,13 +33,12 @@ export const usePatientStore = defineStore('patient', {
       is_solo: false,
 
       // Transaction information default values
-      // id: null,
       transaction_date: date.formatDate(new Date(), 'YYYY-MM-DD'),
       transaction_type: '',
       transaction_mode: '',
       purpose: '',
 
-      // Vital signs default values
+      // Vital signs default values (now part of single form)
       height: null,
       weight: null,
       bmi: '',
@@ -135,21 +134,21 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
-    // // Fetch patient transactions
-    // async getPatientTransactions(id) {
-    //   this.loading = true
-    //   this.error = null
+    // Get patient transactions
+    async getPatientTransactions(patientId) {
+      this.loading = true
+      this.error = null
 
-    //   try {
-    //     const response = await api.get(`/transactions/${id}`)
-    //     return response.data
-    //   } catch (error) {
-    //     this.handleApiError(error)
-    //     return []
-    //   } finally {
-    //     this.loading = false
-    //   }
-    // },
+      try {
+        const response = await api.get(`/patients/${patientId}/transactions`)
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
 
     // Get transaction details
     async getTransactionDetails(id) {
@@ -184,16 +183,13 @@ export const usePatientStore = defineStore('patient', {
     },
 
     // Update BMI when height or weight changes
-    updateBMI(patientData) {
-      if (patientData && patientData.height && patientData.weight) {
-        patientData.bmi = this.calculateBMI(
-          parseFloat(patientData.height),
-          parseFloat(patientData.weight),
-        )
+    updateBMI(data) {
+      if (data && data.height && data.weight) {
+        data.bmi = this.calculateBMI(parseFloat(data.height), parseFloat(data.weight))
       } else {
-        patientData.bmi = ''
+        data.bmi = ''
       }
-      return patientData
+      return data
     },
 
     // Create new patient
@@ -235,7 +231,7 @@ export const usePatientStore = defineStore('patient', {
       patientData = this.updateBMI(patientData)
 
       try {
-        const response = await api.put(`/patients/${id}`, patientData)
+        const response = await api.put(`/patients/update/${id}`, patientData)
 
         // Update patient in the list
         const index = this.patients.findIndex((p) => p.id === id)
@@ -253,21 +249,22 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
-    // Delete patient
-    async removePatient(id) {
+    async updateTransaction(id, transactionData) {
       this.loading = true
       this.error = null
 
       try {
-        await api.delete(`/patients/${id}`)
+        const response = await api.put(`/transaction/update/${id}`, transactionData)
 
-        // Remove from the list
-        this.patients = this.patients.filter((p) => p.id !== id)
-
-        // Reset current patient if it's the one we deleted
-        if (this.currentPatient && this.currentPatient.id === id) {
-          this.currentPatient = null
+        // Update the current patient's transactions if they exist
+        if (this.currentPatient && this.currentPatient.transaction) {
+          const index = this.currentPatient.transaction.findIndex((t) => t.id === id)
+          if (index !== -1) {
+            this.currentPatient.transaction[index] = response.data
+          }
         }
+
+        return response.data
       } catch (error) {
         this.handleApiError(error)
         throw error
@@ -276,15 +273,157 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
-    // Create new transaction for a patient
-    async createTransaction(patientId, transactionData) {
+    async updateTransactionStatus(id, status) {
       this.loading = true
       this.error = null
 
       try {
-        const response = await api.post(`/patients/${patientId}/transactions`, transactionData)
+        console.log(`Updating transaction ${id} status to: ${status}`)
+
+        // Send only the status field to the API
+        const response = await api.put(`/transaction/${id}/update/status`, {
+          status: status,
+        })
+
+        console.log('Transaction status update response:', response.data)
+
+        // Update the current patient's transactions if they exist
+        if (this.currentPatient && this.currentPatient.transaction) {
+          const transactionIndex = this.currentPatient.transaction.findIndex((t) => t.id === id)
+          if (transactionIndex !== -1) {
+            // Only update the status field, preserve all other transaction data
+            this.currentPatient.transaction[transactionIndex].status = status
+            console.log(`Updated transaction ${id} in currentPatient`)
+          }
+        }
+
+        // Also update the patients list if the transaction exists there
+        if (this.patients && this.patients.length > 0) {
+          for (let patient of this.patients) {
+            if (patient.transaction && Array.isArray(patient.transaction)) {
+              const transactionIndex = patient.transaction.findIndex((t) => t.id === id)
+              if (transactionIndex !== -1) {
+                // Only update the status field, preserve all other transaction data
+                patient.transaction[transactionIndex].status = status
+                console.log(`Updated transaction ${id} in patients list`)
+                break
+              }
+            }
+          }
+        }
+
+        // Update any cached transactions list (if exists in your store)
+        if (this.transactions && this.transactions.length > 0) {
+          const transactionIndex = this.transactions.findIndex((t) => t.id === id)
+          if (transactionIndex !== -1) {
+            this.transactions[transactionIndex].status = status
+            console.log(`Updated transaction ${id} in transactions list`)
+          }
+        }
+
+        return { id: id, status: status }
+      } catch (error) {
+        console.error('Error updating transaction status:', error)
+        this.handleApiError(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async updateVital(id, vital) {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.put(`/vital/update/${id}`, vital)
+
+        // Update the current patient's transactions if they exist
+        if (this.currentPatient && this.currentPatient.Vital) {
+          const index = this.currentPatient.vital.findIndex((v) => v.id === id)
+          if (index !== -1) {
+            this.currentPatient.vital[index] = response.data
+          }
+        }
+
         return response.data
       } catch (error) {
+        this.handleApiError(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Create new transaction - UPDATED to send all data in single form
+    async createNewTransaction(transactionData) {
+      this.loading = true
+      this.error = null
+
+      try {
+        // Ensure user_id is set
+        if (!transactionData.user_id) {
+          const user = this.getUserFromLocalStorage()
+          if (user) {
+            transactionData.user_id = user.id
+          }
+        }
+
+        // Ensure patient_id is set
+        if (!transactionData.patient_id) {
+          throw new Error('Patient ID is required for transaction creation')
+        }
+
+        // Calculate BMI if height and weight are provided
+        if (transactionData.height && transactionData.weight) {
+          transactionData.bmi = this.calculateBMI(
+            parseFloat(transactionData.height),
+            parseFloat(transactionData.weight),
+          )
+        }
+
+        // Prepare the complete transaction data
+        const completeTransactionData = {
+          // Transaction fields
+          patient_id: transactionData.patient_id,
+          user_id: transactionData.user_id,
+          transaction_number: transactionData.transaction_number,
+          transaction_date: transactionData.transaction_date,
+          transaction_type: transactionData.transaction_type,
+          transaction_mode: transactionData.transaction_mode,
+          purpose: transactionData.purpose || '',
+
+          // Vital signs fields
+          height: transactionData.height || '',
+          weight: transactionData.weight || '',
+          bmi: transactionData.bmi || '',
+          waist: transactionData.waist || '',
+          heart_rate: transactionData.heart_rate || '',
+          blood_pressure: transactionData.blood_pressure || '',
+          respiratory_rate: transactionData.respiratory_rate || '',
+          pulse_rate: transactionData.pulse_rate || '',
+          temperature: transactionData.temperature || '',
+          sp02: transactionData.sp02 || '',
+          LMP: transactionData.LMP || '',
+          medicine: transactionData.medicine || '',
+        }
+
+        console.log('Sending transaction data:', completeTransactionData)
+
+        // Create the transaction with all data in one form
+        const response = await api.post('/transaction/add', completeTransactionData)
+
+        // Update current patient's transactions if this patient is currently loaded
+        if (this.currentPatient && this.currentPatient.id === transactionData.patient_id) {
+          if (!this.currentPatient.transaction) {
+            this.currentPatient.transaction = []
+          }
+          this.currentPatient.transaction.unshift(response.data)
+        }
+
+        return response.data
+      } catch (error) {
+        console.error('Transaction creation error:', error)
         this.handleApiError(error)
         throw error
       } finally {

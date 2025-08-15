@@ -65,21 +65,6 @@
                     icon="description"
                     to="/customers/profile"
                   />
-
-                  <q-btn
-                    flat
-                    color="amber"
-                    @click="showClient(props.row.id)"
-                    icon="edit"
-                    to="/customer"
-                  />
-
-                  <q-btn
-                    flat
-                    color="negative"
-                    @click="showDeletepage(props.row.id)"
-                    icon="delete"
-                  />
                 </q-td>
               </q-tr>
             </template>
@@ -87,19 +72,6 @@
         </q-card-section>
       </q-card>
     </div>
-
-    <q-dialog v-model="DeleteClient" persistent>
-      <q-card class="q-pa-sm" style="max-width: 400px; width: 100%">
-        <q-card-section>
-          <div class="text-h6 text-primary">Do you want to delete this client?</div>
-        </q-card-section>
-        <q-card-actions align="right">
-          <!-- Button to close dialog -->
-          <q-btn flat label="Yes" color="primary" @click="remove_client()" />
-          <q-btn flat label="No" color="red" @click="DeleteClient = false" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
   </q-page>
 </template>
 <script>
@@ -235,31 +207,10 @@ export default {
       }
     },
 
-    showDeletepage(id) {
-      this.Patients.patient_id = id
-      this.DeleteClient = true
-    },
-
     showClient(id) {
       this.Patients.isEdit = true
       this.Patients.isSave = false
       this.Patients.patient_id = id
-    },
-
-    async remove_client() {
-      try {
-        await this.Patients.removePatient(this.Patients.patient_id)
-        this.$q.notify({
-          type: 'positive',
-          message: 'Deleting record successful!',
-          position: 'center',
-          timeout: 1200,
-        })
-        this.getPatients()
-        this.DeleteClient = false
-      } catch (error) {
-        console.error('Error deleting patient:', error)
-      }
     },
   },
 
