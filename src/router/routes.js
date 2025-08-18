@@ -33,6 +33,11 @@ const routes = [
         meta: { requiresAuth: true },
       }, //customers  profile and order history
       {
+        path: '/customers/consultation',
+        component: () => import('pages/ClientConsultation.vue'),
+        meta: { requiresAuth: true },
+      }, //customers  profile and order history
+      {
         path: '/customers/profile/current',
         component: () => import('pages/ClientProfile_current.vue'),
         meta: { requiresAuth: true },

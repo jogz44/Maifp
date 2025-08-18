@@ -82,7 +82,7 @@
           </q-item>
         </q-expansion-item>
 
-        <q-item clickable v-ripple to="">
+        <q-item clickable v-ripple to="/customers/consultation">
           <div class="row items-center">
             <q-icon name="forum" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Consultation</span>
