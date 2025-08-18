@@ -5,56 +5,48 @@ const routes = [
 
     children: [
       { path: '', component: () => import('pages/DashBoard.vue'), meta: { requiresAuth: true } }, //dashboard
+
+      //dashboard
       {
         path: '/dashboard',
         component: () => import('pages/DashBoard.vue'),
         meta: { requiresAuth: true },
-      }, //dashboard
+      },
+
+      //patients
       {
         path: '/customer',
         component: () => import('pages/NewClients.vue'),
         meta: { requiresAuth: true },
-      }, //customers
-
-      {
-        path: '/customer/releasing',
-        component: () => import('pages/NewClientsReleasing.vue'),
-        meta: { requiresAuth: true },
-      }, //customers
+      },
 
       {
         path: '/customers',
         component: () => import('pages/ClientList.vue'),
         meta: { requiresAuth: true },
-      }, //customers  list
+      },
       {
         path: '/customers/profile',
         component: () => import('pages/ClientProfile.vue'),
         meta: { requiresAuth: true },
-      }, //customers  profile and order history
+      },
+
+      //assessment
       {
-        path: '/customers/consultation',
-        component: () => import('pages/ClientConsultation.vue'),
-        meta: { requiresAuth: true },
-      }, //customers  profile and order history
-      {
-        path: '/customers/profile/current',
-        component: () => import('pages/ClientProfile_current.vue'),
-        meta: { requiresAuth: true },
-      }, //customers  profile and order history
-      {
-        path: '/customer/orders',
-        component: () => import('pages/ClientOrderHistory.vue'),
-        meta: { requiresAuth: true },
-      }, // entire  customer from the beginning
-      {
-        path: '/customers/orders/new',
-        component: () => import('pages/ClientOrders.vue'),
+        path: '/assessment',
+        component: () => import('pages/AssessmentPage.vue'),
         meta: { requiresAuth: true },
       },
       {
-        path: '/ris/orders/new',
-        component: () => import('pages/NewRIS.vue'),
+        path: '/assessment/profile',
+        component: () => import('pages/AssessmentProfile.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      //fundings
+      {
+        path: '/fundings',
+        component: () => import('pages/FundingPage.vue'),
         meta: { requiresAuth: true },
       },
 
