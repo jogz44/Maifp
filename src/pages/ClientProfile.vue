@@ -305,7 +305,7 @@
                 :rules="[(val) => !!val || 'Transaction date is required']"
               />
             </div>
-            <div class="col-12 col-md-4">
+            <!-- <div class="col-12 col-md-4">
               <q-select
                 outlined
                 dense
@@ -315,7 +315,7 @@
                 class="text-caption"
                 :rules="[(val) => !!val || 'Transaction mode is required']"
               />
-            </div>
+            </div> -->
             <div class="col-12 col-md-4">
               <q-select
                 outlined
@@ -549,7 +549,7 @@ export default {
       creatingTransaction: false,
       newTransaction: {
         transaction_date: '',
-        transaction_mode: '',
+        transaction_mode: 'Walk-in',
         transaction_type: '',
         purpose: '',
         patient_id: null,

@@ -35,7 +35,7 @@ export const usePatientStore = defineStore('patient', {
       // Transaction information default values
       transaction_date: date.formatDate(new Date(), 'YYYY-MM-DD'),
       transaction_type: '',
-      transaction_mode: '',
+      transaction_mode: 'Walk-in',
       purpose: '',
 
       // Vital signs default values (now part of single form)
@@ -56,8 +56,8 @@ export const usePatientStore = defineStore('patient', {
     // UI state
     closeNewPatient: false,
     genderOptions: ['Male', 'Female', 'LGBTQ'],
-    transactionModes: ['Walk-in', 'Online', 'Referral', 'Phone'],
-    transaction_type: ['Consultation', 'Follow-up', 'Medication', 'Laboratory', 'Procedure'],
+    transactionModes: ['Walk-in', 'Referral'],
+    transaction_type: ['Consultation', 'Medication', 'Laboratory'],
   }),
 
   getters: {
@@ -104,6 +104,22 @@ export const usePatientStore = defineStore('patient', {
 
       try {
         const response = await api.get('/patients')
+        this.patients = response.data
+        return this.patients
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchPatientsAssessment() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/patients/assessment')
         this.patients = response.data
         return this.patients
       } catch (error) {
@@ -254,7 +270,7 @@ export const usePatientStore = defineStore('patient', {
       this.error = null
 
       try {
-        const response = await api.put(`/transaction/update/${id}`, transactionData)
+        const response = await api.put(`/transactions/update/${id}`, transactionData)
 
         // Update the current patient's transactions if they exist
         if (this.currentPatient && this.currentPatient.transaction) {
@@ -281,7 +297,7 @@ export const usePatientStore = defineStore('patient', {
         console.log(`Updating transaction ${id} status to: ${status}`)
 
         // Send only the status field to the API
-        const response = await api.put(`/transaction/${id}/update/status`, {
+        const response = await api.put(`/transactions/${id}/update/status`, {
           status: status,
         })
 
@@ -411,7 +427,7 @@ export const usePatientStore = defineStore('patient', {
         console.log('Sending transaction data:', completeTransactionData)
 
         // Create the transaction with all data in one form
-        const response = await api.post('/transaction/add', completeTransactionData)
+        const response = await api.post('/transactions/add', completeTransactionData)
 
         // Update current patient's transactions if this patient is currently loaded
         if (this.currentPatient && this.currentPatient.id === transactionData.patient_id) {

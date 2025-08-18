@@ -215,12 +215,21 @@
           <div class="q-pa-sm flex justify-center">
             <q-card class="q-pa-sm" style="max-width: 1200px; width: 100%">
               <div class="text-h6 text-green text-weight-bolder">Patient Transaction History</div>
+              <q-input
+                v-model="filterDate"
+                label="Filter by Date"
+                type="date"
+                outlined
+                denses
+                class="q-mb-md"
+                :max="today"
+              />
               <q-separator />
 
               <q-table
                 bordered
                 dense
-                :rows="transactions"
+                :rows="filteredTransactions"
                 :columns="transactionColumns"
                 row-key="id"
                 no-data-label="No transaction history available"
@@ -355,6 +364,9 @@ export default {
       transactions: [],
       selectedTransaction: null,
 
+      filterDate: date.formatDate(new Date(), 'YYYY-MM-DD'),
+      today: date.formatDate(new Date(), 'YYYY-MM-DD'),
+
       // Status change confirmation
       showStatusConfirmModal: false,
       updatingStatus: false,
@@ -385,7 +397,7 @@ export default {
         sp02: '',
         LMP: '',
         medicine: '',
-        status: 'unqualified', // Default status
+        status: '',
       },
 
       transactionColumns: [
@@ -458,6 +470,14 @@ export default {
   computed: {
     patientStore() {
       return usePatientStore()
+    },
+    filteredTransactions() {
+      if (!this.filterDate) return this.transactions
+
+      return this.transactions.filter((t) => {
+        const transactionDate = date.formatDate(t.transaction_date || t.created_at, 'YYYY-MM-DD')
+        return transactionDate === this.filterDate
+      })
     },
   },
 

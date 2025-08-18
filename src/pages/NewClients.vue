@@ -373,7 +373,7 @@
                 :rules="[(val) => !!val || 'Date is required']"
               />
             </div>
-            <div class="col-12 col-md-6">
+            <!-- <div class="col-12 col-md-6">
               <q-select
                 outlined
                 dense
@@ -384,7 +384,7 @@
                 lazy-rules
                 :rules="[(val) => !!val || 'Mode is required']"
               />
-            </div>
+            </div> -->
             <div class="col-12">
               <q-select
                 outlined

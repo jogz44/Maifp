@@ -53,6 +53,10 @@
                   {{ props.row.barangay }}
                 </q-td>
 
+                <!-- <q-td key="status" style="font-size: 11px" align="left">
+                  {{ props.row.transaction[0]?.status || 'N/A' }}
+                </q-td> -->
+
                 <q-td key="actions" style="font-size: 11px" align="center">
                   <q-btn
                     flat
@@ -165,6 +169,16 @@ export default {
           headerStyle: 'font-size: 1.2 em',
         },
 
+        // {
+        //   name: 'status',
+        //   label: 'Status',
+        //   field: (row) => row.transaction[0]?.status || 'N/A',
+        //   sortable: true,
+        //   align: 'left',
+        //   headerClasses: 'bg-grey-7 text-white',
+        //   headerStyle: 'font-size: .9em',
+        // },
+
         {
           name: 'Actions',
           label: 'Actions',
@@ -209,7 +223,7 @@ export default {
   methods: {
     async getPatients() {
       try {
-        await this.Patients.fetchPatients()
+        await this.Patients.fetchPatientsAssessment()
         this.rows = this.Patients.patients
       } catch (error) {
         console.error('Error fetching patients:', error)
