@@ -33,6 +33,15 @@ export const useFundsStore = defineStore('funds', {
       }
     },
 
+    async addAdditional(payload) {
+      try {
+        const res = await api.post('/Budgets/store', payload)
+        this.funds.push(res.data)
+      } catch (error) {
+        console.error('Failed to add fund:', error)
+      }
+    },
+
     // async removeFund(id) {
     //   try {
     //     await api.delete(`/funds/${id}`)

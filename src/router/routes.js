@@ -20,7 +20,7 @@ const routes = [
         meta: { requiresAuth: true },
       },
 
-      { 
+      {
         path: '/customers',
         component: () => import('pages/ClientList.vue'),
         meta: { requiresAuth: true },
@@ -55,9 +55,15 @@ const routes = [
         meta: { requiresAuth: true },
       },
 
+      //guaranteed letter
       {
-        path: '/ris/orders',
-        component: () => import('pages/RISListing.vue'),
+        path: '/gl',
+        component: () => import('pages/GuaranteedPage.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/gl/report',
+        component: () => import('pages/GuaranteedLetter.vue'),
         meta: { requiresAuth: true },
       },
 

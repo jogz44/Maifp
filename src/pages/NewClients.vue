@@ -90,7 +90,7 @@
                 v-model="patientData.contact_number"
                 label="Contact Number"
                 class="text-caption"
-                inputmode="numeric"
+                type="number"
               />
             </div>
           </div>

@@ -73,7 +73,7 @@
               </q-item-label>
             </q-item-section>
           </q-item>
-          <q-item clickable v-ripple to="/libraries/list">
+          <q-item clickable v-ripple to="/gl">
             <q-item-section class="q-ml-sm">
               <q-item-label class="text-caption">
                 <q-icon name="category" class="q-ml-md q-mr-lg" size="24px" />Guaranteed Letter
