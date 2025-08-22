@@ -20,7 +20,7 @@
             row-key="id"
             binary-state-sort
             no-data-label="No data available"
-            title="Guaranteed Letter"
+            title="Billing"
             title-class="text-bold text-subtitle1 text-green-9"
             square
             :rows-per-page-options="[0]"
@@ -53,12 +53,17 @@
                   {{ props.row.barangay }}
                 </q-td>
 
-                <!-- <q-td key="status" style="font-size: 11px" align="left">
-                  {{ props.row.transaction[0]?.status || 'N/A' }}
-                </q-td> -->
+                <q-td key="status" style="font-size: 11px" align="left">
+                  {{ props.row.transaction[0]?.transaction_type || 'N/A' }}
+                </q-td>
 
                 <q-td key="actions" style="font-size: 11px" align="center">
-                  <q-btn flat color="green-9" @click="showClient(props.row.id)" icon="article" />
+                  <q-btn
+                    flat
+                    color="primary"
+                    @click="showClient(props.row.id)"
+                    icon="request_quote"
+                  />
                 </q-td>
               </q-tr>
             </template>
@@ -163,15 +168,15 @@ export default {
           headerStyle: 'font-size: 1.2 em',
         },
 
-        // {
-        //   name: 'status',
-        //   label: 'Status',
-        //   field: (row) => row.transaction[0]?.status || 'N/A',
-        //   sortable: true,
-        //   align: 'left',
-        //   headerClasses: 'bg-grey-7 text-white',
-        //   headerStyle: 'font-size: .9em',
-        // },
+        {
+          name: 'transaction_type',
+          label: 'Transaction Type',
+          field: (row) => row.transaction[0]?.transaction_type || 'N/A',
+          sortable: true,
+          align: 'left',
+          headerClasses: 'bg-grey-7 text-white',
+          headerStyle: 'font-size: .9em',
+        },
 
         {
           name: 'Actions',
@@ -217,7 +222,7 @@ export default {
   methods: {
     async getPatients() {
       try {
-        await this.Patients.fetchPatientsGL()
+        await this.Patients.fetchPatientsBilling()
         this.rows = this.Patients.patients
       } catch (error) {
         console.error('Error fetching patients:', error)
@@ -234,7 +239,7 @@ export default {
       this.Patients.isSave = false
       this.Patients.patient_id = id
 
-      this.$router.push('/gl/report')
+      this.$router.push('/billing/report')
     },
 
     async remove_client() {

@@ -74,7 +74,7 @@
             <template #prepend>₱</template>
           </q-input>
 
-          <q-input v-model="form.budget_end_date" label="Remarks" dense outlined autogrow />
+          <q-input v-model="form.remarks" label="Remarks" dense outlined autogrow />
         </q-card-section>
         <q-card-actions align="right">
           <q-btn flat label="Cancel" v-close-popup />
@@ -117,8 +117,7 @@ const rows = computed(() => fundsStore.funds)
 const saveNewFund = async () => {
   try {
     await fundsStore.addFund({
-      budget_start_date: form.budget_start_date,
-      budget_end_date: form.budget_end_date,
+      remarks: form.remarks,
       funds: form.funds,
     })
 

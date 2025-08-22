@@ -67,6 +67,18 @@ const routes = [
         meta: { requiresAuth: true },
       },
 
+      //billing
+      {
+        path: '/billing',
+        component: () => import('pages/BillingPage.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/billing/report',
+        component: () => import('pages/BillingStatement.vue'),
+        meta: { requiresAuth: true },
+      },
+
       {
         path: '/ris/orders/info',
         component: () => import('pages/RISinfo.vue'),

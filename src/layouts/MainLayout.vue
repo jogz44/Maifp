@@ -103,7 +103,7 @@
           </div>
         </q-item>
 
-        <q-item clickable v-ripple to="">
+        <q-item clickable v-ripple to="/billing">
           <div class="row items-center">
             <q-icon name="receipt_long" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Billing</span>

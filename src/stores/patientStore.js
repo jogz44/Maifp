@@ -130,6 +130,38 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
+    async fetchPatientsGL() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/guarantee')
+        this.patients = response.data
+        return this.patients
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchPatientsBilling() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/billing')
+        this.patients = response.data
+        return this.patients
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
     // Get single patient by ID with transactions
     async getPatient(id) {
       this.loading = true
@@ -173,6 +205,36 @@ export const usePatientStore = defineStore('patient', {
 
       try {
         const response = await api.get(`/transactions/${id}`)
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        return null
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async getBillingDetails(id) {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get(`/billing/${id}`)
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        return null
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async addGL(payload) {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.post('/guarantee/store', payload)
         return response.data
       } catch (error) {
         this.handleApiError(error)
