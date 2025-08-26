@@ -114,6 +114,7 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
+    // Step 1 Assessment
     async fetchPatientsAssessment() {
       this.loading = true
       this.error = null
@@ -130,12 +131,13 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
-    async fetchPatientsGL() {
+    // Step 2 New Consultation
+    async fetchPatientsNew() {
       this.loading = true
       this.error = null
 
       try {
-        const response = await api.get('/guarantee')
+        const response = await api.get('/transactions/qualified')
         this.patients = response.data
         return this.patients
       } catch (error) {
@@ -146,12 +148,81 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
+    // Step 3 Laboratory
+    async fetchPatientsLaboratory() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/laboratory')
+        this.patients = response.data
+        return this.patients
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Step 4 Returned Consultation
+    async fetchPatientsReturned() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/patients/consultation/return')
+        this.patients = response.data
+        return this.patients
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Step 5 Medicine
+    async fetchPatientsMedicine() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/medications')
+        this.patients = response.data
+        return this.patients
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Step 6 Billing
     async fetchPatientsBilling() {
       this.loading = true
       this.error = null
 
       try {
         const response = await api.get('/billing')
+        this.patients = response.data
+        return this.patients
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
+    //Step 7 Guarantee Letter
+    async fetchPatientsGL() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/guarantee')
         this.patients = response.data
         return this.patients
       } catch (error) {

@@ -3,12 +3,21 @@ import { api } from 'src/boot/axios'
 
 export const useFundsStore = defineStore('funds', {
   state: () => ({
-    funds: [],
+    funds: [], // list of funds (/Budgets)
+    dashboard: {
+      // summary (/Budgets/dashboard)
+      total_funds: 0,
+      released_funds: 0,
+      remaining_funds: 0,
+    },
     loading: false,
   }),
 
   getters: {
     rows: (state) => state.funds,
+    totalFunds: (state) => state.dashboard.total_funds,
+    releasedFunds: (state) => state.dashboard.released_funds,
+    remainingFunds: (state) => state.dashboard.remaining_funds,
   },
 
   actions: {
@@ -19,6 +28,22 @@ export const useFundsStore = defineStore('funds', {
         this.funds = res.data
       } catch (error) {
         console.error('Error fetching funds:', error)
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchFundsDashboard() {
+      this.loading = true
+      try {
+        const res = await api.get('/Budgets/dashboard')
+        this.dashboard = {
+          total_funds: Number(res.data.total_funds || 0),
+          released_funds: Number(res.data.released_funds || 0),
+          remaining_funds: Number(res.data.remaining_funds || 0),
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard:', error)
       } finally {
         this.loading = false
       }
@@ -38,27 +63,8 @@ export const useFundsStore = defineStore('funds', {
         const res = await api.post('/Budgets/store', payload)
         this.funds.push(res.data)
       } catch (error) {
-        console.error('Failed to add fund:', error)
+        console.error('Failed to add additional fund:', error)
       }
     },
-
-    // async removeFund(id) {
-    //   try {
-    //     await api.delete(`/funds/${id}`)
-    //     this.funds = this.funds.filter((f) => f.id !== id)
-    //   } catch (error) {
-    //     console.error('Failed to remove fund:', error)
-    //   }
-    // },
-
-    // async addAdditional(id, amount) {
-    //   try {
-    //     const res = await api.post(`/funds/${id}/add`, { amount })
-    //     const index = this.funds.findIndex((f) => f.id === id)
-    //     if (index !== -1) this.funds[index].funds = res.data.funds
-    //   } catch (error) {
-    //     console.error('Failed to add funds:', error)
-    //   }
-    // },
   },
 })

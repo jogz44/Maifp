@@ -58,12 +58,7 @@
                 </q-td>
 
                 <q-td key="actions" style="font-size: 11px" align="center">
-                  <q-btn
-                    flat
-                    color="primary"
-                    @click="showClient(props.row.id)"
-                    icon="request_quote"
-                  />
+                  <q-btn flat color="primary" @click="showClient(props.row)" icon="request_quote" />
                 </q-td>
               </q-tr>
             </template>
@@ -71,202 +66,121 @@
         </q-card-section>
       </q-card>
     </div>
-
-    <q-dialog v-model="DeleteClient" persistent>
-      <q-card class="q-pa-sm" style="max-width: 400px; width: 100%">
-        <q-card-section>
-          <div class="text-h6 text-primary">Do you want to delete this client?</div>
-        </q-card-section>
-        <q-card-actions align="right">
-          <!-- Button to close dialog -->
-          <q-btn flat label="Yes" color="primary" @click="remove_client()" />
-          <q-btn flat label="No" color="red" @click="DeleteClient = false" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
   </q-page>
 </template>
-<script>
-import { usePatientStore } from '../stores/patientStore'
-export default {
-  setup() {
-    return {
-      columns: [
-        {
-          name: 'lastname',
-          label: 'Last Name',
-          field: 'lastname',
-          sortable: true,
-          align: 'left',
-          headerClasses: 'bg-grey-7 text-white',
-          headerStyle: 'font-size: 1.2 em',
-        },
-        {
-          name: 'firstname',
-          label: 'First Name',
-          field: 'firstname',
-          sortable: true,
-          align: 'left',
-          headerClasses: 'bg-grey-7 text-white',
-          headerStyle: 'font-size: 1.2 em',
-        },
-        {
-          name: 'middlename',
-          label: 'Middle Name',
-          field: 'middlename',
-          sortable: true,
-          align: 'left',
-          headerClasses: 'bg-grey-7 text-white',
-          headerStyle: 'font-size: 1.2 em',
-        },
-        {
-          name: 'ext',
-          label: 'Ext',
-          field: 'ext',
-          sortable: true,
-          align: 'left',
-          headerClasses: 'bg-grey-7 text-white',
-          headerStyle: 'font-size: 1.2 em',
-        },
 
-        {
-          name: 'birthdate',
-          label: 'Birthdate',
-          field: 'birthdate',
-          sortable: true,
-          align: 'left',
-          headerClasses: 'bg-grey-7 text-white',
-          headerStyle: 'font-size: 1.2 em',
-        },
+<script setup>
+import { ref, onMounted } from 'vue'
+import { usePatientStore } from 'src/stores/patientStore'
+import { useRouter } from 'vue-router'
 
-        {
-          name: 'age',
-          label: 'Age',
-          field: 'age',
-          sortable: true,
-          align: 'left',
-          headerClasses: 'bg-grey-7 text-white',
-          headerStyle: 'font-size: 1.2 em',
-        },
+const store = usePatientStore()
+const router = useRouter()
+const search = ref('')
+const rows = ref([])
 
-        {
-          name: 'contact_number',
-          label: 'Contact Number',
-          field: 'contact_number',
-          sortable: true,
-          align: 'left',
-          headerClasses: 'bg-grey-7 text-white',
-          headerStyle: 'font-size: 1.2 em',
-        },
-        {
-          name: 'barangay',
-          label: 'Barangay',
-          field: 'barangay',
-          sortable: true,
-          align: 'left',
-          headerClasses: 'bg-grey-7 text-white',
-          headerStyle: 'font-size: 1.2 em',
-        },
-
-        {
-          name: 'transaction_type',
-          label: 'Transaction Type',
-          field: (row) => row.transaction[0]?.transaction_type || 'N/A',
-          sortable: true,
-          align: 'left',
-          headerClasses: 'bg-grey-7 text-white',
-          headerStyle: 'font-size: .9em',
-        },
-
-        {
-          name: 'Actions',
-          label: 'Actions',
-          field: 'actions',
-          align: 'center',
-          headerClasses: 'bg-grey-7 text-white',
-          headerStyle: 'font-size: 1.2 em',
-        },
-      ],
-    }
+const columns = [
+  {
+    name: 'lastname',
+    label: 'Last Name',
+    field: 'lastname',
+    sortable: true,
+    align: 'left',
+    headerClasses: 'bg-grey-7 text-white',
+    headerStyle: 'font-size: .9em',
   },
-
-  data() {
-    return {
-      Selected_ID: 0,
-      DeleteClient: false,
-      search: '',
-      rows: [],
-
-      CustomerInfo: {
-        firstname: '',
-        lastname: '',
-        middlename: '',
-        ext: '',
-        birthdate: '',
-        contact_number: '',
-        age: 0,
-        gender: '',
-        is_not_tagum: false,
-        street: '',
-        purok: '',
-        barangay: '',
-        city: 'Tagum City',
-        province: 'Davao del Norte',
-        category: '',
-        is_pwd: false,
-        is_solo: false,
-        user_id: 0,
-      },
-    }
+  {
+    name: 'firstname',
+    label: 'First Name',
+    field: 'firstname',
+    sortable: true,
+    align: 'left',
+    headerClasses: 'bg-grey-7 text-white',
+    headerStyle: 'font-size: .9em',
   },
-  methods: {
-    async getPatients() {
-      try {
-        await this.Patients.fetchPatientsBilling()
-        this.rows = this.Patients.patients
-      } catch (error) {
-        console.error('Error fetching patients:', error)
-      }
-    },
-
-    showDeletepage(id) {
-      this.Patients.patient_id = id
-      this.DeleteClient = true
-    },
-
-    showClient(id) {
-      this.Patients.isEdit = true
-      this.Patients.isSave = false
-      this.Patients.patient_id = id
-
-      this.$router.push('/billing/report')
-    },
-
-    async remove_client() {
-      try {
-        await this.Patients.removePatient(this.Patients.patient_id)
-        this.$q.notify({
-          type: 'positive',
-          message: 'Deleting record successful!',
-          position: 'center',
-          timeout: 1200,
-        })
-        this.getPatients()
-        this.DeleteClient = false
-      } catch (error) {
-        console.error('Error deleting patient:', error)
-      }
-    },
+  {
+    name: 'middlename',
+    label: 'Middle Name',
+    field: 'middlename',
+    sortable: true,
+    align: 'left',
+    headerClasses: 'bg-grey-7 text-white',
+    headerStyle: 'font-size: .9em',
   },
-
-  computed: {
-    Patients() {
-      return usePatientStore()
-    },
+  {
+    name: 'ext',
+    label: 'Ext',
+    field: 'ext',
+    sortable: true,
+    align: 'left',
+    headerClasses: 'bg-grey-7 text-white',
+    headerStyle: 'font-size: .9em',
   },
-
-  mounted() {
-    this.getPatients()
+  {
+    name: 'birthdate',
+    label: 'Birthdate',
+    field: 'birthdate',
+    sortable: true,
+    align: 'left',
+    headerClasses: 'bg-grey-7 text-white',
+    headerStyle: 'font-size: .9em',
   },
+  {
+    name: 'age',
+    label: 'Age',
+    field: 'age',
+    sortable: true,
+    align: 'left',
+    headerClasses: 'bg-grey-7 text-white',
+    headerStyle: 'font-size: .9em',
+  },
+  {
+    name: 'contact_number',
+    label: 'Contact Number',
+    field: 'contact_number',
+    sortable: true,
+    align: 'left',
+    headerClasses: 'bg-grey-7 text-white',
+    headerStyle: 'font-size: .9em',
+  },
+  {
+    name: 'barangay',
+    label: 'Barangay',
+    field: 'barangay',
+    sortable: true,
+    align: 'left',
+    headerClasses: 'bg-grey-7 text-white',
+    headerStyle: 'font-size: .9em',
+  },
+  {
+    name: 'status',
+    label: 'Transaction Type',
+    field: (row) => row.transaction[0]?.transaction_type || 'N/A',
+    sortable: true,
+    align: 'left',
+    headerClasses: 'bg-grey-7 text-white',
+    headerStyle: 'font-size: .9em',
+  },
+  {
+    name: 'actions',
+    label: 'Actions',
+    field: 'actions',
+    align: 'left',
+    headerClasses: 'bg-grey-7 text-white',
+    headerStyle: 'font-size: .9em',
+  },
+]
+
+async function getPatients() {
+  await store.fetchPatientsBilling()
+  rows.value = store.patients
 }
+
+function showClient(row) {
+  store.patient_id = row.id
+  store.transaction_id = row.transaction[0]?.id
+  router.push('/billing/report')
+}
+
+onMounted(getPatients)
 </script>
