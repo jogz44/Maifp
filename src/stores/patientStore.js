@@ -8,6 +8,9 @@ export const usePatientStore = defineStore('patient', {
     error: null,
     currentPatient: null,
     patients: [],
+    qualifiedPatients: [],
+    returnedPatients: [],
+    laboratoryPatients: [],
     isSave: true,
     isEdit: false,
     patient_id: 0,
@@ -64,6 +67,9 @@ export const usePatientStore = defineStore('patient', {
     isLoading: (state) => state.loading,
     hasError: (state) => !!state.error,
     errorMessage: (state) => state.error,
+    totalQualifiedCount: (state) => state.qualifiedPatients.length,
+    totalReturnedCount: (state) => state.returnedPatients.length,
+    totalLaboratoryCount: (state) => state.laboratoryPatients?.length || 0,
 
     patientsWithFullName: (state) => {
       return state.patients.map((patient) => ({
@@ -83,7 +89,7 @@ export const usePatientStore = defineStore('patient', {
       return state.patients.find((patient) => patient.id === id)
     },
 
-    // 🔹 Count only consultations
+    // Count only consultations
     consultationCount: (state) => {
       return state.patients.filter((p) => p.transaction_type === 'Consultation').length
     },
@@ -157,7 +163,7 @@ export const usePatientStore = defineStore('patient', {
       this.error = null
 
       try {
-        const response = await api.post('/patients/consultation/return', payload)
+        const response = await api.post('/new_consultations/store', payload)
 
         // Optionally push into patients list if API returns updated patient
         if (response.data && response.data.patient) {
@@ -200,10 +206,11 @@ export const usePatientStore = defineStore('patient', {
 
       try {
         const response = await api.get('/transactions/qualified')
-        this.patients = response.data
-        return this.patients
+        this.qualifiedPatients = response.data
+        return this.qualifiedPatients
       } catch (error) {
         this.handleApiError(error)
+        this.qualifiedPatients = []
         return []
       } finally {
         this.loading = false
@@ -217,10 +224,11 @@ export const usePatientStore = defineStore('patient', {
 
       try {
         const response = await api.get('/patients/consultation/return')
-        this.patients = response.data
-        return this.patients
+        this.returnedPatients = response.data
+        return this.returnedPatients
       } catch (error) {
         this.handleApiError(error)
+        this.returnedPatients = []
         return []
       } finally {
         this.loading = false
@@ -234,11 +242,10 @@ export const usePatientStore = defineStore('patient', {
 
       try {
         const response = await api.get('/laboratory')
-        this.patients = response.data.patients
-        return this.patients
+        this.laboratoryPatients = response.data // save into store
       } catch (error) {
         this.handleApiError(error)
-        return []
+        this.laboratoryPatients = [] // reset on error
       } finally {
         this.loading = false
       }

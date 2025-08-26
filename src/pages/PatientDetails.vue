@@ -385,7 +385,7 @@ export default {
       }
 
       try {
-        await patientStore.returnConsultationDone(payload)
+        await patientStore.storeNewConsultation(payload)
 
         this.$q.notify({
           type: 'positive',
@@ -456,7 +456,7 @@ export default {
       }
 
       try {
-        await patientStore.returnConsultationDone(payload)
+        await patientStore.storeNewConsultation(payload)
 
         this.$q.notify({
           type: 'positive',

@@ -99,15 +99,38 @@
           <q-item clickable v-ripple to="/customers/newconsultation">
             <q-item-section class="q-ml-sm">
               <q-item-label class="text-caption">
-                <q-icon name="person_add_alt" class="q-ml-md q-mr-lg" size="24px" />New Consultation
+                <q-icon name="person_add_alt" class="q-ml-md q-mr-lg" size="24px" />
+                New Consultation
               </q-item-label>
             </q-item-section>
+
+            <q-item-section side>
+              <q-badge
+                v-if="patientStore.totalQualifiedCount > 0"
+                :label="patientStore.totalQualifiedCount"
+                color="red"
+                rounded
+                class="q-ml-sm"
+              />
+            </q-item-section>
           </q-item>
+
           <q-item clickable v-ripple to="/customers/returnconsultation">
             <q-item-section class="q-ml-sm">
               <q-item-label class="text-caption">
-                <q-icon name="restart_alt" class="q-ml-md q-mr-lg" size="24px" />Returned Consultation
+                <q-icon name="assignment_return" class="q-ml-md q-mr-lg" size="24px" />
+                Return Consultation
               </q-item-label>
+            </q-item-section>
+
+            <q-item-section side>
+              <q-badge
+                v-if="patientStore.totalReturnedCount > 0"
+                :label="patientStore.totalReturnedCount"
+                color="red"
+                rounded
+                class="q-ml-sm"
+              />
             </q-item-section>
           </q-item>
         </q-expansion-item>
@@ -116,6 +139,14 @@
           <div class="row items-center">
             <q-icon name="science" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Laboratory</span>
+
+            <q-badge
+              v-if="patientStore.totalLaboratoryCount > 0"
+              :label="patientStore.totalLaboratoryCount"
+              color="red"
+              rounded
+              class="q-ml-sm"
+            />
           </div>
         </q-item>
 
@@ -144,18 +175,28 @@
 <script>
 import auth from 'src/services/auth'
 import { useUserStore } from 'src/stores/userStore'
+import { usePatientStore } from 'src/stores/patientStore'
+
 export default {
   name: 'MyLayout',
-  components: {},
 
   setup() {
     const ausSrvc = auth
     const userStore = useUserStore()
+    const patientStore = usePatientStore()
+
+    // fetch patients when mounted
+    patientStore.fetchQualifiedPatients()
+    patientStore.fetchReturnedPatients()
+    patientStore.fetchLaboratoryPatients()
+
     return {
       ausSrvc,
       userStore,
+      patientStore,
     }
   },
+
   data() {
     return {
       leftDrawerOpen: false,
@@ -163,6 +204,7 @@ export default {
       expandedConsultation: false,
     }
   },
+
   methods: {
     toggleLeftDrawer() {
       this.leftDrawerOpen = !this.leftDrawerOpen
@@ -182,17 +224,16 @@ export default {
       const sanitized_object = unsanitized_object.replace('__q_objt|', '')
       const user = JSON.parse(sanitized_object)
       this.userStore.authenticatedUser = user.id
-      // console.log(user.id)
     },
   },
 
-  watch: {},
   mounted() {
-    // This is where you can perform any actions when the component is mounted
-
     if (this.ausSrvc.isAuthenticated()) {
       this.ausSrvc.initializeAuth()
       this.GetUserID()
+      this.patientStore.fetchQualifiedPatients()
+      this.patientStore.fetchReturnedPatients()
+      this.patientStore.fetchLaboratoryPatients()
     }
   },
 }

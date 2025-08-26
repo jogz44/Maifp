@@ -292,7 +292,7 @@
         <!-- LABORATORY RESULTS -->
         <q-card-section v-if="!loading">
           <div class="row items-center justify-between">
-            <div class="text-subtitle2 q-mb-sm">Laboratory Results</div>
+            <div class="text-subtitle2 q-mb-sm">Availed Laboratory Services</div>
             <q-btn color="green" dense icon="add" label="Add Result" @click="openLabModal" />
           </div>
 

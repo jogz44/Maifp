@@ -199,12 +199,14 @@ export default {
   methods: {
     async getPatients() {
       try {
-        const patients = await this.Patients.fetchLaboratoryPatients()
+        // First fetch (this updates the store state)
+        await this.Patients.fetchLaboratoryPatients()
 
-        if (Array.isArray(patients) && patients.length > 0) {
-          this.rows = patients.map(p => ({
+        // Then read directly from the store state
+        if (Array.isArray(this.Patients.laboratoryPatients) && this.Patients.laboratoryPatients.length > 0) {
+          this.rows = this.Patients.laboratoryPatients.map(p => ({
             id: p.id,
-            firstname: p.firstname,   // ✅ match API response
+            firstname: p.firstname,
             lastname: p.lastname,
             middlename: p.middlename,
             ext: p.ext,
@@ -213,6 +215,8 @@ export default {
             contact_number: p.contact_number,
             barangay: p.barangay,
           }))
+        } else {
+          this.rows = []
         }
 
         console.log('Mapped laboratory patients:', this.rows)

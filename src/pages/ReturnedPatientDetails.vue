@@ -289,7 +289,7 @@
 
         <!-- Laboratory Results Table -->
         <q-card-section v-if="transaction.laboratories && transaction.laboratories.length">
-          <div class="text-subtitle1 q-mb-sm">Laboratory Results</div>
+          <div class="text-subtitle2 q-mb-sm">Availed Laboratory Services</div>
           <q-table
             :rows="transaction.laboratories"
             :columns="labColumns"
@@ -421,7 +421,7 @@ export default {
       }
 
       try {
-        await patientStore.returnConsultationDone(payload)
+        await patientStore.storeNewConsultation(payload)
 
         this.$q.notify({
           type: 'positive',
@@ -455,11 +455,11 @@ export default {
       }
 
       try {
-        await patientStore.returnConsultationDone(payload)
+        await patientStore.storeNewConsultation(payload)
 
         this.$q.notify({
           type: 'positive',
-          message: 'Consultation status updated to Medication',
+          message: 'Consultation status updated to Done',
         })
 
         // If you want, redirect to pharmacy page
