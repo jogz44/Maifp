@@ -26,7 +26,7 @@
             :disable="completing"
             @click="showConfirmDialog = true"
           />
-          <q-btn color="secondary" label="Print" icon="print" @click="handlePrint" />
+          <q-btn color="secondary" label="Print PDF" icon="picture_as_pdf" @click="handlePrint" />
         </div>
       </div>
 
@@ -152,6 +152,8 @@ import ReportHeader from 'src/components/ReportHeader.vue'
 import ReportFooter from 'src/components/ReportFooter.vue'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 
 const store = usePatientStore()
 const router = useRouter()
@@ -247,8 +249,50 @@ async function completeTransaction() {
   }
 }
 
-function handlePrint() {
-  window.print()
+async function handlePrint() {
+  const element = document.querySelector('.certification-report-container')
+  if (!element) {
+    $q.notify({ type: 'negative', message: 'No report found to export', position: 'top' })
+    return
+  }
+
+  try {
+    const canvas = await html2canvas(element, { scale: 2 })
+    const imgData = canvas.toDataURL('image/png')
+
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'pt',
+      format: 'letter',
+    })
+
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    const imgProps = pdf.getImageProperties(imgData)
+    const pdfWidth = pageWidth
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
+
+    let position = 0
+    if (pdfHeight > pageHeight) {
+      let heightLeft = pdfHeight
+      while (heightLeft > 0) {
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight)
+        heightLeft -= pageHeight
+        if (heightLeft > 0) {
+          position = -(pdfHeight - heightLeft)
+          pdf.addPage()
+        }
+      }
+    } else {
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+    }
+
+    const pdfBlob = pdf.output('bloburl')
+    window.open(pdfBlob, '_blank')
+  } catch (error) {
+    console.error('Error generating PDF:', error)
+    $q.notify({ type: 'negative', message: 'Failed to generate PDF', position: 'top' })
+  }
 }
 </script>
 
@@ -322,18 +366,5 @@ function handlePrint() {
   left: 0;
   right: 0;
   text-align: center;
-}
-@media print {
-  .header-section {
-    display: none;
-  }
-  @page {
-    size: letter;
-    margin: 0;
-  }
-  .footer {
-    position: fixed;
-    bottom: 0.5in;
-  }
 }
 </style>
