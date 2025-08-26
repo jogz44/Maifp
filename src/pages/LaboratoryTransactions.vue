@@ -213,23 +213,14 @@
         <!-- Patient Transactions Section -->
         <q-card-section>
           <div class="q-pa-sm flex justify-center">
-            <q-card class="q-pa-sm" style="max-width: 1200px; width: 100%">
+            <q-card class="q-pa-sm" style="max-width: 1000px; width: 100%">
               <div class="text-h6 text-green text-weight-bolder">Patient Transaction History</div>
-              <q-input
-                v-model="filterDate"
-                label="Filter by Date"
-                type="date"
-                outlined
-                denses
-                class="q-mb-md"
-                :max="today"
-              />
               <q-separator />
 
               <q-table
                 bordered
                 dense
-                :rows="filteredTransactions"
+                :rows="transactions"
                 :columns="transactionColumns"
                 row-key="id"
                 no-data-label="No transaction history available"
@@ -238,7 +229,7 @@
                 <!-- Body slot -->
                 <template #body="props">
                   <q-tr :props="props">
-                    <q-td key="id" style="font-size: 11px" align="left">
+                    <q-td key="transaction_number" style="font-size: 11px" align="left">
                       {{ props.row.id }}
                     </q-td>
                     <q-td key="transaction_number" style="font-size: 11px" align="left">
@@ -256,23 +247,6 @@
                     <q-td key="purpose" style="font-size: 11px" align="left">
                       {{ props.row.purpose || 'N/A' }}
                     </q-td>
-                    <q-td key="status" style="font-size: 11px" align="center">
-                      <q-toggle
-                        :model-value="props.row.status === 'qualified'"
-                        color="green"
-                        @update:model-value="
-                          (isChecked) =>
-                            confirmStatusChange(props.row, isChecked ? 'qualified' : 'unqualified')
-                        "
-                        :loading="props.row.statusUpdating"
-                      />
-                      <div
-                        class="text-caption q-mt-xs"
-                        :class="props.row.status === 'qualified' ? 'text-green' : 'text-orange'"
-                      >
-                        {{ props.row.status || 'unqualified' }}
-                      </div>
-                    </q-td>
                     <q-td key="actions" style="font-size: 11px" align="center">
                       <q-btn
                         icon="visibility"
@@ -286,6 +260,12 @@
               </q-table>
 
               <div class="q-pa-sm flex justify-end">
+                <q-btn
+                  color="green-9"
+                  label="New Transaction"
+                  @click="showNewTransactionModal = true"
+                  class="q-mr-md"
+                />
                 <q-btn color="red" label="Close" @click="goBack" />
               </div>
             </q-card>
@@ -294,34 +274,234 @@
       </q-card>
     </div>
 
-    <!-- Status Change Confirmation Modal -->
-    <q-dialog v-model="showStatusConfirmModal" persistent>
-      <q-card style="min-width: 400px">
-        <q-card-section class="row items-center">
-          <q-avatar icon="warning" color="orange" text-color="white" />
-          <span class="q-ml-sm text-h6">Confirm Status Change</span>
+    <!-- New Transaction Modal -->
+    <q-dialog v-model="showNewTransactionModal" persistent>
+      <q-card style="min-width: 800px; max-width: 90vw">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6 text-green-9 text-weight-bold">New Transaction</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup @click="resetNewTransaction" />
         </q-card-section>
 
-        <q-card-section class="q-pt-none">
-          <p class="q-mb-sm">
-            Are you sure you want to change the status of transaction
-            <strong>{{ pendingStatusChange.transaction?.transaction_number }}</strong>
-            from <strong class="text-capitalize">{{ pendingStatusChange.oldStatus }}</strong> to
-            <strong class="text-capitalize">{{ pendingStatusChange.newStatus }}</strong
-            >?
-          </p>
-          <p class="text-caption text-grey-7">
-            This action will update the qualification status of this transaction.
-          </p>
+        <q-separator />
+
+        <q-card-section>
+          <div class="text-subtitle2 q-mb-md text-grey-8">
+            Patient: {{ patient.firstname }} {{ patient.middlename }} {{ patient.lastname }}
+            {{ patient.ext }}
+          </div>
+
+          <!-- Transaction Information -->
+          <div class="text-subtitle2 q-mb-sm text-weight-bold">Transaction Information</div>
+          <div class="row q-col-gutter-md q-mb-md">
+            <div class="col-12 col-md-4">
+              <q-input
+                outlined
+                dense
+                v-model="newTransaction.transaction_date"
+                type="date"
+                label="Date *"
+                class="text-caption"
+                :rules="[(val) => !!val || 'Transaction date is required']"
+              />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-select
+                outlined
+                dense
+                v-model="newTransaction.transaction_mode"
+                :options="patientStore.transactionModes"
+                label="Mode of Transaction *"
+                class="text-caption"
+                :rules="[(val) => !!val || 'Transaction mode is required']"
+              />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-select
+                outlined
+                dense
+                v-model="newTransaction.transaction_type"
+                :options="patientStore.transaction_type"
+                label="Type of Transaction *"
+                class="text-caption"
+                :rules="[(val) => !!val || 'Transaction type is required']"
+              />
+            </div>
+            <div class="col-12">
+              <q-input
+                outlined
+                dense
+                v-model="newTransaction.purpose"
+                label="Purpose"
+                type="textarea"
+                class="text-caption"
+                autogrow
+                rows="3"
+              />
+            </div>
+          </div>
+
+          <q-separator class="q-mb-md" />
+
+          <!-- Vital Signs -->
+          <div class="text-subtitle2 q-mb-sm text-weight-bold">Vital Signs</div>
+
+          <!-- Basic measurements -->
+          <div class="text-caption text-grey-7 q-mb-sm">Basic Measurements</div>
+          <div class="row q-col-gutter-md q-mb-md">
+            <div class="col-12 col-md-3">
+              <q-input
+                outlined
+                dense
+                v-model="newTransaction.height"
+                label="Height (cm)"
+                class="text-caption"
+                type="number"
+                @update:model-value="updateNewTransactionBMI"
+              />
+            </div>
+            <div class="col-12 col-md-3">
+              <q-input
+                outlined
+                dense
+                v-model="newTransaction.weight"
+                label="Weight (kg)"
+                class="text-caption"
+                type="number"
+                @update:model-value="updateNewTransactionBMI"
+              />
+            </div>
+            <div class="col-12 col-md-3">
+              <q-input
+                outlined
+                dense
+                v-model="newTransaction.bmi"
+                label="BMI"
+                class="text-caption"
+                readonly
+              >
+                <template v-slot:append v-if="newTransaction.bmi">
+                  <q-badge color="primary" text-color="white">
+                    {{ getBmiCategory(newTransaction.bmi) }}
+                  </q-badge>
+                </template>
+              </q-input>
+            </div>
+            <div class="col-12 col-md-3">
+              <q-input
+                outlined
+                dense
+                v-model="newTransaction.waist"
+                label="Waist Circumference (cm)"
+                class="text-caption"
+                type="number"
+              />
+            </div>
+          </div>
+
+          <!-- Vital signs -->
+          <div class="text-caption text-grey-7 q-mb-sm">Vital Signs</div>
+          <div class="row q-col-gutter-md q-mb-md">
+            <div class="col-12 col-md-2">
+              <q-input
+                outlined
+                dense
+                v-model="newTransaction.heart_rate"
+                label="Heart Rate (bpm)"
+                class="text-caption"
+                type="number"
+              />
+            </div>
+            <div class="col-12 col-md-2">
+              <q-input
+                outlined
+                dense
+                v-model="newTransaction.blood_pressure"
+                label="Blood Pressure"
+                class="text-caption"
+                placeholder="120/80"
+              />
+            </div>
+            <div class="col-12 col-md-2">
+              <q-input
+                outlined
+                dense
+                v-model="newTransaction.respiratory_rate"
+                label="Respiratory Rate"
+                class="text-caption"
+                type="number"
+              />
+            </div>
+            <div class="col-12 col-md-2">
+              <q-input
+                outlined
+                dense
+                v-model="newTransaction.pulse_rate"
+                label="Pulse Rate"
+                class="text-caption"
+                type="number"
+              />
+            </div>
+            <div class="col-12 col-md-2">
+              <q-input
+                outlined
+                dense
+                v-model="newTransaction.temperature"
+                label="Temperature (°C)"
+                class="text-caption"
+                type="number"
+                step="0.1"
+              />
+            </div>
+            <div class="col-12 col-md-2">
+              <q-input
+                outlined
+                dense
+                v-model="newTransaction.sp02"
+                label="SpO2 (%)"
+                class="text-caption"
+                type="number"
+              />
+            </div>
+          </div>
+
+          <!-- Additional information -->
+          <div class="text-caption text-grey-7 q-mb-sm">Additional Information</div>
+          <div class="row q-col-gutter-md">
+            <div class="col-12 col-md-6">
+              <q-input
+                outlined
+                dense
+                v-model="newTransaction.LMP"
+                label="Last Menstrual Period (LMP)"
+                type="date"
+                class="text-caption"
+              />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input
+                outlined
+                dense
+                v-model="newTransaction.medicine"
+                label="Maintenance Medicine"
+                class="text-caption"
+                type="textarea"
+                autogrow
+                rows="2"
+              />
+            </div>
+          </div>
         </q-card-section>
 
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" color="grey" @click="cancelStatusChange" />
+        <q-separator />
+
+        <q-card-actions align="right" class="q-pa-md">
+          <q-btn flat label="Cancel" color="grey" v-close-popup @click="resetNewTransaction" />
           <q-btn
-            label="Confirm"
-            color="orange"
-            @click="confirmStatusUpdate"
-            :loading="updatingStatus"
+            label="Create Transaction"
+            color="green-9"
+            :loading="creatingTransaction"
+            @click="createNewTransaction"
           />
         </q-card-actions>
       </q-card>
@@ -364,18 +544,6 @@ export default {
       transactions: [],
       selectedTransaction: null,
 
-      filterDate: date.formatDate(new Date(), 'YYYY-MM-DD'),
-      today: date.formatDate(new Date(), 'YYYY-MM-DD'),
-
-      // Status change confirmation
-      showStatusConfirmModal: false,
-      updatingStatus: false,
-      pendingStatusChange: {
-        transaction: null,
-        newStatus: '',
-        oldStatus: '',
-      },
-
       // New Transaction Modal
       showNewTransactionModal: false,
       creatingTransaction: false,
@@ -385,6 +553,8 @@ export default {
         transaction_type: '',
         purpose: '',
         patient_id: null,
+        consultation_date: '',   // ✅ added
+        status: 'pending',       // ✅ added
         height: '',
         weight: '',
         bmi: '',
@@ -397,13 +567,12 @@ export default {
         sp02: '',
         LMP: '',
         medicine: '',
-        status: '',
       },
 
       transactionColumns: [
         {
           name: 'id',
-          label: 'ID',
+          label: 'id',
           field: 'id',
           sortable: true,
           align: 'left',
@@ -450,14 +619,6 @@ export default {
           headerClasses: 'bg-grey-7 text-white',
         },
         {
-          name: 'status',
-          label: 'Status',
-          field: 'status',
-          sortable: true,
-          align: 'center',
-          headerClasses: 'bg-grey-7 text-white',
-        },
-        {
           name: 'actions',
           label: 'Actions',
           align: 'center',
@@ -471,21 +632,15 @@ export default {
     patientStore() {
       return usePatientStore()
     },
-    filteredTransactions() {
-      if (!this.filterDate) return this.transactions
-
-      return this.transactions.filter((t) => {
-        const transactionDate = date.formatDate(t.transaction_date || t.created_at, 'YYYY-MM-DD')
-        return transactionDate === this.filterDate
-      })
-    },
   },
 
   watch: {
     showNewTransactionModal(newVal) {
       if (newVal) {
-        // Set default date to today
+        // Set defaults when modal opens
         this.newTransaction.transaction_date = date.formatDate(new Date(), 'YYYY-MM-DD')
+        this.newTransaction.consultation_date = date.formatDate(new Date(), 'YYYY-MM-DD') // ✅ added
+        this.newTransaction.status = 'pending'
         this.newTransaction.patient_id = this.patient.id
       }
     },
@@ -534,22 +689,13 @@ export default {
 
           // If transactions are included in the patient data
           if (patientData.transaction && Array.isArray(patientData.transaction)) {
-            this.transactions = patientData.transaction.map((transaction) => ({
-              ...transaction,
-              status: transaction.status || 'unqualified',
-              statusUpdating: false,
-            }))
+            this.transactions = patientData.transaction
             console.log(`Loaded ${this.transactions.length} transactions from patient data`)
           } else {
             // If transactions are not included, fetch them separately
             console.log('Transactions not included in patient data, fetching separately')
-            const transactionsData =
+            this.transactions =
               (await this.patientStore.getPatientTransactions(this.patientId)) || []
-            this.transactions = transactionsData.map((transaction) => ({
-              ...transaction,
-              status: transaction.status || 'unqualified',
-              statusUpdating: false,
-            }))
             console.log(`Loaded ${this.transactions.length} transactions`)
           }
         } else {
@@ -569,96 +715,6 @@ export default {
           position: 'top',
           timeout: 2000,
         })
-      }
-    },
-
-    confirmStatusChange(transaction, newStatus) {
-      // Store the current status before showing confirmation
-      const oldStatus = transaction.status || 'unqualified'
-
-      console.log('Status change requested:', { oldStatus, newStatus, transaction: transaction.id })
-
-      // If status is the same, no need to confirm
-      if (oldStatus === newStatus) {
-        console.log('Status is the same, no change needed')
-        return
-      }
-
-      // Set up pending status change data
-      this.pendingStatusChange = {
-        transaction: transaction,
-        newStatus: newStatus,
-        oldStatus: oldStatus,
-      }
-
-      console.log('Showing confirmation modal for:', this.pendingStatusChange)
-
-      // Show confirmation modal
-      this.showStatusConfirmModal = true
-    },
-
-    async confirmStatusUpdate() {
-      try {
-        this.updatingStatus = true
-        const transaction = this.pendingStatusChange.transaction
-        const newStatus = this.pendingStatusChange.newStatus
-
-        // Set loading state for this specific transaction
-        transaction.statusUpdating = true
-
-        // Update the status first
-        const updatedTransaction = await this.patientStore.updateTransactionStatus(
-          transaction.id,
-          newStatus
-        )
-
-        if (updatedTransaction) {
-          // Update the local transaction data
-          transaction.status = newStatus
-
-          this.$q.notify({
-            type: 'positive',
-            message: `Transaction status updated to ${newStatus}`,
-            position: 'top',
-            timeout: 2000,
-          })
-
-          // ✅ Check if it qualifies for consultation
-          if (newStatus === 'qualified' && transaction.transaction_type === 'consultation') {
-            await this.addToConsultations(transaction.patient_id)
-          }
-        }
-
-        // Close the confirmation modal
-        this.showStatusConfirmModal = false
-        this.resetPendingStatusChange()
-      } catch (error) {
-        console.error('Error updating transaction status:', error)
-        this.$q.notify({
-          type: 'negative',
-          message: `Failed to update status: ${error.message}`,
-          position: 'top',
-          timeout: 2000,
-        })
-      } finally {
-        this.updatingStatus = false
-        if (this.pendingStatusChange.transaction) {
-          this.pendingStatusChange.transaction.statusUpdating = false
-        }
-      }
-    },
-
-    cancelStatusChange() {
-      // Just close the modal without making changes
-      this.showStatusConfirmModal = false
-      this.resetPendingStatusChange()
-    },
-
-    resetPendingStatusChange() {
-      this.pendingStatusChange = {
-        transaction: null,
-        newStatus: '',
-        oldStatus: '',
       }
     },
 
@@ -725,7 +781,7 @@ export default {
     viewTransactionDetails(transaction) {
       console.log('Viewing transaction:', transaction)
       this.$router.push({
-        path: '/customers/profile/transaction',
+        path: '/customers/laboratoryResults',
         query: { patientId: this.patient.id, transactionId: transaction.id },
       })
     },
@@ -748,6 +804,8 @@ export default {
         transaction_type: '',
         purpose: '',
         patient_id: this.patient.id,
+        consultation_date: date.formatDate(new Date(), 'YYYY-MM-DD'), // ✅ reset default
+        status: 'pending', // ✅ reset default
         height: '',
         weight: '',
         bmi: '',
@@ -760,7 +818,6 @@ export default {
         sp02: '',
         LMP: '',
         medicine: '',
-        status: 'unqualified', // Default status
       }
     },
 
@@ -787,31 +844,21 @@ export default {
 
     async createNewTransaction() {
       try {
-        // Validate required fields
-        if (!this.newTransaction.transaction_date) {
+        // ✅ validate consultation_date + status too
+        if (!this.newTransaction.consultation_date) {
           this.$q.notify({
             type: 'negative',
-            message: 'Transaction date is required',
+            message: 'Consultation date is required',
             position: 'top',
             timeout: 2000,
           })
           return
         }
 
-        if (!this.newTransaction.transaction_mode) {
+        if (!this.newTransaction.status) {
           this.$q.notify({
             type: 'negative',
-            message: 'Transaction mode is required',
-            position: 'top',
-            timeout: 2000,
-          })
-          return
-        }
-
-        if (!this.newTransaction.transaction_type) {
-          this.$q.notify({
-            type: 'negative',
-            message: 'Transaction type is required',
+            message: 'Status is required',
             position: 'top',
             timeout: 2000,
           })
@@ -820,14 +867,12 @@ export default {
 
         this.creatingTransaction = true
 
-        // Prepare transaction data with vital signs
         const transactionData = {
           ...this.newTransaction,
           patient_id: this.patient.id,
           vital_signs: this.newTransaction,
         }
 
-        // Create the transaction using the store action
         const createdTransaction = await this.patientStore.createNewTransaction(transactionData)
 
         if (createdTransaction) {
@@ -838,15 +883,7 @@ export default {
             timeout: 2000,
           })
 
-          // Add the new transaction to the local list with default status
-          const newTransactionWithStatus = {
-            ...createdTransaction,
-            status: createdTransaction.status || 'unqualified',
-            statusUpdating: false,
-          }
-          this.transactions.unshift(newTransactionWithStatus)
-
-          // Close modal and reset form
+          this.transactions.unshift(createdTransaction)
           this.showNewTransactionModal = false
           this.resetNewTransaction()
         }
@@ -887,9 +924,5 @@ export default {
 
 .q-table th {
   font-size: 12px !important;
-}
-
-.q-toggle .q-toggle__inner {
-  font-size: 11px;
 }
 </style>

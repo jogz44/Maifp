@@ -286,6 +286,40 @@
             </div>
           </div>
         </q-card-section>
+
+        <!-- Laboratory Results Table -->
+        <q-card-section v-if="transaction.laboratories && transaction.laboratories.length">
+          <div class="text-subtitle2 q-mb-sm">Availed Laboratory Services</div>
+          <q-table
+            :rows="transaction.laboratories"
+            :columns="labColumns"
+            row-key="id"
+            flat
+            dense
+          >
+            <!-- Amount -->
+            <template v-slot:body-cell-amount="props">
+              <q-td :props="props">
+                ₱{{ props.row.amount }}
+              </q-td>
+            </template>
+
+            <!-- Date -->
+            <template v-slot:body-cell-date="props">
+              <q-td :props="props">
+                {{ new Date(props.row.created_at).toLocaleDateString() }}
+              </q-td>
+            </template>
+
+            <!-- Time -->
+            <template v-slot:body-cell-time="props">
+              <q-td :props="props">
+                {{ new Date(props.row.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
+              </q-td>
+            </template>
+          </q-table>
+        </q-card-section>
+
         <!-- Buttons BELOW the card -->
         <div class="q-mt-md flex justify-end q-gutter-sm">
           <q-btn
@@ -294,12 +328,6 @@
               icon="medication"
               @click="onRequireMedication"
             />
-          <q-btn
-            color="blue"
-            label="Process Lab"
-            icon="biotech"
-            @click="processLab"
-          />
           <q-btn
             color="green"
             label="Done"
@@ -334,6 +362,14 @@ export default {
       // Backup data for cancellation
       originalTransactionData: null,
       originalVitalSigns: null,
+
+      labColumns: [
+        { name: 'laboratory_type', label: 'Laboratory', field: 'laboratory_type', align: 'left' },
+        { name: 'amount', label: 'Amount', field: 'amount', align: 'right' },
+        { name: 'status', label: 'Status', field: 'status', align: 'center' },
+        { name: 'date', label: 'Date', field: 'date', align: 'center' },
+        { name: 'time', label: 'Time', field: 'time', align: 'center' }
+      ],
     }
   },
 
@@ -393,48 +429,11 @@ export default {
         })
 
         // If you want, redirect to pharmacy page
-        this.$router.push({ path: '/customers/newConsultation' })
+        this.$router.push({ path: '/customers/returnConsultation' })
       } catch (error) {
         this.$q.notify({
           type: 'negative',
           message: `Failed to update consultation: ${error.message}`,
-        })
-      }
-    },
-
-    async processLab() {
-      const patientStore = usePatientStore()
-
-      const now = new Date()
-      const consultationDate = now.toISOString().split('T')[0] // YYYY-MM-DD
-      const consultationTime = now.toTimeString().split(' ')[0] // HH:MM:SS
-
-      const payload = {
-        patient_id: this.patientId,
-        transaction_id: this.transactionId,
-        consultation_date: consultationDate,
-        consultation_time: consultationTime,
-        status: 'Processing',
-        transaction_type: 'consultation',
-      }
-
-      try {
-        await patientStore.storeLaboratoryPatient(payload)
-
-        this.$q.notify({
-          type: 'positive',
-          message: 'Patient sent to Laboratory successfully!',
-        })
-
-        // Refresh laboratory list
-        await patientStore.fetchLaboratoryPatients()
-
-        // (Optional) Navigate if you want to redirect
-        this.$router.push({ path: '/customers/newConsultation' })
-      } catch (error) {
-        this.$q.notify({
-          type: 'negative',
-          message: `Failed to process laboratory: ${error.message}`,
         })
       }
     },
@@ -460,7 +459,7 @@ export default {
 
         this.$q.notify({
           type: 'positive',
-          message: 'Consultation status updated to Medication',
+          message: 'Consultation status updated to Done',
         })
 
         // If you want, redirect to pharmacy page
