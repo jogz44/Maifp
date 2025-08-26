@@ -65,7 +65,6 @@ export const usePatientStore = defineStore('patient', {
     hasError: (state) => !!state.error,
     errorMessage: (state) => state.error,
 
-    // Get full name for each patient
     patientsWithFullName: (state) => {
       return state.patients.map((patient) => ({
         ...patient,
@@ -80,9 +79,13 @@ export const usePatientStore = defineStore('patient', {
       }))
     },
 
-    // Get patient by ID
     getPatientById: (state) => (id) => {
       return state.patients.find((patient) => patient.id === id)
+    },
+
+    // 🔹 Count only consultations
+    consultationCount: (state) => {
+      return state.patients.filter((p) => p.transaction_type === 'Consultation').length
     },
   },
 
@@ -111,6 +114,166 @@ export const usePatientStore = defineStore('patient', {
         return []
       } finally {
         this.loading = false
+      }
+    },
+
+    //consultation patients
+    async fetchConsultationPatients() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/new_consultations')
+        this.patients = response.data.filter((p) => p.transaction_type === 'Consultation')
+      } catch (error) {
+        this.handleApiError(error)
+      }
+    },
+
+    // Store Laboratory Patient
+    async storeLaboratoryPatient(payload) {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.post('/new_consultations/store', payload)
+
+        // If backend returns the stored patient, push it into list
+        if (response.data && response.data.patient) {
+          this.patients.push(response.data.patient)
+        }
+
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async storeNewConsultation(payload) {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.post('/patients/consultation/return', payload)
+
+        // Optionally push into patients list if API returns updated patient
+        if (response.data && response.data.patient) {
+          this.patients.push(response.data.patient)
+        }
+
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async laboratoryReturn(id, payload) {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.post(`/laboratory/update/${id}`, payload)
+
+        if (response.data && response.data.patient) {
+          this.patients.push(response.data.patient)
+        }
+
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Fetch New Consultation Qualified
+    async fetchQualifiedPatients() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/transactions/qualified')
+        this.patients = response.data
+        return this.patients
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Fetch New Consultation Qualified
+    async fetchReturnedPatients() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/patients/consultation/return')
+        this.patients = response.data
+        return this.patients
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Fetch Qualified Laboratory
+    async fetchLaboratoryPatients() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/laboratory')
+        this.patients = response.data.patients
+        return this.patients
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async storeLaboratoryResult(payload) {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.post('/laboratory/store', payload)
+
+        // Optionally push into patients list if API returns updated patient
+        if (response.data && response.data.patient) {
+          this.patients.push(response.data.patient)
+        }
+
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchLaboratoryResults(transactionId) {
+      try {
+        const response = await api.get(`/transactions/${transactionId}`)
+        // response.data is a transaction object with .laboratories inside
+        this.laboratoryResults = response.data.laboratories || []
+        return this.laboratoryResults
+      } catch (error) {
+        console.error('API Error (getLaboratoryResults):', error)
+        throw error
       }
     },
 
@@ -411,7 +574,7 @@ export const usePatientStore = defineStore('patient', {
         console.log('Sending transaction data:', completeTransactionData)
 
         // Create the transaction with all data in one form
-        const response = await api.post('/transaction/add', completeTransactionData)
+        const response = await api.post('/transactions/add', completeTransactionData)
 
         // Update current patient's transactions if this patient is currently loaded
         if (this.currentPatient && this.currentPatient.id === transactionData.patient_id) {

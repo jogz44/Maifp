@@ -30,6 +30,55 @@ const routes = [
         component: () => import('pages/ClientProfile.vue'),
         meta: { requiresAuth: true },
       },
+      {
+        path: '/customers/newConsultation',
+        component: () => import('pages/NewConsultation.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/customers/newPatient',
+        component: () => import('src/pages/ConsultNewPatient.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/customers/returnConsultation',
+        component: () => import('pages/ReturnConsultation.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/customers/returnPatient',
+        component: () => import('src/pages/ConsultReturnPatient.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/customers/returnedPatientDetails',
+        component: () => import('src/pages/ReturnedPatientDetails.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      //patient details during transaction
+      {
+        path: '/customers/profile/transaction',
+        component: () => import('src/pages/PatientDetails.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      //laboratory
+      {
+        path: '/customers/laboratory',
+        component: () => import('src/pages/PatientsLaboratory.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/customers/laboratoryTransactions',
+        component: () => import('src/pages/LaboratoryTransactions.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/customers/laboratoryResults',
+        component: () => import('src/pages/LaboratoryResults.vue'),
+        meta: { requiresAuth: true },
+      },
 
       //assessment
       {

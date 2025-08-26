@@ -89,14 +89,30 @@
           </q-item>
         </q-expansion-item>
 
-        <q-item clickable v-ripple to="/customers/consultation">
-          <div class="row items-center">
-            <q-icon name="forum" size="24px" class="q-mr-md" />
-            <span class="text-sm" style="padding-left: 16px">Consultation</span>
-          </div>
-        </q-item>
+        <q-expansion-item
+          label="Consultation"
+          icon="forum"
+          icon-class="q-mr-xs"
+          header-class="row items-center"
+          v-model="expandedConsultation"
+        >
+          <q-item clickable v-ripple to="/customers/newconsultation">
+            <q-item-section class="q-ml-sm">
+              <q-item-label class="text-caption">
+                <q-icon name="person_add_alt" class="q-ml-md q-mr-lg" size="24px" />New Consultation
+              </q-item-label>
+            </q-item-section>
+          </q-item>
+          <q-item clickable v-ripple to="/customers/returnconsultation">
+            <q-item-section class="q-ml-sm">
+              <q-item-label class="text-caption">
+                <q-icon name="restart_alt" class="q-ml-md q-mr-lg" size="24px" />Returned Consultation
+              </q-item-label>
+            </q-item-section>
+          </q-item>
+        </q-expansion-item>
 
-        <q-item clickable v-ripple to="">
+        <q-item clickable v-ripple to="/customers/laboratory">
           <div class="row items-center">
             <q-icon name="science" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Laboratory</span>
@@ -144,6 +160,7 @@ export default {
     return {
       leftDrawerOpen: false,
       expanded: true,
+      expandedConsultation: false,
     }
   },
   methods: {
