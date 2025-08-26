@@ -66,10 +66,10 @@ const showAddFundsDialog = ref(false)
 const form = reactive({ remarks: '', funds: 0 })
 
 const columns = [
-  { name: 'date', label: 'Date', field: 'created_at', align: 'left' },
-  { name: 'time', label: 'Time', field: 'created_at', align: 'left' },
-  { name: 'funds', label: 'Funds', field: 'funds', align: 'right' },
+  { name: 'funds', label: 'Funds', field: 'funds', align: 'left' },
   { name: 'remarks', label: 'Remarks', field: 'remarks', align: 'left' },
+  { name: 'date', label: 'Date', field: 'created_at', align: 'left' },
+  // { name: 'time', label: 'Time', field: 'created_at', align: 'left' },
 ]
 
 const money = (v) =>
@@ -89,7 +89,7 @@ const saveNewFund = async () => {
     form.remarks = ''
     form.funds = 0
     refreshFunds() // refresh table after adding
-  } catch  {
+  } catch {
     // Optionally handle error here
   }
 }

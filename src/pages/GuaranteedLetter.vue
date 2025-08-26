@@ -24,11 +24,12 @@
             @click="showConfirmDialog = true"
             :loading="submitting"
           />
-          <q-btn color="secondary" label="Print" icon="print" @click="handlePrint" />
+          <q-btn color="secondary" label="Preview PDF" icon="picture_as_pdf" @click="handlePrint" />
         </div>
       </div>
+
       <!-- REPORT CONTENT -->
-      <div class="certification-report-container">
+      <div id="report-container" class="certification-report-container">
         <div class="report-content">
           <ReportHeader :officeName="officeName" />
           <div class="certification-title">
@@ -38,43 +39,25 @@
             <p class="concern-text">TO WHOM IT MAY CONCERN:</p>
             <p class="main-text">
               This is to certify that
-              <span class="bold"
-                >{{ gender === 'male' ? 'MR.' : 'MS.' }} {{ firstname }} {{ lastname }}</span
-              >
+              <span class="bold">
+                {{ gender === 'male' ? 'MR.' : 'MS.' }} {{ firstname }} {{ lastname }}
+              </span>
               is a beneficiary of the
-              <span class="bold"
-                >Medical Assistance from the Indigenous and Farmers Program (MAIFIP)</span
+              <span class="bold">
+                Medical Assistance from the Indigenous and Farmers Program (MAIFIP) </span
               >. Pursuant to {{ gender === 'male' ? 'his' : 'her' }} request for assistance, the
               amount of
-              <span class="bold"
-                >{{ formatAmountInWords(total_billing) }} (₱{{ formatAmount(total_billing) }})</span
-              >
+              <span class="bold">
+                {{ formatAmountInWords(total_billing) }} (₱{{ formatAmount(total_billing) }})
+              </span>
               has been allocated and guaranteed to cover
               {{ gender === 'male' ? 'his' : 'her' }} necessary medical expenses, subject to the
               rules and guidelines of the program.
             </p>
-            <ol class="certification-list">
-              <li>
-                That the amount stated herein is guaranteed under the MAIFIP Medical Assistance
-                Program;
-              </li>
-              <li>
-                That the assistance shall be applied solely for the medical expenses of the
-                beneficiary;
-              </li>
-              <li>
-                That disbursement of said amount shall follow the existing financial and auditing
-                regulations;
-              </li>
-              <li>
-                That this certification is issued for the purpose of confirming the beneficiary's
-                entitlement to the said assistance.
-              </li>
-            </ol>
             <p class="issuance-text">
               Issued this {{ formatDayWithSuffix(issueDate) }} day of {{ formatMonth(issueDate) }},
-              {{ formatYear(issueDate) }} at the City Government Center, JV Ayala Avenue, Apokon,
-              Tagum City, Davao del Norte.
+              {{ formatYear(issueDate) }}
+              at the City Government Center, JV Ayala Avenue, Apokon, Tagum City, Davao del Norte.
             </p>
             <div class="signature-container">
               <div class="signature-section">
@@ -85,8 +68,14 @@
             </div>
           </div>
         </div>
-        <ReportFooter :phone="footerPhone" :email="footerEmail" />
+        <div class="footer-spacer"></div>
+        <div class="footer">
+          <ReportFooter :phone="footerPhone" :email="footerEmail" />
+        </div>
+        >
       </div>
+
+      <!-- Confirm Dialog -->
       <q-dialog v-model="showConfirmDialog" persistent>
         <q-card style="min-width: 400px">
           <q-card-section class="row items-center">
@@ -128,6 +117,8 @@ import { usePatientStore } from 'src/stores/patientStore'
 import { useRouter } from 'vue-router'
 import ReportHeader from 'src/components/ReportHeader.vue'
 import ReportFooter from 'src/components/ReportFooter.vue'
+import html2canvas from 'html2canvas'
+import jsPDF from 'jspdf'
 
 const store = usePatientStore()
 const router = useRouter()
@@ -147,9 +138,7 @@ const contact_number = ref('')
 const address = ref({ street: '', purok: '', barangay: '' })
 const transaction_date = ref('')
 const consultation_amount = ref(0)
-
 const laboratory_total = ref(0)
-
 const total_billing = ref(0)
 const laboratories = ref([])
 const issueDate = ref(new Date())
@@ -235,10 +224,29 @@ async function handleSubmit() {
 function handleBack() {
   router.back()
 }
-function handlePrint() {
-  window.print()
+
+/**
+ * Export certification-report-container as PDF preview in new tab
+ */
+async function handlePrint() {
+  const element = document.getElementById('report-container')
+  if (!element) return
+
+  const canvas = await html2canvas(element, { scale: 2, useCORS: true })
+  const imgData = canvas.toDataURL('image/png')
+
+  const pdf = new jsPDF('p', 'mm', 'letter') // US Letter
+  const pdfWidth = pdf.internal.pageSize.getWidth()
+  const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+
+  pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
+
+  const pdfBlob = pdf.output('blob')
+  const pdfUrl = URL.createObjectURL(pdfBlob)
+  window.open(pdfUrl, '_blank')
 }
 
+// --- Format Helpers ---
 function formatDayWithSuffix(date) {
   const day = date.getDate()
   if (day > 3 && day < 21) return day + 'th'
@@ -312,19 +320,11 @@ function formatAmountInWords(amount) {
   }
   let result = ''
   const millions = Math.floor(num / 1000000)
-  if (millions > 0) {
-    result += convertHundreds(millions) + ' MILLION'
-    if (num % 1000000 > 0) result += ' '
-  }
+  if (millions > 0) result += convertHundreds(millions) + ' MILLION '
   const thousands = Math.floor((num % 1000000) / 1000)
-  if (thousands > 0) {
-    result += convertHundreds(thousands) + ' THOUSAND'
-    if (num % 1000 > 0) result += ' '
-  }
+  if (thousands > 0) result += convertHundreds(thousands) + ' THOUSAND '
   const hundreds = num % 1000
-  if (hundreds > 0) {
-    result += convertHundreds(hundreds)
-  }
+  if (hundreds > 0) result += convertHundreds(hundreds)
   return result.trim() + ' PESOS'
 }
 </script>
@@ -348,6 +348,7 @@ function formatAmountInWords(amount) {
   color: black;
   line-height: 1.5;
   letter-spacing: 0.5px;
+  position: relative;
 }
 .report-content {
   padding: 0.75in 1in 0 1in;
@@ -371,15 +372,6 @@ function formatAmountInWords(amount) {
   margin-bottom: 15px;
   line-height: 1.8;
 }
-.certification-list {
-  padding-left: 40px;
-  margin-bottom: 30px;
-  line-height: 1.8;
-}
-.certification-list li {
-  margin-bottom: 15px;
-  text-align: justify;
-}
 .issuance-text {
   margin-top: 15px;
   margin-bottom: 60px;
@@ -392,15 +384,14 @@ function formatAmountInWords(amount) {
   width: 100%;
   display: flex;
   justify-content: flex-end;
-  margin-top: 60px;
-  margin-bottom: 60px;
+  margin-top: 10px;
 }
 .signature-section {
   width: 3in;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 50px;
+  padding-top: 30px;
 }
 .signature-line {
   width: 100%;
@@ -415,13 +406,17 @@ function formatAmountInWords(amount) {
 .signature-title {
   text-align: center;
 }
-@media print {
-  .header-section {
-    display: none;
-  }
-  @page {
-    size: letter;
-    margin: 0;
-  }
+
+.footer-spacer {
+  flex-grow: 1;
+  min-height: 20px;
+}
+.footer {
+  margin-top: auto;
+  position: absolute;
+  bottom: 0.5in;
+  left: 0;
+  right: 0;
+  text-align: center;
 }
 </style>

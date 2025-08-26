@@ -5,7 +5,7 @@
         <q-avatar size="200px" class="q-mb-md">
           <img src="../assets/tagumlogo.png" alt="App Logo" />
         </q-avatar>
-        <div class="text-h5 text-weight-bold text-primary">Pharmacy Inventory System</div>
+        <div class="text-h5 text-weight-bold text-primary">MAIFIP System</div>
         <div class="text-subtitle1 text-grey-7">Login to your account</div>
       </q-card-section>
 
@@ -72,14 +72,14 @@ export default {
 
     return {
       loginStore,
-      loginAuth
+      loginAuth,
     }
   },
   data() {
     return {
-      userLogin:{
-        username:'',
-        password:''
+      userLogin: {
+        username: '',
+        password: '',
       },
       email: '',
       password: '',
@@ -93,14 +93,11 @@ export default {
       this.loading = true
 
       try {
-
         await this.loginAuth.login(this.userLogin)
         // console.log('Show data => ',response)
         //  this.loginStore.loginUser(this.userLogin)
 
         // Simulate an API call
-
-
 
         // Replace with actual API request
         // await new Promise((resolve) => setTimeout(resolve, 1500))
@@ -109,11 +106,10 @@ export default {
 
         //localStorage.setItem('user_id', this.loginSession.user_id = 1)
 
-
         // Redirect or perform other actions on success
-         this.$router.push('/main')
+        this.$router.push('/main')
       } catch (error) {
-        this.$q.notify({ type: 'negative', message:  error.message })
+        this.$q.notify({ type: 'negative', message: error.message })
       } finally {
         this.loading = false
       }

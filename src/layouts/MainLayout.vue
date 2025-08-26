@@ -5,9 +5,7 @@
         <q-btn flat dense round @click="toggleLeftDrawer()" aria-label="Menu" icon="menu" />
         <q-btn flat no-caps no-wrap class="q-ml-xs">
           <q-icon name="local_pharmacy" color="red" size="28px" />
-          <q-toolbar-title shrink class="text-weight-bold">
-            Medical Assistance for Indigent and Financial Incapacitated Patients System
-          </q-toolbar-title>
+          <q-toolbar-title shrink class="text-weight-bold"> MAIFIP System </q-toolbar-title>
         </q-btn>
 
         <div class="q-ml-auto q-gutter-sm">
