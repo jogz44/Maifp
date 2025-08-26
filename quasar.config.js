@@ -76,7 +76,7 @@ export default defineConfig((/* ctx */) => {
       open: true, // opens browser window automatically
       // host: '10.0.1.23'  ,
       // port: 90,
-
+      host: '192.168.8.33', //Your Local Network IP
       // host: '192.168.8.80', // Your OFFICE local IP
       // host: '192.168.50.98', // Your HOME local IP
       port: 9000,
