@@ -132,16 +132,22 @@ export const usePatientStore = defineStore('patient', {
     },
 
     // Step 1 Assessment
-    async fetchPatientsAssessment() {
+    async fetchPatientsAssessment(returnType = 'patients') {
       this.loading = true
       this.error = null
 
       try {
         const response = await api.get('/patients/assessment')
+        this.patients = response.data
         this.assessmentPatients = response.data
-        return this.assessmentPatients
+
+        if (returnType === 'assessment') {
+          return this.assessmentPatients
+        }
+        return this.patients
       } catch (error) {
         this.handleApiError(error)
+        this.patients = []
         this.assessmentPatients = []
         return []
       } finally {
@@ -201,16 +207,22 @@ export const usePatientStore = defineStore('patient', {
     },
 
     // Step 5 Medicine
-    async fetchPatientsMedicine() {
+    async fetchPatientsMedicine(returnType = 'patients') {
       this.loading = true
       this.error = null
 
       try {
         const response = await api.get('/medications')
+        this.patients = response.data
         this.medicationPatients = response.data
-        return this.medicationPatients
+
+        if (returnType === 'medication') {
+          return this.medicationPatients
+        }
+        return this.patients
       } catch (error) {
         this.handleApiError(error)
+        this.patients = []
         this.medicationPatients = []
         return []
       } finally {
@@ -219,16 +231,22 @@ export const usePatientStore = defineStore('patient', {
     },
 
     // Step 6 Billing
-    async fetchPatientsBilling() {
+    async fetchPatientsBilling(returnType = 'patients') {
       this.loading = true
       this.error = null
 
       try {
         const response = await api.get('/billing')
+        this.patients = response.data
         this.billingPatients = response.data
-        return this.billingPatients
+
+        if (returnType === 'billing') {
+          return this.billingPatients
+        }
+        return this.patients
       } catch (error) {
         this.handleApiError(error)
+        this.patients = []
         this.billingPatients = []
         return []
       } finally {
@@ -237,16 +255,22 @@ export const usePatientStore = defineStore('patient', {
     },
 
     //Step 7 Guarantee Letter
-    async fetchPatientsGL() {
+    async fetchPatientsGL(returnType = 'patients') {
       this.loading = true
       this.error = null
 
       try {
         const response = await api.get('/guarantee')
+        this.patients = response.data
         this.glPatients = response.data
-        return this.glPatients
+
+        if (returnType === 'gl') {
+          return this.glPatients
+        }
+        return this.patients
       } catch (error) {
         this.handleApiError(error)
+        this.patients = []
         this.glPatients = []
         return []
       } finally {

@@ -13,6 +13,7 @@ const api = axios.create({
   // baseURL: 'http://10.0.1.35:8000/api',
   // baseURL: process.env.API_URL, //office
   baseURL: 'http://192.168.8.182:8000/api', //Home
+
   withCredentials: true,
 })
 
