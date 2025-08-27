@@ -1,13 +1,13 @@
 <template>
-  <q-page padding>
-    <h6 class="text-2xl text-green-9 font-bold q-mb-md">Patient Monitoring</h6>
+  <q-page padding q-mt-none>
+    <!-- <div class="text-h6 text-green-9 font-bold q-mt-none q-mb-md">Dashboard</div> -->
 
     <!-- Header Fund Cards -->
     <div class="row q-col-gutter-md q-mb-lg">
       <div class="col-xs-12 col-sm-4">
         <q-card>
           <q-card-section>
-            <div class="text-h6">Total Funds</div>
+            <div class="text-h6 text-green-9">Total Funds</div>
             <div class="text-subtitle1">₱ {{ fundStore.totalFunds.toLocaleString() }}</div>
           </q-card-section>
         </q-card>
@@ -15,7 +15,7 @@
       <div class="col-xs-12 col-sm-4">
         <q-card>
           <q-card-section>
-            <div class="text-h6">Released Funds</div>
+            <div class="text-h6 text-green-9">Released Funds</div>
             <div class="text-subtitle1">₱ {{ fundStore.releasedFunds.toLocaleString() }}</div>
           </q-card-section>
         </q-card>
@@ -23,12 +23,14 @@
       <div class="col-xs-12 col-sm-4">
         <q-card>
           <q-card-section>
-            <div class="text-h6">Remaining Funds</div>
+            <div class="text-h6 text-green-9">Remaining Funds</div>
             <div class="text-subtitle1">₱ {{ fundStore.remainingFunds.toLocaleString() }}</div>
           </q-card-section>
         </q-card>
       </div>
     </div>
+
+    <div class="text-h6 text-green-9 font-bold q-mt-none q-mb-md">Patient Monitoring</div>
 
     <!-- Horizontal steps container -->
     <div class="row q-col-gutter-md">
@@ -46,14 +48,14 @@
           <q-separator />
 
           <!-- Step Patients -->
-          <q-card-section class="q-pa-md">
+          <q-card-section class="scroll-hidden" style="height: 150px">
             <div class="row q-col-gutter-sm">
               <div
                 v-for="(patient, patientIndex) in step.patients"
                 :key="patientIndex"
                 class="col-12 q-mb-xs"
               >
-                {{ patient.firstname }}
+                {{ patient.firstname }} {{ patient.lastname }}
               </div>
 
               <div v-if="step.patients.length === 0" class="col-12 text-grey text-center">
@@ -106,7 +108,7 @@ export default {
     }
 
     onMounted(() => {
-      fundStore.fetchFundsDashboard() // fetch funds on mount
+      fundStore.fetchFundsDashboard()
       loadStepPatients()
     })
 
@@ -117,3 +119,14 @@ export default {
   },
 }
 </script>
+
+<style>
+.scroll-hidden {
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.scroll-hidden::-webkit-scrollbar {
+  display: none;
+}
+</style>
