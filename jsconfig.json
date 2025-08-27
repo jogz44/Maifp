@@ -1,3 +1,13 @@
 {
-  "extends": "./.quasar/tsconfig.json"
+  "extends": "./.quasar/tsconfig.json",
+  "exclude": [
+    "src/pages/ConsultNewPatient.vue",
+    "src/pages/ConsultReturnPatient.vue",
+    "src/pages/LaboratoryResults.vue",
+    "src/pages/LaboratoryTransactions.vue",
+    "src/pages/NewConsultation.vue",
+    "src/pages/PatientsLaboratory.vue",
+    "src/pages/ReturnConsultation.vue",
+    "src/pages/ReturnedPatientDetails.vue"
+  ]
 }

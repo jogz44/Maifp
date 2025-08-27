@@ -40,7 +40,7 @@
           <!-- Step Header with Badge -->
           <q-card-section class="bg-green-9 text-white flex justify-between items-center">
             <div class="text-h7">Step {{ index + 1 }}: {{ step.name }}</div>
-            <q-badge :color="step.patients.length > 0 ? 'red-9' : 'grey'" class="q-ml-sm">
+            <q-badge rounded :color="step.patients.length > 0 ? 'red-9' : 'grey'" class="q-ml-sm">
               {{ step.patients.length }}
             </q-badge>
           </q-card-section>
@@ -48,7 +48,7 @@
           <q-separator />
 
           <!-- Step Patients -->
-          <q-card-section class="scroll-hidden" style="height: 150px">
+          <q-card-section class="scroll-hidden">
             <div class="row q-col-gutter-sm">
               <div
                 v-for="(patient, patientIndex) in step.patients"
