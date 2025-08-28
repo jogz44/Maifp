@@ -79,27 +79,34 @@ const routes = [
         meta: { requiresAuth: true },
       },
 
+      //masterlist
+      {
+        path: '/masterlist',
+        component: () => import('pages/MasterList.vue'),
+        meta: { requiresAuth: true },
+      },
+
       //user management
       {
         path: '/users/new',
         component: () => import('pages/RegisterUsers.vue'),
         meta: { requiresAuth: true },
-      }, 
+      },
       {
         path: '/users/user/',
         component: () => import('pages/UpdateUsers.vue'),
         meta: { requiresAuth: true },
-      }, 
+      },
       {
         path: '/users/list',
         component: () => import('pages/RegisteredUsersList.vue'),
         meta: { requiresAuth: true },
-      }, 
+      },
       {
         path: '/users/credentials',
         component: () => import('pages/UserCredentials.vue'),
         meta: { requiresAuth: true },
-      }, 
+      },
     ],
   },
   {

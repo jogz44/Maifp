@@ -1,7 +1,5 @@
 <template>
-  <q-page padding q-mt-none>
-    <!-- <div class="text-h6 text-green-9 font-bold q-mt-none q-mb-md">Dashboard</div> -->
-
+  <q-page padding>
     <!-- Header Fund Cards -->
     <div class="row q-col-gutter-md q-mb-lg">
       <div class="col-xs-12 col-sm-4">
@@ -30,40 +28,42 @@
       </div>
     </div>
 
+    <!-- Patient Monitoring Section -->
     <div class="text-h6 text-green-9 font-bold q-mt-none q-mb-md">Patient Monitoring</div>
 
-    <!-- Horizontal steps container -->
+    <!-- Steps -->
     <div class="row q-col-gutter-md">
-      <!-- Individual step boxes -->
       <div v-for="(step, index) in steps" :key="index" class="col-xs-12 col-sm-6 col-md">
-        <q-card class="h-100">
-          <!-- Step Header with Badge -->
-          <q-card-section class="bg-green-9 text-white flex justify-between items-center">
-            <div class="text-h7">Step {{ index + 1 }}: {{ step.name }}</div>
-            <q-badge rounded :color="step.patients.length > 0 ? 'red-9' : 'grey'" class="q-ml-sm">
-              {{ step.patients.length }}
-            </q-badge>
-          </q-card-section>
+        <router-link :to="step.route" class="no-decoration">
+          <q-card class="h-100 cursor-pointer" hover>
+            <!-- Header -->
+            <q-card-section class="bg-green-9 text-white flex justify-between items-center">
+              <div class="text-h7">Step {{ index + 1 }}: {{ step.name }}</div>
+              <q-badge rounded :color="step.patients.length > 0 ? 'red-9' : 'grey'" class="q-ml-sm">
+                {{ step.patients.length }}
+              </q-badge>
+            </q-card-section>
 
-          <q-separator />
+            <q-separator />
 
-          <!-- Step Patients -->
-          <q-card-section class="scroll-hidden">
-            <div class="row q-col-gutter-sm">
-              <div
-                v-for="(patient, patientIndex) in step.patients"
-                :key="patientIndex"
-                class="col-12 q-mb-xs"
-              >
-                {{ patient.firstname }} {{ patient.lastname }}
+            <!-- Patients -->
+            <q-card-section class="scroll-hidden">
+              <div class="row q-col-gutter-sm">
+                <div
+                  v-for="(patient, pIndex) in step.patients"
+                  :key="pIndex"
+                  class="col-12 q-mb-xs"
+                >
+                  {{ patient.firstname }} {{ patient.lastname }}
+                </div>
+
+                <div v-if="step.patients.length === 0" class="col-12 text-grey text-center">
+                  No patients
+                </div>
               </div>
-
-              <div v-if="step.patients.length === 0" class="col-12 text-grey text-center">
-                No patients
-              </div>
-            </div>
-          </q-card-section>
-        </q-card>
+            </q-card-section>
+          </q-card>
+        </router-link>
       </div>
     </div>
   </q-page>
@@ -71,51 +71,64 @@
 
 <script>
 import { usePatientStore } from 'src/stores/patientStore'
-import { useFundsStore } from '../stores/fundingStore'
-import { ref, onMounted } from 'vue'
+import { useFundsStore } from 'src/stores/fundingStore'
 
 export default {
   name: 'PatientMonitoring',
 
-  setup() {
-    const patientStore = usePatientStore()
-    const fundStore = useFundsStore()
-
-    // Steps definition
-    const steps = ref([
-      { name: 'Assessment', patients: [] },
-      { name: 'New', patients: [] },
-      { name: 'Laboratory', patients: [] },
-      { name: 'Returned', patients: [] },
-      { name: 'Medicine', patients: [] },
-      { name: 'Billing', patients: [] },
-      { name: 'GL', patients: [] },
-    ])
-
-    // Fetch patients per step
-    const loadStepPatients = async () => {
-      try {
-        steps.value[0].patients = await patientStore.fetchPatientsAssessment()
-        steps.value[1].patients = await patientStore.fetchPatientsNew()
-        steps.value[2].patients = await patientStore.fetchPatientsLaboratory()
-        steps.value[3].patients = await patientStore.fetchPatientsReturned()
-        steps.value[4].patients = await patientStore.fetchPatientsMedicine()
-        steps.value[5].patients = await patientStore.fetchPatientsBilling()
-        steps.value[6].patients = await patientStore.fetchPatientsGL()
-      } catch (err) {
-        console.error('Error fetching patients per step:', err)
-      }
-    }
-
-    onMounted(() => {
-      fundStore.fetchFundsDashboard()
-      loadStepPatients()
-    })
-
+  data() {
     return {
-      steps,
-      fundStore,
+      steps: [
+        { name: 'Assessment', patients: [], route: '/assessment' },
+        { name: 'New', patients: [], route: '/customers/newconsultation' },
+        { name: 'Laboratory', patients: [], route: '/customers/laboratory' },
+        { name: 'Returned', patients: [], route: '/customers/returnconsultation' },
+        { name: 'Medicine', patients: [] },
+        { name: 'Billing', patients: [], route: '/billing' },
+        { name: 'GL', patients: [], route: '/gl' },
+      ],
+      intervalId: null,
+      fundStore: null,
+      patientStore: null,
     }
+  },
+
+  created() {
+    this.fundStore = useFundsStore()
+    this.patientStore = usePatientStore()
+    this.loadAllData()
+    this.intervalId = setInterval(this.loadAllData, 30000)
+  },
+
+  beforeUnmount() {
+    if (this.intervalId) clearInterval(this.intervalId)
+  },
+
+  methods: {
+    async loadStepPatients() {
+      const results = await Promise.allSettled([
+        this.patientStore.fetchPatientsAssessment(),
+        this.patientStore.fetchPatientsNew(),
+        this.patientStore.fetchPatientsLaboratory(),
+        this.patientStore.fetchPatientsReturned(),
+        this.patientStore.fetchPatientsMedicine(),
+        this.patientStore.fetchPatientsBilling(),
+        this.patientStore.fetchPatientsGL(),
+      ])
+
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          this.steps[index].patients = result.value
+        } else {
+          console.error(`Error loading ${this.steps[index].name}:`, result.reason)
+          this.steps[index].patients = []
+        }
+      })
+    },
+
+    async loadAllData() {
+      await Promise.allSettled([this.fundStore.fetchFundsDashboard(), this.loadStepPatients()])
+    },
   },
 }
 </script>
@@ -125,8 +138,11 @@ export default {
   overflow-y: auto;
   scrollbar-width: none;
 }
-
 .scroll-hidden::-webkit-scrollbar {
   display: none;
+}
+.no-decoration {
+  text-decoration: none;
+  color: inherit;
 }
 </style>

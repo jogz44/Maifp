@@ -8,13 +8,6 @@ export const usePatientStore = defineStore('patient', {
     error: null,
     currentPatient: null,
     patients: [],
-    assessmentPatients: [],
-    medicationPatients: [],
-    billingPatients: [],
-    glPatients: [],
-    qualifiedPatients: [],
-    returnedPatients: [],
-    laboratoryPatients: [],
     isSave: true,
     isEdit: false,
     patient_id: 0,
@@ -29,7 +22,6 @@ export const usePatientStore = defineStore('patient', {
       contact_number: '',
       age: 0,
       gender: '',
-      is_not_tagum: false,
       street: '',
       purok: '',
       barangay: '',
@@ -38,6 +30,16 @@ export const usePatientStore = defineStore('patient', {
       category: '',
       is_pwd: false,
       is_solo: false,
+
+      // Representative information
+      rep_name: '',
+      rep_relationship: '',
+      rep_contact: '',
+      rep_barangay: '',
+      rep_purok: '',
+      rep_street: '',
+      rep_city: 'Tagum City',
+      rep_province: 'Davao del Norte',
 
       // Transaction information default values
       transaction_date: date.formatDate(new Date(), 'YYYY-MM-DD'),
@@ -71,14 +73,8 @@ export const usePatientStore = defineStore('patient', {
     isLoading: (state) => state.loading,
     hasError: (state) => !!state.error,
     errorMessage: (state) => state.error,
-    totalAssessedCount: (state) => state.assessmentPatients.length,
-    totalMedicationCount: (state) => state.medicationPatients.length,
-    totalBillingCount: (state) => state.billingPatients.length,
-    totalGLCount: (state) => state.glPatients.length,
-    totalQualifiedCount: (state) => state.qualifiedPatients.length,
-    totalReturnedCount: (state) => state.returnedPatients.length,
-    totalLaboratoryCount: (state) => state.laboratoryPatients?.length || 0,
 
+    // Get full name for each patient
     patientsWithFullName: (state) => {
       return state.patients.map((patient) => ({
         ...patient,
@@ -93,13 +89,9 @@ export const usePatientStore = defineStore('patient', {
       }))
     },
 
+    // Get patient by ID
     getPatientById: (state) => (id) => {
       return state.patients.find((patient) => patient.id === id)
-    },
-
-    // Count only consultations
-    consultationCount: (state) => {
-      return state.patients.filter((p) => p.transaction_type === 'Consultation').length
     },
   },
 
@@ -132,23 +124,16 @@ export const usePatientStore = defineStore('patient', {
     },
 
     // Step 1 Assessment
-    async fetchPatientsAssessment(returnType = 'patients') {
+    async fetchPatientsAssessment() {
       this.loading = true
       this.error = null
 
       try {
         const response = await api.get('/patients/assessment')
         this.patients = response.data
-        this.assessmentPatients = response.data
-
-        if (returnType === 'assessment') {
-          return this.assessmentPatients
-        }
         return this.patients
       } catch (error) {
         this.handleApiError(error)
-        this.patients = []
-        this.assessmentPatients = []
         return []
       } finally {
         this.loading = false
@@ -207,23 +192,16 @@ export const usePatientStore = defineStore('patient', {
     },
 
     // Step 5 Medicine
-    async fetchPatientsMedicine(returnType = 'patients') {
+    async fetchPatientsMedicine() {
       this.loading = true
       this.error = null
 
       try {
         const response = await api.get('/medications')
         this.patients = response.data
-        this.medicationPatients = response.data
-
-        if (returnType === 'medication') {
-          return this.medicationPatients
-        }
         return this.patients
       } catch (error) {
         this.handleApiError(error)
-        this.patients = []
-        this.medicationPatients = []
         return []
       } finally {
         this.loading = false
@@ -231,23 +209,16 @@ export const usePatientStore = defineStore('patient', {
     },
 
     // Step 6 Billing
-    async fetchPatientsBilling(returnType = 'patients') {
+    async fetchPatientsBilling() {
       this.loading = true
       this.error = null
 
       try {
         const response = await api.get('/billing')
         this.patients = response.data
-        this.billingPatients = response.data
-
-        if (returnType === 'billing') {
-          return this.billingPatients
-        }
         return this.patients
       } catch (error) {
         this.handleApiError(error)
-        this.patients = []
-        this.billingPatients = []
         return []
       } finally {
         this.loading = false
@@ -255,187 +226,19 @@ export const usePatientStore = defineStore('patient', {
     },
 
     //Step 7 Guarantee Letter
-    async fetchPatientsGL(returnType = 'patients') {
+    async fetchPatientsGL() {
       this.loading = true
       this.error = null
 
       try {
         const response = await api.get('/guarantee')
         this.patients = response.data
-        this.glPatients = response.data
-
-        if (returnType === 'gl') {
-          return this.glPatients
-        }
         return this.patients
       } catch (error) {
         this.handleApiError(error)
-        this.patients = []
-        this.glPatients = []
         return []
       } finally {
         this.loading = false
-      }
-    },
-
-    //consultation patients
-    async fetchConsultationPatients() {
-      this.loading = true
-      this.error = null
-
-      try {
-        const response = await api.get('/new_consultations')
-        this.patients = response.data.filter((p) => p.transaction_type === 'Consultation')
-      } catch (error) {
-        this.handleApiError(error)
-      }
-    },
-
-    // Store Laboratory Patient
-    async storeLaboratoryPatient(payload) {
-      this.loading = true
-      this.error = null
-
-      try {
-        const response = await api.post('/new_consultations/store', payload)
-
-        // If backend returns the stored patient, push it into list
-        if (response.data && response.data.patient) {
-          this.patients.push(response.data.patient)
-        }
-
-        return response.data
-      } catch (error) {
-        this.handleApiError(error)
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async storeNewConsultation(payload) {
-      this.loading = true
-      this.error = null
-
-      try {
-        const response = await api.post('/new_consultations/store', payload)
-
-        // Optionally push into patients list if API returns updated patient
-        if (response.data && response.data.patient) {
-          this.patients.push(response.data.patient)
-        }
-
-        return response.data
-      } catch (error) {
-        this.handleApiError(error)
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async laboratoryReturn(id, payload) {
-      this.loading = true
-      this.error = null
-
-      try {
-        const response = await api.post(`/laboratory/update/${id}`, payload)
-
-        if (response.data && response.data.patient) {
-          this.patients.push(response.data.patient)
-        }
-
-        return response.data
-      } catch (error) {
-        this.handleApiError(error)
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
-
-    // Fetch New Consultation Qualified
-    async fetchQualifiedPatients() {
-      this.loading = true
-      this.error = null
-
-      try {
-        const response = await api.get('/transactions/qualified')
-        this.qualifiedPatients = response.data
-        return this.qualifiedPatients
-      } catch (error) {
-        this.handleApiError(error)
-        this.qualifiedPatients = []
-        return []
-      } finally {
-        this.loading = false
-      }
-    },
-
-    // Fetch New Consultation Qualified
-    async fetchReturnedPatients() {
-      this.loading = true
-      this.error = null
-
-      try {
-        const response = await api.get('/patients/consultation/return')
-        this.returnedPatients = response.data
-        return this.returnedPatients
-      } catch (error) {
-        this.handleApiError(error)
-        this.returnedPatients = []
-        return []
-      } finally {
-        this.loading = false
-      }
-    },
-
-    // Fetch Qualified Laboratory
-    async fetchLaboratoryPatients() {
-      this.loading = true
-      this.error = null
-
-      try {
-        const response = await api.get('/laboratory')
-        this.laboratoryPatients = response.data // save into store
-      } catch (error) {
-        this.handleApiError(error)
-        this.laboratoryPatients = [] // reset on error
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async storeLaboratoryResult(payload) {
-      this.loading = true
-      this.error = null
-
-      try {
-        const response = await api.post('/laboratory/store', payload)
-
-        // Optionally push into patients list if API returns updated patient
-        if (response.data && response.data.patient) {
-          this.patients.push(response.data.patient)
-        }
-
-        return response.data
-      } catch (error) {
-        this.handleApiError(error)
-        throw error
-      } finally {
-        this.loading = false
-      }
-    },
-
-    async fetchLaboratoryResults(transactionId) {
-      try {
-        const response = await api.get(`/transactions/${transactionId}`)
-        // response.data is a transaction object with .laboratories inside
-        this.laboratoryResults = response.data.laboratories || []
-        return this.laboratoryResults
-      } catch (error) {
-        console.error('API Error (getLaboratoryResults):', error)
-        throw error
       }
     },
 
@@ -563,6 +366,37 @@ export const usePatientStore = defineStore('patient', {
       // Ensure BMI is calculated and stored as string
       patientData = this.updateBMI(patientData)
 
+      // Format data for submission - ensure all numeric values are strings
+      const numericFields = [
+        'height',
+        'weight',
+        'age',
+        'heart_rate',
+        'respiratory_rate',
+        'pulse_rate',
+        'temperature',
+        'sp02',
+        'waist',
+      ]
+
+      numericFields.forEach((field) => {
+        if (patientData[field]) {
+          patientData[field] = patientData[field].toString()
+        }
+      })
+
+      // Ensure rep_city and rep_province are set if representative is enabled
+      if (patientData.rep_name) {
+        if (!patientData.rep_city) patientData.rep_city = 'Tagum City'
+        if (!patientData.rep_province) patientData.rep_province = 'Davao del Norte'
+      }
+
+      console.log('Submitting patient with rep data:', {
+        rep_name: patientData.rep_name,
+        rep_city: patientData.rep_city,
+        rep_province: patientData.rep_province,
+      })
+
       try {
         const response = await api.post('/patients/store', patientData)
         // Add the new patient to the list
@@ -584,6 +418,31 @@ export const usePatientStore = defineStore('patient', {
 
       // Ensure BMI is calculated and stored as string
       patientData = this.updateBMI(patientData)
+
+      // Format data for submission - ensure all numeric values are strings
+      const numericFields = [
+        'height',
+        'weight',
+        'age',
+        'heart_rate',
+        'respiratory_rate',
+        'pulse_rate',
+        'temperature',
+        'sp02',
+        'waist',
+      ]
+
+      numericFields.forEach((field) => {
+        if (patientData[field]) {
+          patientData[field] = patientData[field].toString()
+        }
+      })
+
+      // Ensure rep_city and rep_province are set if representative is enabled
+      if (patientData.rep_name) {
+        if (!patientData.rep_city) patientData.rep_city = 'Tagum City'
+        if (!patientData.rep_province) patientData.rep_province = 'Davao del Norte'
+      }
 
       try {
         const response = await api.put(`/patients/update/${id}`, patientData)

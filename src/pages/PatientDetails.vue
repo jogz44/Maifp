@@ -113,6 +113,100 @@
 
         <q-separator spaced inset v-if="!loading" />
 
+        <!-- Representative Information Section - Only show if representative data exists -->
+        <q-card-section v-if="!loading && hasRepresentative">
+          <div class="row items-center justify-between">
+            <div class="text-subtitle2 q-mb-sm">Representative Information</div>
+          </div>
+
+          <div class="row q-col-gutter-md q-mt-sm">
+            <div class="col-12 col-md-4">
+              <q-input
+                outlined
+                dense
+                v-model="transaction.representative.rep_name"
+                label="Representative Name"
+                class="text-caption"
+                readonly
+              />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-input
+                outlined
+                dense
+                v-model="transaction.representative.rep_relationship"
+                label="Relationship to Patient"
+                class="text-caption"
+                readonly
+              />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-input
+                outlined
+                dense
+                v-model="transaction.representative.rep_contact"
+                label="Contact Number"
+                class="text-caption"
+                readonly
+              />
+            </div>
+
+            <!-- Representative Address -->
+            <div class="col-12 col-md-4">
+              <q-input
+                outlined
+                dense
+                v-model="transaction.representative.rep_barangay"
+                label="Barangay"
+                class="text-caption"
+                readonly
+              />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-input
+                outlined
+                dense
+                v-model="transaction.representative.rep_purok"
+                label="Purok"
+                class="text-caption"
+                readonly
+              />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-input
+                outlined
+                dense
+                v-model="transaction.representative.rep_street"
+                label="Street"
+                class="text-caption"
+                readonly
+              />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input
+                outlined
+                dense
+                v-model="transaction.representative.rep_city"
+                label="City"
+                class="text-caption"
+                readonly
+              />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input
+                outlined
+                dense
+                v-model="transaction.representative.rep_province"
+                label="Province"
+                class="text-caption"
+                readonly
+              />
+            </div>
+          </div>
+        </q-card-section>
+
+        <q-separator spaced inset v-if="!loading && hasRepresentative" />
+
         <!-- Vital Signs Section -->
         <q-card-section v-if="!loading && vitalSigns">
           <div class="row items-center justify-between">
@@ -320,6 +414,15 @@ export default {
     patientStore() {
       return usePatientStore()
     },
+
+    // Check if transaction has representative data
+    hasRepresentative() {
+      return (
+        this.transaction &&
+        this.transaction.representative &&
+        this.transaction.representative.rep_name
+      )
+    },
   },
 
   mounted() {
@@ -361,6 +464,11 @@ export default {
           // Extract vital signs data from the vital property
           this.vitalSigns = transactionData.vital || {}
           console.log('Vital signs data:', this.vitalSigns)
+
+          // Check if we have representative data
+          if (transactionData.representative) {
+            console.log('Representative data found:', transactionData.representative)
+          }
 
           // Load patient data if not already loaded and if patientId is available
           if (this.patientId && (!this.patient || !this.patient.id)) {
