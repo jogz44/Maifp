@@ -123,6 +123,22 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
+    async fetchMasterListPatients() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/patients/master_list')
+        this.patients = response.data
+        return this.patients
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
     // Step 1 Assessment
     async fetchPatientsAssessment() {
       this.loading = true
@@ -569,6 +585,30 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
+    async updateRepresentative(id, representative) {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.put(`/transactions/representative/${id}`, representative)
+
+        // Update the current patient's transactions if they exist
+        if (this.currentPatient && this.currentPatient.Vital) {
+          const index = this.currentPatient.representative.findIndex((r) => r.id === id)
+          if (index !== -1) {
+            this.currentPatient.representative[index] = response.data
+          }
+        }
+
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
     // Create new transaction - UPDATED to send all data in single form
     async createNewTransaction(transactionData) {
       this.loading = true
@@ -620,6 +660,16 @@ export const usePatientStore = defineStore('patient', {
           sp02: transactionData.sp02 || '',
           LMP: transactionData.LMP || '',
           medicine: transactionData.medicine || '',
+
+          // Representative fields
+          rep_name: transactionData.rep_name || '',
+          rep_relationship: transactionData.rep_relationship || '',
+          rep_contact: transactionData.rep_contact || '',
+          rep_purok: transactionData.rep_purok || '',
+          rep_street: transactionData.rep_street || '',
+          rep_barangay: transactionData.rep_barangay || '',
+          rep_city: transactionData.rep_city || '',
+          rep_province: transactionData.rep_province || '',
         }
 
         console.log('Sending transaction data:', completeTransactionData)

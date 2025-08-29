@@ -13,7 +13,6 @@
                 </template>
               </q-input>
             </div>
-
             <!-- Date Filter -->
             <div class="col-12 col-md-6">
               <q-input
@@ -27,7 +26,6 @@
             </div>
           </div>
         </q-card-section>
-
         <!-- Table Section -->
         <q-card-section>
           <q-table
@@ -47,26 +45,38 @@
             <template v-slot:top-right>
               <q-btn color="green-9" label="New Patient" to="/customer" icon="add" flat />
             </template>
-
             <template #body="props">
               <q-tr :props="props">
-                <q-td key="lastname" style="font-size: 11px">{{ props.row.lastname }}</q-td>
-                <q-td key="firstname" style="font-size: 11px">{{ props.row.firstname }}</q-td>
-                <q-td key="middlename" style="font-size: 11px">{{ props.row.middlename }}</q-td>
-                <q-td key="ext" style="font-size: 11px">{{ props.row.ext }}</q-td>
-                <q-td key="birthdate" style="font-size: 11px">{{ props.row.birthdate }}</q-td>
-                <q-td key="age" style="font-size: 11px">{{ props.row.age }}</q-td>
+                <q-td key="fullName" style="font-size: 11px">{{ props.row.fullName }}</q-td>
                 <q-td key="contact_number" style="font-size: 11px">{{
                   props.row.contact_number
                 }}</q-td>
-                <q-td key="barangay" style="font-size: 11px">{{ props.row.barangay }}</q-td>
+                <q-td key="status" style="font-size: 11px">{{
+                  getPatientStepStatus(props.row)
+                }}</q-td>
                 <q-td key="actions" align="center">
                   <q-btn
                     flat
                     color="primary"
-                    @click="showClient(props.row.id)"
                     icon="description"
-                    to="/customers/profile"
+                    @click="showPatientDetail(props.row.id)"
+                    :to="'/customers/profile'"
+                    class="q-mr-sm"
+                  />
+                  <q-btn
+                    v-if="getPatientStepStatus(props.row) === 'Billing'"
+                    flat
+                    color="positive"
+                    icon="receipt_long"
+                    @click="showClient(props.row, '/billing/report')"
+                    class="q-mr-sm"
+                  />
+                  <q-btn
+                    v-if="getPatientStepStatus(props.row) === 'GL'"
+                    flat
+                    color="secondary"
+                    icon="list_alt"
+                    @click="showClient(props.row, '/gl/report')"
                   />
                 </q-td>
               </q-tr>
@@ -78,136 +88,129 @@
   </q-page>
 </template>
 
-<script>
+<script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { usePatientStore } from '../stores/patientStore'
 
-export default {
-  setup() {
-    const Patients = usePatientStore()
+const router = useRouter()
+const Patients = usePatientStore()
+const search = ref('')
+const selectedDate = ref(new Date().toISOString().substring(0, 10))
 
-    const search = ref('')
-    const selectedDate = ref(new Date().toISOString().substring(0, 10)) // Default to today
-    const rows = ref([])
-
-    // Columns configuration
-    const columns = [
-      {
-        name: 'lastname',
-        label: 'Last Name',
-        field: 'lastname',
-        sortable: true,
-        align: 'left',
-        headerClasses: 'bg-grey-7 text-white',
-      },
-      {
-        name: 'firstname',
-        label: 'First Name',
-        field: 'firstname',
-        sortable: true,
-        align: 'left',
-        headerClasses: 'bg-grey-7 text-white',
-      },
-      {
-        name: 'middlename',
-        label: 'Middle Name',
-        field: 'middlename',
-        sortable: true,
-        align: 'left',
-        headerClasses: 'bg-grey-7 text-white',
-      },
-      {
-        name: 'ext',
-        label: 'Ext',
-        field: 'ext',
-        sortable: true,
-        align: 'left',
-        headerClasses: 'bg-grey-7 text-white',
-      },
-      {
-        name: 'birthdate',
-        label: 'Birthdate',
-        field: 'birthdate',
-        sortable: true,
-        align: 'left',
-        headerClasses: 'bg-grey-7 text-white',
-      },
-      {
-        name: 'age',
-        label: 'Age',
-        field: 'age',
-        sortable: true,
-        align: 'left',
-        headerClasses: 'bg-grey-7 text-white',
-      },
-      {
-        name: 'contact_number',
-        label: 'Contact Number',
-        field: 'contact_number',
-        sortable: true,
-        align: 'left',
-        headerClasses: 'bg-grey-7 text-white',
-      },
-      {
-        name: 'barangay',
-        label: 'Barangay',
-        field: 'barangay',
-        sortable: true,
-        align: 'left',
-        headerClasses: 'bg-grey-7 text-white',
-      },
-      {
-        name: 'actions',
-        label: 'Actions',
-        field: 'actions',
-        align: 'center',
-        headerClasses: 'bg-grey-7 text-white',
-      },
-    ]
-
-    // Filtered rows (search + date)
-    const filteredRows = computed(() => {
-      return rows.value.filter((row) => {
-        const matchesSearch =
-          row.firstname?.toLowerCase().includes(search.value.toLowerCase()) ||
-          row.lastname?.toLowerCase().includes(search.value.toLowerCase()) ||
-          row.middlename?.toLowerCase().includes(search.value.toLowerCase())
-
-        const rowDate = row.created_at?.substring(0, 10)
-        const matchesDate = selectedDate.value === '' || rowDate === selectedDate.value
-
-        return matchesSearch && matchesDate
-      })
-    })
-
-    // Load data from store
-    const getPatients = async () => {
-      try {
-        await Patients.fetchPatients()
-        rows.value = Patients.patients
-      } catch (err) {
-        console.error('Failed to fetch patients:', err)
-      }
-    }
-
-    const showClient = (id) => {
-      Patients.isEdit = true
-      Patients.isSave = false
-      Patients.patient_id = id
-    }
-
-    onMounted(() => {
-      getPatients()
-    })
-
-    return {
-      search,
-      selectedDate,
-      rows,
-      columns,
-      filteredRows,
-      showClient,
-    }
+const columns = [
+  {
+    name: 'fullName',
+    label: 'Full Name',
+    field: 'fullName',
+    sortable: true,
+    align: 'left',
+    headerClasses: 'bg-grey-7 text-white',
   },
+  {
+    name: 'contact_number',
+    label: 'Contact Number',
+    field: 'contact_number',
+    sortable: true,
+    align: 'left',
+    headerClasses: 'bg-grey-7 text-white',
+  },
+  {
+    name: 'status',
+    label: 'Status',
+    field: 'status',
+    align: 'left',
+    headerClasses: 'bg-grey-7 text-white',
+  },
+  {
+    name: 'actions',
+    label: 'Actions',
+    field: 'actions',
+    align: 'center',
+    headerClasses: 'bg-grey-7 text-white',
+  },
+]
+
+const rows = computed(() => Patients.patientsWithFullName)
+
+function getPatientStepStatus(patient) {
+  const tx = patient.latest_transaction
+  if (!tx) return ''
+
+  if (tx.status === 'for assessment') return 'Assessment'
+  if (tx.guarantee_letter && tx.guarantee_letter.status === 'Funded') {
+    return 'Completed'
+  }
+  if (tx.status === 'qualified') {
+    const hasLaboratories = Array.isArray(tx.laboratories) && tx.laboratories.length > 0
+    if (hasLaboratories) {
+      const labStatus = tx.laboratories[0]?.status
+      if (labStatus === 'Pending') return 'Laboratory'
+      if (labStatus === 'Done') return 'Billing'
+      if (labStatus === 'Returned') return 'Returned Consultation'
+    }
+    const hasConsultation = !!tx.consultation
+    const hasMedication = !!tx.medication
+    if (hasMedication && tx.medication.status === 'Done') {
+      return 'Billing'
+    }
+
+    if (!hasConsultation && !hasLaboratories && !hasMedication) {
+      if (tx.transaction_type === 'Consultation') return 'New Consultation'
+      return tx.transaction_type || 'Qualified'
+    }
+
+    if (hasConsultation && tx.consultation.status) {
+      if (tx.consultation.status === 'Processing') return 'Laboratory'
+      if (tx.consultation.status === 'Returned') return 'Returned Consultation'
+      if (tx.consultation.status === 'Medication') return 'Medication'
+      if (tx.consultation.status === 'Done') return 'Billing'
+    }
+  }
+
+  if (tx.status === 'Done') return 'Billing'
+  if (tx.status === 'Funded') return 'Completed'
+  if (tx.status === 'Complete') return 'GL'
+
+  return tx.status ? tx.status.charAt(0).toUpperCase() + tx.status.slice(1) : ''
 }
+
+const filteredRows = computed(() => {
+  return rows.value.filter((row) => {
+    const statusText = getPatientStepStatus(row)
+    const matchesSearch =
+      row.fullName.toLowerCase().includes(search.value.toLowerCase()) ||
+      row.contact_number?.toLowerCase().includes(search.value.toLowerCase()) ||
+      statusText.toLowerCase().includes(search.value.toLowerCase())
+
+    const rowDate = row.latest_transaction?.transaction_date?.substring(0, 10)
+    const matchesDate = selectedDate.value === '' || rowDate === selectedDate.value
+
+    return matchesSearch && matchesDate
+  })
+})
+
+function showClient(row, route) {
+  Patients.patient_id = row.id
+  Patients.transaction_id = row.latest_transaction?.id || (row.transaction?.[0]?.id ?? null)
+  router.push(route)
+}
+
+function showPatientDetail(id) {
+  Patients.isEdit = true
+  Patients.isSave = false
+  Patients.patient_id = id
+}
+
+const getPatients = async () => {
+  try {
+    await Patients.fetchMasterListPatients()
+  } catch (err) {
+    console.error('Failed to fetch patients:', err)
+  }
+}
+
+onMounted(() => {
+  getPatients()
+})
 </script>

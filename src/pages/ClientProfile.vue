@@ -192,6 +192,7 @@
               <q-separator />
 
               <q-table
+                :loading
                 bordered
                 dense
                 :rows="transactions"
@@ -203,11 +204,11 @@
                 <!-- Body slot -->
                 <template #body="props">
                   <q-tr :props="props">
-                    <q-td key="transaction_number" style="font-size: 11px" align="left">
+                    <q-td key="id" style="font-size: 11px" align="left">
                       {{ props.row.id }}
                     </q-td>
                     <q-td key="transaction_number" style="font-size: 11px" align="left">
-                      {{ props.row.transaction_number }}
+                      {{ props.row.transaction_number || 'N/A' }}
                     </q-td>
                     <q-td key="transaction_date" style="font-size: 11px" align="left">
                       {{ formatDate(props.row.transaction_date || props.row.created_at) }}
@@ -279,17 +280,6 @@
                 :rules="[(val) => !!val || 'Transaction date is required']"
               />
             </div>
-            <!-- <div class="col-12 col-md-4">
-              <q-select
-                outlined
-                dense
-                v-model="newTransaction.transaction_mode"
-                :options="patientStore.transactionModes"
-                label="Mode of Transaction *"
-                class="text-caption"
-                :rules="[(val) => !!val || 'Transaction mode is required']"
-              />
-            </div> -->
             <div class="col-12 col-md-4">
               <q-select
                 outlined
@@ -312,6 +302,125 @@
                 autogrow
                 rows="3"
               />
+            </div>
+          </div>
+
+          <q-separator class="q-mb-md" />
+
+          <!-- Representative Information Section -->
+          <div>
+            <div class="row items-center">
+              <div class="text-subtitle2 q-mb-sm text-weight-bold">Patient Representative</div>
+              <q-space />
+              <q-checkbox
+                v-model="hasRepresentativeInfo"
+                label="Has Patient Representative?"
+                class="text-caption"
+              />
+            </div>
+
+            <div v-if="hasRepresentativeInfo" class="row q-col-gutter-md q-mt-sm">
+              <div class="col-12 col-md-4">
+                <q-input
+                  outlined
+                  dense
+                  v-model="newTransaction.rep_name"
+                  label="Representative Name *"
+                  class="text-caption"
+                  lazy-rules
+                  :rules="[
+                    (val) => !hasRepresentativeInfo || !!val || 'Representative name is required',
+                  ]"
+                />
+              </div>
+              <div class="col-12 col-md-4">
+                <q-input
+                  outlined
+                  dense
+                  v-model="newTransaction.rep_relationship"
+                  label="Relationship to Patient *"
+                  class="text-caption"
+                  lazy-rules
+                  :rules="[(val) => !hasRepresentativeInfo || !!val || 'Relationship is required']"
+                />
+              </div>
+              <div class="col-12 col-md-4">
+                <q-input
+                  outlined
+                  dense
+                  v-model="newTransaction.rep_contact"
+                  label="Contact Number"
+                  class="text-caption"
+                  type="text"
+                  maxlength="11"
+                  mask="###########"
+                  :rules="[
+                    (val) => !val || val.length === 11 || 'Contact number must be 11 digits',
+                  ]"
+                />
+              </div>
+
+              <!-- Representative Address with "Same as Patient" option -->
+              <div class="col-12">
+                <div class="row items-center">
+                  <div class="text-subtitle2 q-mb-sm">Representative Address</div>
+                  <q-space />
+                  <q-checkbox
+                    v-model="sameAsPatientAddress"
+                    label="Same as Patient's Address"
+                    class="text-caption"
+                    @update:model-value="handleSameAddressChange"
+                  />
+                </div>
+              </div>
+
+              <div class="col-12 col-md-4" v-if="!sameAsPatientAddress">
+                <q-input
+                  outlined
+                  dense
+                  v-model="newTransaction.rep_barangay"
+                  label="Barangay"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-4" v-if="!sameAsPatientAddress">
+                <q-input
+                  outlined
+                  dense
+                  v-model="newTransaction.rep_purok"
+                  label="Purok"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-4" v-if="!sameAsPatientAddress">
+                <q-input
+                  outlined
+                  dense
+                  v-model="newTransaction.rep_street"
+                  label="Street"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-6" v-if="!sameAsPatientAddress">
+                <q-input
+                  outlined
+                  dense
+                  v-model="newTransaction.rep_city"
+                  label="City"
+                  class="text-caption"
+                  readonly
+                />
+              </div>
+              <div class="col-12 col-md-6" v-if="!sameAsPatientAddress">
+                <q-input
+                  outlined
+                  dense
+                  v-model="newTransaction.rep_province"
+                  label="Province"
+                  class="text-caption"
+                  readonly
+                />
+              </div>
             </div>
           </div>
 
@@ -518,6 +627,10 @@ export default {
       transactions: [],
       selectedTransaction: null,
 
+      // Representative related data
+      hasRepresentativeInfo: false,
+      sameAsPatientAddress: false,
+
       // New Transaction Modal
       showNewTransactionModal: false,
       creatingTransaction: false,
@@ -539,12 +652,20 @@ export default {
         sp02: '',
         LMP: '',
         medicine: '',
+        rep_name: '',
+        rep_relationship: '',
+        rep_contact: '',
+        rep_purok: '',
+        rep_street: '',
+        rep_barangay: '',
+        rep_city: 'Tagum City',
+        rep_province: 'Davao del Norte',
       },
 
       transactionColumns: [
         {
           name: 'id',
-          label: 'id',
+          label: 'ID',
           field: 'id',
           sortable: true,
           align: 'left',
@@ -609,18 +730,25 @@ export default {
   watch: {
     showNewTransactionModal(newVal) {
       if (newVal) {
-        // Set default date to today
         this.newTransaction.transaction_date = date.formatDate(new Date(), 'YYYY-MM-DD')
+        this.newTransaction.transaction_mode = 'Walk-in'
         this.newTransaction.patient_id = this.patient.id
+        this.newTransaction.rep_city = 'Tagum City'
+        this.newTransaction.rep_province = 'Davao del Norte'
+        this.sameAsPatientAddress = false
+      }
+    },
+
+    sameAsPatientAddress(newVal) {
+      if (newVal) {
+        this.handleSameAddressChange(true)
       }
     },
   },
 
   mounted() {
-    // Initialize patient ID from route params or store
     this.patientId = this.$route.query.patientId || this.patientStore.patient_id
 
-    // Load patient data once component is mounted
     if (this.patientId) {
       this.loadPatientData()
     } else {
@@ -636,8 +764,13 @@ export default {
 
   methods: {
     async loadPatientData() {
+      const patientData = await this.patientStore.getPatient(this.patientId)
+      if (patientData && Array.isArray(patientData.transaction)) {
+        this.transactions = patientData.transaction
+      } else {
+        this.transactions = (await this.patientStore.getPatientTransactions(this.patientId)) || []
+      }
       try {
-        // Get patient ID from store or route params
         if (!this.patientId) {
           this.$q.notify({
             type: 'negative',
@@ -651,18 +784,15 @@ export default {
 
         console.log(`Loading patient data for ID: ${this.patientId}`)
 
-        // Fetch patient data
         const patientData = await this.patientStore.getPatient(this.patientId)
         if (patientData) {
           console.log('Patient data loaded:', patientData)
           this.patient = { ...patientData }
 
-          // If transactions are included in the patient data
           if (patientData.transaction && Array.isArray(patientData.transaction)) {
             this.transactions = patientData.transaction
             console.log(`Loaded ${this.transactions.length} transactions from patient data`)
           } else {
-            // If transactions are not included, fetch them separately
             console.log('Transactions not included in patient data, fetching separately')
             this.transactions =
               (await this.patientStore.getPatientTransactions(this.patientId)) || []
@@ -690,13 +820,11 @@ export default {
 
     toggleEditMode() {
       this.isEditMode = true
-      // Store original data for potential cancellation
       this.originalPatientData = { ...this.patient }
     },
 
     async savePatientChanges() {
       try {
-        // Validate required fields
         if (!this.patient.firstname || !this.patient.lastname) {
           this.$q.notify({
             type: 'negative',
@@ -707,7 +835,6 @@ export default {
           return
         }
 
-        // Update the patient using the store action
         const updatedPatient = await this.patientStore.updatePatient(this.patient.id, this.patient)
 
         if (updatedPatient) {
@@ -718,7 +845,6 @@ export default {
             timeout: 2000,
           })
 
-          // Exit edit mode
           this.isEditMode = false
           this.originalPatientData = null
         }
@@ -734,12 +860,27 @@ export default {
     },
 
     cancelEdit() {
-      // Restore original data
       if (this.originalPatientData) {
         this.patient = { ...this.originalPatientData }
       }
       this.isEditMode = false
       this.originalPatientData = null
+    },
+
+    handleSameAddressChange(checked) {
+      if (checked) {
+        this.newTransaction.rep_barangay = this.patient.barangay || ''
+        this.newTransaction.rep_purok = this.patient.purok || ''
+        this.newTransaction.rep_street = this.patient.street || ''
+        this.newTransaction.rep_city = this.patient.city || 'Tagum City'
+        this.newTransaction.rep_province = this.patient.province || 'Davao del Norte'
+      } else {
+        this.newTransaction.rep_barangay = ''
+        this.newTransaction.rep_purok = ''
+        this.newTransaction.rep_street = ''
+        this.newTransaction.rep_city = 'Tagum City'
+        this.newTransaction.rep_province = 'Davao del Norte'
+      }
     },
 
     updateAge() {
@@ -756,21 +897,10 @@ export default {
       })
     },
 
-    addNewTransaction() {
-      console.log('Adding new transaction for patient ID:', this.patient.id)
-      // Navigate to transaction creation page or open a dialog
-      // Include patient ID so new transaction is linked to this patient
-      this.$router.push({
-        path: '/customers/profile',
-        query: { patientId: this.patient.id },
-      })
-    },
-
-    // New Transaction Modal Methods
     resetNewTransaction() {
       this.newTransaction = {
         transaction_date: '',
-        transaction_mode: '',
+        transaction_mode: 'Walk-in',
         transaction_type: '',
         purpose: '',
         patient_id: this.patient.id,
@@ -786,7 +916,18 @@ export default {
         sp02: '',
         LMP: '',
         medicine: '',
+        rep_name: '',
+        rep_relationship: '',
+        rep_contact: '',
+        rep_purok: '',
+        rep_street: '',
+        rep_barangay: '',
+        rep_city: 'Tagum City',
+        rep_province: 'Davao del Norte',
       }
+
+      this.hasRepresentativeInfo = false
+      this.sameAsPatientAddress = false
     },
 
     updateNewTransactionBMI() {
@@ -804,29 +945,36 @@ export default {
 
     getBmiCategory(bmi) {
       const bmiValue = parseFloat(bmi)
+      if (isNaN(bmiValue)) return ''
       if (bmiValue < 18.5) return 'Underweight'
       if (bmiValue < 25) return 'Normal'
       if (bmiValue < 30) return 'Overweight'
       return 'Obese'
     },
 
+    getUserId() {
+      try {
+        const userStr = localStorage.getItem('user')
+        if (userStr) {
+          const sanitizedStr = userStr.includes('__q_objt|')
+            ? userStr.replace('__q_objt|', '')
+            : userStr
+
+          const user = JSON.parse(sanitizedStr)
+          return user.id
+        }
+      } catch (error) {
+        console.error('Error getting user ID:', error)
+      }
+      return 1
+    },
+
     async createNewTransaction() {
       try {
-        // Validate required fields
         if (!this.newTransaction.transaction_date) {
           this.$q.notify({
             type: 'negative',
             message: 'Transaction date is required',
-            position: 'top',
-            timeout: 2000,
-          })
-          return
-        }
-
-        if (!this.newTransaction.transaction_mode) {
-          this.$q.notify({
-            type: 'negative',
-            message: 'Transaction mode is required',
             position: 'top',
             timeout: 2000,
           })
@@ -843,17 +991,82 @@ export default {
           return
         }
 
-        this.creatingTransaction = true
+        if (this.hasRepresentativeInfo) {
+          if (!this.newTransaction.rep_name) {
+            this.$q.notify({
+              type: 'negative',
+              message: 'Representative name is required',
+              position: 'top',
+              timeout: 2000,
+            })
+            return
+          }
 
-        // Prepare transaction data with vital signs
-        const transactionData = {
-          ...this.newTransaction,
-          patient_id: this.patient.id,
-          vital_signs: this.newTransaction,
+          if (!this.newTransaction.rep_relationship) {
+            this.$q.notify({
+              type: 'negative',
+              message: 'Representative relationship is required',
+              position: 'top',
+              timeout: 2000,
+            })
+            return
+          }
         }
 
-        // Create the transaction using the store action
-        const createdTransaction = await this.patientStore.createNewTransaction(transactionData)
+        this.creatingTransaction = true
+
+        const payload = {
+          patient_id: this.patient.id,
+          user_id: this.getUserId(),
+          transaction_date: this.newTransaction.transaction_date,
+          transaction_type: this.newTransaction.transaction_type,
+          transaction_mode: this.newTransaction.transaction_mode || 'Walk-in',
+          purpose: this.newTransaction.purpose || '',
+
+          // Vital signs fields
+          height: this.newTransaction.height || '',
+          weight: this.newTransaction.weight || '',
+          bmi: this.newTransaction.bmi || '',
+          waist: this.newTransaction.waist || '',
+          heart_rate: this.newTransaction.heart_rate || '',
+          blood_pressure: this.newTransaction.blood_pressure || '',
+          respiratory_rate: this.newTransaction.respiratory_rate || '',
+          pulse_rate: this.newTransaction.pulse_rate || '',
+          temperature: this.newTransaction.temperature || '',
+          sp02: this.newTransaction.sp02 || '',
+          LMP: this.newTransaction.LMP || '',
+          medicine: this.newTransaction.medicine || '',
+        }
+
+        // Add representative data if enabled
+        if (this.hasRepresentativeInfo) {
+          if (this.sameAsPatientAddress) {
+            Object.assign(payload, {
+              rep_name: this.newTransaction.rep_name,
+              rep_relationship: this.newTransaction.rep_relationship,
+              rep_contact: this.newTransaction.rep_contact || '',
+              rep_barangay: this.patient.barangay || '',
+              rep_purok: this.patient.purok || '',
+              rep_street: this.patient.street || '',
+              rep_city: this.patient.city || 'Tagum City',
+              rep_province: this.patient.province || 'Davao del Norte',
+            })
+          } else {
+            Object.assign(payload, {
+              rep_name: this.newTransaction.rep_name,
+              rep_relationship: this.newTransaction.rep_relationship,
+              rep_contact: this.newTransaction.rep_contact || '',
+              rep_barangay: this.newTransaction.rep_barangay || '',
+              rep_purok: this.newTransaction.rep_purok || '',
+              rep_street: this.newTransaction.rep_street || '',
+              rep_city: this.newTransaction.rep_city || 'Tagum City',
+              rep_province: this.newTransaction.rep_province || 'Davao del Norte',
+            })
+          }
+        }
+
+        console.log('Creating transaction with data:', payload)
+        const createdTransaction = await this.patientStore.createNewTransaction(payload)
 
         if (createdTransaction) {
           this.$q.notify({
@@ -862,9 +1075,9 @@ export default {
             position: 'top',
             timeout: 2000,
           })
-
-          // Add the new transaction to the local list
-          this.transactions.unshift(createdTransaction)
+          await this.loadPatientData() // or await this.refreshTransactions()
+          this.showNewTransactionModal = false
+          this.resetNewTransaction()
 
           // Close modal and reset form
           this.showNewTransactionModal = false
@@ -874,7 +1087,7 @@ export default {
         console.error('Error creating transaction:', error)
         this.$q.notify({
           type: 'negative',
-          message: `Failed to create transaction: ${error.message}`,
+          message: `Failed to create transaction: ${error.message || 'Unknown error'}`,
           position: 'top',
           timeout: 2000,
         })

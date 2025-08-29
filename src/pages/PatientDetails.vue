@@ -117,6 +117,24 @@
         <q-card-section v-if="!loading && hasRepresentative">
           <div class="row items-center justify-between">
             <div class="text-subtitle2 q-mb-sm">Representative Information</div>
+            <div class="row q-gutter-sm">
+              <q-btn
+                v-if="!isRepresentativeEditMode"
+                color="orange"
+                label="Edit"
+                @click="toggleRepresentativeEditMode"
+                :loading="patientStore.loading"
+              />
+              <template v-else>
+                <q-btn
+                  color="green"
+                  label="Save"
+                  @click="saveRepresentativeChanges"
+                  :loading="patientStore.loading"
+                />
+                <q-btn color="grey" label="Cancel" @click="cancelRepresentativeEdit" />
+              </template>
+            </div>
           </div>
 
           <div class="row q-col-gutter-md q-mt-sm">
@@ -124,30 +142,30 @@
               <q-input
                 outlined
                 dense
-                v-model="transaction.representative.rep_name"
+                v-model="representative.rep_name"
                 label="Representative Name"
                 class="text-caption"
-                readonly
+                :readonly="!isRepresentativeEditMode"
               />
             </div>
             <div class="col-12 col-md-4">
               <q-input
                 outlined
                 dense
-                v-model="transaction.representative.rep_relationship"
+                v-model="representative.rep_relationship"
                 label="Relationship to Patient"
                 class="text-caption"
-                readonly
+                :readonly="!isRepresentativeEditMode"
               />
             </div>
             <div class="col-12 col-md-4">
               <q-input
                 outlined
                 dense
-                v-model="transaction.representative.rep_contact"
+                v-model="representative.rep_contact"
                 label="Contact Number"
                 class="text-caption"
-                readonly
+                :readonly="!isRepresentativeEditMode"
               />
             </div>
 
@@ -156,50 +174,50 @@
               <q-input
                 outlined
                 dense
-                v-model="transaction.representative.rep_barangay"
+                v-model="representative.rep_barangay"
                 label="Barangay"
                 class="text-caption"
-                readonly
+                :readonly="!isRepresentativeEditMode"
               />
             </div>
             <div class="col-12 col-md-4">
               <q-input
                 outlined
                 dense
-                v-model="transaction.representative.rep_purok"
+                v-model="representative.rep_purok"
                 label="Purok"
                 class="text-caption"
-                readonly
+                :readonly="!isRepresentativeEditMode"
               />
             </div>
             <div class="col-12 col-md-4">
               <q-input
                 outlined
                 dense
-                v-model="transaction.representative.rep_street"
+                v-model="representative.rep_street"
                 label="Street"
                 class="text-caption"
-                readonly
+                :readonly="!isRepresentativeEditMode"
               />
             </div>
             <div class="col-12 col-md-6">
               <q-input
                 outlined
                 dense
-                v-model="transaction.representative.rep_city"
+                v-model="representative.rep_city"
                 label="City"
                 class="text-caption"
-                readonly
+                :readonly="!isRepresentativeEditMode"
               />
             </div>
             <div class="col-12 col-md-6">
               <q-input
                 outlined
                 dense
-                v-model="transaction.representative.rep_province"
+                v-model="representative.rep_province"
                 label="Province"
                 class="text-caption"
-                readonly
+                :readonly="!isRepresentativeEditMode"
               />
             </div>
           </div>
@@ -398,15 +416,18 @@ export default {
       transaction: {},
       patient: {},
       vitalSigns: {},
+      representative: {}, // Separate representative data for better state management
       loading: true,
 
-      // Separate edit modes for transaction and vital signs
+      // Edit modes for each section
       isTransactionEditMode: false,
       isVitalSignsEditMode: false,
+      isRepresentativeEditMode: false,
 
       // Backup data for cancellation
       originalTransactionData: null,
       originalVitalSigns: null,
+      originalRepresentative: null,
     }
   },
 
@@ -465,9 +486,10 @@ export default {
           this.vitalSigns = transactionData.vital || {}
           console.log('Vital signs data:', this.vitalSigns)
 
-          // Check if we have representative data
+          // Extract representative data to a separate property for easier management
           if (transactionData.representative) {
             console.log('Representative data found:', transactionData.representative)
+            this.representative = { ...transactionData.representative }
           }
 
           // Load patient data if not already loaded and if patientId is available
@@ -578,6 +600,75 @@ export default {
       this.originalTransactionData = null
     },
 
+    // Representative Edit Methods
+    toggleRepresentativeEditMode() {
+      this.isRepresentativeEditMode = true
+      // Store original data for potential cancellation
+      this.originalRepresentative = { ...this.representative }
+    },
+
+    async saveRepresentativeChanges() {
+      try {
+        // Validate required fields for representative
+        if (!this.representative.rep_name) {
+          this.$q.notify({
+            type: 'negative',
+            message: 'Representative name is required',
+            position: 'top',
+            timeout: 2000,
+          })
+          return
+        }
+
+        console.log('Updating representative with data:', this.representative)
+
+        // Update the representative using the store action
+        const updatedRepresentative = await this.patientStore.updateRepresentative(
+          this.representative.id,
+          this.representative,
+        )
+
+        if (updatedRepresentative) {
+          this.$q.notify({
+            type: 'positive',
+            message: 'Representative information updated successfully',
+            position: 'top',
+            timeout: 2000,
+          })
+
+          // Update local representative data with the response
+          this.representative = { ...updatedRepresentative }
+
+          // Also update the representative in the transaction object
+          if (this.transaction) {
+            this.transaction.representative = { ...updatedRepresentative }
+          }
+
+          // Exit edit mode
+          this.isRepresentativeEditMode = false
+          this.originalRepresentative = null
+        }
+      } catch (error) {
+        console.error('Error updating representative:', error)
+        this.$q.notify({
+          type: 'negative',
+          message: 'Failed to update representative information',
+          position: 'top',
+          timeout: 2000,
+        })
+      }
+    },
+
+    cancelRepresentativeEdit() {
+      // Restore original representative data
+      if (this.originalRepresentative) {
+        this.representative = { ...this.originalRepresentative }
+      }
+
+      this.isRepresentativeEditMode = false
+      this.originalRepresentative = null
+    },
+
     // Vital Signs Edit Methods
     toggleVitalSignsEditMode() {
       this.isVitalSignsEditMode = true
@@ -639,10 +730,6 @@ export default {
           // Exit edit mode
           this.isVitalSignsEditMode = false
           this.originalVitalSigns = null
-
-          // Optional: Refresh the entire transaction data to ensure consistency
-          // Uncomment the line below if the vital signs still don't display properly
-          // await this.refreshTransactionData()
         }
       } catch (error) {
         console.error('Error updating vital signs:', error)
@@ -675,7 +762,9 @@ export default {
           console.log('Refreshed transaction data:', transactionData)
           this.transaction = transactionData
           this.vitalSigns = transactionData.vital || {}
+          this.representative = transactionData.representative || {}
           console.log('Refreshed vital signs:', this.vitalSigns)
+          console.log('Refreshed representative:', this.representative)
         }
       } catch (error) {
         console.error('Error refreshing transaction data:', error)
