@@ -250,102 +250,21 @@
             </div>
           </div>
         </q-card-section>
-
-        <q-separator spaced inset v-if="!loading" />
-
-        <!-- LABORATORY RESULTS -->
-        <q-card-section v-if="!loading">
-          <div class="row items-center justify-between">
-            <div class="text-subtitle2 q-mb-sm">Availed Laboratory Services</div>
-            <q-btn color="green" dense icon="add" label="Add Services" @click="openLabModal" />
-          </div>
-
-          <!-- Table to display saved results -->
-          <q-table
-            v-if="results.length"
-            :rows="results"
-            :columns="labColumns"
-            row-key="id"
-            flat
-            dense
-            class="q-mt-md"
-          >
-            <template v-slot:body-cell-amount="props">
-              <q-td :props="props">
-                ₱{{ props.row.amount }}
-              </q-td>
-            </template>
-          </q-table>
-        </q-card-section>
-
-        <!-- Add/Edit Laboratory Modal -->
-        <q-dialog v-model="labModalOpen" persistent>
-          <q-card style="min-width: 900px">
-            <q-card-section>
-              <div class="text-h6">Add Laboratory Results</div>
-            </q-card-section>
-
-            <q-card-section>
-              <div
-                v-for="(result, index) in resultsForm"
-                :key="index"
-                class="row q-col-gutter-md q-mt-sm text-caption"
-              >
-                <div class="col-12 col-md-2">
-                  <q-input dense v-model="result.time" label="Time" type="time" />
-                </div>
-                <div class="col-12 col-md-2">
-                  <q-input dense v-model="result.date" label="Date" type="date" />
-                </div>
-                <div class="col-12 col-md-3">
-                  <q-select
-                    dense
-                    v-model="result.laboratory_type"
-                    :options="laboratoryOptions"
-                    use-input
-                    fill-input
-                    hide-selected
-                    input-debounce="0"
-                    label="Type of Laboratory"
-                    hint="Select or type a laboratory test"
-                    @new-value="val => addNewLabType(val)"
-                  />
-                </div>
-                <div class="col-12 col-md-3 row">
-                  <q-input dense v-model="result.amount" label="Amount" type="number" class="col" />
-                  <q-btn round dense flat color="red" icon="delete" @click="removeResultRow(index)" />
-                </div>
-              </div>
-
-              <!-- Add Row Button -->
-              <q-btn
-                flat
-                color="blue"
-                icon="add"
-                label="Add Another Service"
-                class="q-mt-md"
-                @click="addResultRow"
-              />
-            </q-card-section>
-
-            <q-card-actions align="right">
-              <q-btn flat label="Cancel" color="grey" @click="labModalOpen = false" />
-              <q-btn color="green" icon="save" label="Save" @click="saveLaboratoryResults" />
-            </q-card-actions>
-          </q-card>
-        </q-dialog>
-
-        <!-- ACTION BUTTONS -->
+        <!-- Buttons BELOW the card -->
         <div class="q-mt-md flex justify-end q-gutter-sm">
           <q-btn
-            v-if="transaction.transaction_type === 'Consultation'"
+              color="primary"
+              label="Require Medication"
+              icon="medication"
+              @click="onRequireMedication"
+            />
+          <q-btn
             color="blue"
-            label="Return"
-            icon="ios_share"
-            @click="markReturn"
+            label="Process Lab"
+            icon="biotech"
+            @click="processLab"
           />
           <q-btn
-            v-if="transaction.transaction_type === 'Laboratory'"
             color="green"
             label="Done"
             icon="check_circle"
@@ -372,40 +291,15 @@ export default {
       vitalSigns: {},
       loading: true,
 
-      // UI states
+      // Separate edit modes for transaction and vital signs
       isTransactionEditMode: false,
       isVitalSignsEditMode: false,
-      isResultsEditMode: false,
-      labModalOpen: false,   // 👈 ADD THIS
 
-      // Backup data
+      // Backup data for cancellation
       originalTransactionData: null,
       originalVitalSigns: null,
-      originalResults: null,
-
-      // Results
-      laboratoryOptions: [
-        'X-ray',
-        'Blood Test',
-        'Urinalysis',
-        'Stool Exam',
-        'ECG',
-        'Ultrasound'
-      ],
-      results: [],
-      resultsForm: [
-        { laboratory_type: '', time: '', date: '', amount: '' },
-      ],
-      labColumns: [
-        { name: 'laboratory_type', label: 'Laboratory', field: 'laboratory_type', align: 'left' },
-        { name: 'amount', label: 'Amount', field: 'amount', align: 'right' },
-        { name: 'status', label: 'Status', field: 'status', align: 'center' },
-        { name: 'date', label: 'Date', field: 'date', align: 'center' },
-        { name: 'time', label: 'Time', field: 'time', align: 'center' }
-      ],
     }
   },
-
 
   computed: {
     patientStore() {
@@ -414,16 +308,17 @@ export default {
   },
 
   mounted() {
+    // Get patientId and transactionId from route query parameters
     this.patientId = this.$route.query.patientId
     this.transactionId = this.$route.query.transactionId
 
     console.log(
-      `Mounted TransactionDetails. Patient ID: ${this.patientId}, Transaction ID: ${this.transactionId}`
+      `Mounted TransactionDetails. Patient ID: ${this.patientId}, Transaction ID: ${this.transactionId}`,
     )
 
+    // Load data once we have the required IDs
     if (this.transactionId) {
       this.loadTransactionData()
-      this.loadLaboratoryResults(this.transactionId) // ✅ fetch saved labs
     } else {
       this.$q.notify({
         type: 'negative',
@@ -435,9 +330,9 @@ export default {
     }
   },
 
-
   methods: {
-    async markReturn() {
+
+    async onRequireMedication() {
       const patientStore = usePatientStore()
 
       const now = new Date()
@@ -449,23 +344,61 @@ export default {
         transaction_id: this.transactionId,
         consultation_date: consultationDate,
         consultation_time: consultationTime,
-        status: 'Returned',
+        status: 'Medication',
+        transaction_type: 'consultation',
       }
 
       try {
-        await patientStore.laboratoryReturn(this.transactionId, payload)
+        await patientStore.storeNewConsultation(payload)
 
         this.$q.notify({
           type: 'positive',
-          message: 'Laboratory returned successfully',
+          message: 'Consultation status updated to Medication',
         })
 
-        // Redirect to new consultation page
-        this.$router.push({ path: '/customers/laboratory' })
+        // If you want, redirect to pharmacy page
+        this.$router.push({ path: '/customers/newConsultation' })
       } catch (error) {
         this.$q.notify({
           type: 'negative',
-          message: `Failed to store consultation: ${error.message}`,
+          message: `Failed to update consultation: ${error.message}`,
+        })
+      }
+    },
+
+    async processLab() {
+      const patientStore = usePatientStore()
+
+      const now = new Date()
+      const consultationDate = now.toISOString().split('T')[0] // YYYY-MM-DD
+      const consultationTime = now.toTimeString().split(' ')[0] // HH:MM:SS
+
+      const payload = {
+        patient_id: this.patientId,
+        transaction_id: this.transactionId,
+        consultation_date: consultationDate,
+        consultation_time: consultationTime,
+        status: 'Processing',
+        transaction_type: 'consultation',
+      }
+
+      try {
+        await patientStore.storeLaboratoryPatient(payload)
+
+        this.$q.notify({
+          type: 'positive',
+          message: 'Patient sent to Laboratory successfully!',
+        })
+
+        // Refresh laboratory list
+        await patientStore.fetchLaboratoryPatients()
+
+        // (Optional) Navigate if you want to redirect
+        this.$router.push({ path: '/customers/newConsultation' })
+      } catch (error) {
+        this.$q.notify({
+          type: 'negative',
+          message: `Failed to process laboratory: ${error.message}`,
         })
       }
     },
@@ -483,125 +416,23 @@ export default {
         consultation_date: consultationDate,
         consultation_time: consultationTime,
         status: 'Done',
+        transaction_type: 'consultation',
       }
 
       try {
-        await patientStore.laboratoryReturn(this.transactionId, payload)
+        await patientStore.storeNewConsultation(payload)
 
         this.$q.notify({
           type: 'positive',
-          message: 'Laboratory done successfully',
+          message: 'Consultation status updated to Medication',
         })
 
-        // Redirect to new consultation page
-        this.$router.push({ path: '/customers/laboratory' })
+        // If you want, redirect to pharmacy page
+        this.$router.push({ path: '/customers/returnConsultation' })
       } catch (error) {
         this.$q.notify({
           type: 'negative',
-          message: `Failed to store consultation: ${error.message}`,
-        })
-      }
-    },
-
-    openLabModal() {
-      const now = new Date()
-      const currentDate = now.toISOString().split("T")[0] // YYYY-MM-DD
-      const currentTime = now.toTimeString().slice(0, 5)  // HH:MM
-
-      this.resultsForm = [{
-        laboratory_type: '',
-        time: currentTime,
-        date: currentDate,
-        amount: ''
-      }]
-      this.labModalOpen = true
-    },
-
-    addNewLabType(val) {
-      if (val && !this.laboratoryOptions.includes(val)) {
-        this.laboratoryOptions.push(val)
-      }
-    },
-
-    addResultRow() {
-      const now = new Date()
-      const currentDate = now.toISOString().split("T")[0]
-      const currentTime = now.toTimeString().slice(0, 5)
-
-      this.resultsForm.push({
-        laboratory_type: '',
-        time: currentTime,
-        date: currentDate,
-        amount: ''
-      })
-    },
-
-    removeResultRow(index) {
-      this.resultsForm.splice(index, 1)
-    },
-
-    async saveLaboratoryResults() {
-      try {
-        const payload = {
-          patient_id: this.patientId,
-          transaction_id: this.transactionId,
-          laboratories: this.resultsForm.map(result => ({
-            laboratory_type: result.laboratory_type,   // required
-            amount: result.amount,                     // required
-            consultation_date: result.date,
-            consultation_time: result.time,
-          }))
-        }
-
-        await this.patientStore.storeLaboratoryResult(payload)
-
-        this.$q.notify({
-          type: "positive",
-          message: "Laboratory results saved successfully"
-        })
-
-        this.labModalOpen = false
-        this.results = [...this.results, ...this.resultsForm]
-
-      } catch (error) {
-        console.error("Save Error:", error)
-        this.$q.notify({
-          type: "negative",
-          message: `Failed to save results: ${error.message}`
-        })
-      }
-
-    },
-
-    async loadLaboratoryResults(transactionId) {
-      try {
-        const res = await this.patientStore.fetchLaboratoryResults(transactionId)
-
-        // format created_at into date & time
-        this.results = (res || []).map(r => {
-          const createdAt = new Date(r.created_at)
-          return {
-            ...r,
-            date: createdAt.toLocaleDateString('en-PH', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric'
-            }),
-            time: createdAt.toLocaleTimeString('en-PH', {
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit'
-            })
-          }
-        })
-
-        console.log("Loaded lab results:", this.results)
-
-      } catch (error) {
-        console.error("Error loading lab results:", error)
-        this.$q.notify({
-          type: "negative",
-          message: "Failed to load laboratory results"
+          message: `Failed to update consultation: ${error.message}`,
         })
       }
     },

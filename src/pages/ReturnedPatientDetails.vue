@@ -24,24 +24,6 @@
         <q-card-section v-if="!loading">
           <div class="row items-center justify-between">
             <div class="text-subtitle2 q-mb-sm">Transaction Information</div>
-            <div class="row q-gutter-sm">
-              <q-btn
-                v-if="!isTransactionEditMode"
-                color="orange"
-                label="Edit"
-                @click="toggleTransactionEditMode"
-                :loading="patientStore.loading"
-              />
-              <template v-else>
-                <q-btn
-                  color="green"
-                  label="Save"
-                  @click="saveTransactionChanges"
-                  :loading="patientStore.loading"
-                />
-                <q-btn color="grey" label="Cancel" @click="cancelTransactionEdit" />
-              </template>
-            </div>
           </div>
 
           <div class="row q-col-gutter-md q-mt-sm">
@@ -117,24 +99,6 @@
         <q-card-section v-if="!loading && vitalSigns">
           <div class="row items-center justify-between">
             <div class="text-subtitle2 q-mb-sm">Vital Signs</div>
-            <div class="row q-gutter-sm">
-              <q-btn
-                v-if="!isVitalSignsEditMode"
-                color="orange"
-                label="Edit"
-                @click="toggleVitalSignsEditMode"
-                :loading="patientStore.loading"
-              />
-              <template v-else>
-                <q-btn
-                  color="green"
-                  label="Save"
-                  @click="saveVitalSignsChanges"
-                  :loading="patientStore.loading"
-                />
-                <q-btn color="grey" label="Cancel" @click="cancelVitalSignsEdit" />
-              </template>
-            </div>
           </div>
 
           <!-- Basic measurements -->
