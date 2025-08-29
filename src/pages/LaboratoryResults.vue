@@ -376,7 +376,7 @@ export default {
       isTransactionEditMode: false,
       isVitalSignsEditMode: false,
       isResultsEditMode: false,
-      labModalOpen: false,   // 👈 ADD THIS
+      labModalOpen: false,   // ADD THIS
 
       // Backup data
       originalTransactionData: null,
