@@ -98,25 +98,8 @@
                   class="q-mr-sm"
                   color="primary"
                   @click="getUser(props.row.id)"
-                  to="/users/user/"
                 >
                   <q-tooltip> Edit </q-tooltip>
-                </q-btn>
-
-                <q-btn
-                  dense
-                  flat
-                  icon="badge"
-                  class="q-mr-sm"
-                  color="green"
-                  @click="
-                    () => {
-                      getUser(props.row.id)
-                      $router.push('/users/credentials')
-                    }
-                  "
-                >
-                  <q-tooltip> Credentials </q-tooltip>
                 </q-btn>
               </q-td>
             </q-tr>
@@ -205,12 +188,12 @@ export default {
     this.getUsers()
   },
   methods: {
-    // Define any methods you need for your component
     getUser(id) {
       this.userStore.selected_id = id
       this.UserCredentialstore.selected_id = id
-      console.log(id)
-      console.log(this.userStore.selected_id)
+      console.log('Setting selected ID:', id)
+
+      this.$router.push('/users/user/')
     },
     async getUsers() {
       try {

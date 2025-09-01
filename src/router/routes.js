@@ -4,12 +4,40 @@ const routes = [
     component: () => import('layouts/MainLayout.vue'),
 
     children: [
-      { path: '', component: () => import('pages/DashBoard.vue'), meta: { requiresAuth: true } }, //dashboard
-
       //dashboard
       {
         path: '/dashboard',
         component: () => import('pages/DashBoard.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      {
+        path: '/dashboard-encoder',
+        component: () => import('pages/DashBoardEncoder.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      {
+        path: '/dashboard-social',
+        component: () => import('pages/DashBoardSocialWorker.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      {
+        path: '/dashboard-doctor',
+        component: () => import('pages/DashBoardDoctor.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      {
+        path: '/dashboard-lab',
+        component: () => import('pages/DashBoardLab.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      {
+        path: '/dashboard-billing',
+        component: () => import('pages/DashBoardBilling.vue'),
         meta: { requiresAuth: true },
       },
 
@@ -100,11 +128,6 @@ const routes = [
       {
         path: '/users/list',
         component: () => import('pages/RegisteredUsersList.vue'),
-        meta: { requiresAuth: true },
-      },
-      {
-        path: '/users/credentials',
-        component: () => import('pages/UserCredentials.vue'),
         meta: { requiresAuth: true },
       },
     ],

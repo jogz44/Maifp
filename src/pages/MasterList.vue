@@ -36,7 +36,7 @@
             row-key="id"
             binary-state-sort
             no-data-label="No data available"
-            title="Patient Logs"
+            title="Master List"
             title-class="text-bold text-subtitle1 text-green-9"
             square
             :rows-per-page-options="[0]"
@@ -96,8 +96,8 @@ import { usePatientStore } from '../stores/patientStore'
 const router = useRouter()
 const Patients = usePatientStore()
 const search = ref('')
-const selectedDate = ref(new Date().toISOString().substring(0, 10))
-
+// const selectedDate = ref(new Date().toISOString().substring(0, 10))
+const selectedDate = ref('')
 const columns = [
   {
     name: 'fullName',

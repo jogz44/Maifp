@@ -163,20 +163,15 @@ export const useUserStore = defineStore('users', {
         })
       }
     },
-
     async loginUser(payload) {
       try {
-        // await api.get('/sanctum/csrf-cookie') // Get CSRF cookie first
         const response = await api.post('/user/login', payload)
         console.log(response.data)
 
         if (response.data.success) {
-          // Store token in localStorage
           LocalStorage.set('auth_token', response.data.data.token)
           LocalStorage.set('user', response.data.data.user)
-
-          // Set default authorization header
-          this.setAuthHeader(response.data.data.token)
+          LocalStorage.set('role_name', response.data.data.user.role_name)
 
           return response.data
         }

@@ -136,6 +136,7 @@
                     outlined
                     dense
                     v-model="patient.barangay"
+                    :options="TagumBarangay.barangay"
                     label="Barangay"
                     :readonly="!isEditMode"
                   />
@@ -594,16 +595,24 @@
 
 <script>
 import { usePatientStore } from 'src/stores/patientStore'
+import { useTagumStore } from '../stores/TagumStore'
 import { date } from 'quasar'
 
 export default {
   name: 'PatientProfile',
 
+  setup() {
+    const TagumBarangay = useTagumStore()
+    return {
+      TagumBarangay,
+    }
+  },
+
   data() {
     return {
       patientId: null,
       isEditMode: false,
-      originalPatientData: null, // Store original data for cancellation
+      originalPatientData: null,
       patient: {
         id: null,
         firstname: '',

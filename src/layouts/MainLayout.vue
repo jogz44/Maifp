@@ -47,22 +47,25 @@
       <q-list>
         <q-item></q-item>
 
-        <q-item clickable v-ripple to="/dashboard">
+        <!-- Dashboard - Available to all roles -->
+        <q-item clickable v-ripple :to="dashboardRoute">
           <div class="row items-center">
             <q-icon name="dashboard" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Dashboard</span>
           </div>
         </q-item>
 
-        <q-item clickable v-ripple to="/customers">
+        <!-- Patient Info - Available to admin and coder -->
+        <q-item v-if="canAccessPatientInfo" clickable v-ripple to="/customers">
           <div class="row items-center">
             <q-icon name="person" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Patient Info</span>
           </div>
         </q-item>
 
-        <!-- MAIFIP MENU -->
+        <!-- MAIFIP MENU - Available to admin and social -->
         <q-expansion-item
+          v-if="canAccessMAIFIP"
           label="MAIFIP"
           icon="volunteer_activism"
           icon-class="q-mr-xs"
@@ -115,8 +118,9 @@
           </q-item>
         </q-expansion-item>
 
-        <!-- CONSULTATION MENU -->
+        <!-- CONSULTATION MENU - Available to admin and doctor -->
         <q-expansion-item
+          v-if="canAccessConsultation"
           label="Consultation"
           icon="forum"
           icon-class="q-mr-xs"
@@ -160,7 +164,7 @@
           </q-item>
         </q-expansion-item>
 
-        <q-item clickable v-ripple to="/customers/laboratory">
+        <q-item v-if="canAccessLaboratory" clickable v-ripple to="/customers/laboratory">
           <div class="row items-center">
             <q-icon name="science" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Laboratory</span>
@@ -174,7 +178,7 @@
           </div>
         </q-item>
 
-        <q-item clickable v-ripple to="/billing">
+        <q-item v-if="canAccessBilling" clickable v-ripple to="/billing">
           <div class="row items-center">
             <q-icon name="receipt_long" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Billing</span>
@@ -188,14 +192,16 @@
           </div>
         </q-item>
 
-        <q-item clickable v-ripple to="/masterlist">
+        <!-- Master List - Available to admin only -->
+        <q-item v-if="canAccessMasterList" clickable v-ripple to="/masterlist">
           <div class="row items-center">
             <q-icon name="list" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Master List</span>
           </div>
         </q-item>
 
-        <q-item clickable v-ripple to="/users/list">
+        <!-- User Management - Available to admin only -->
+        <q-item v-if="canAccessUserManagement" clickable v-ripple to="/users/list">
           <div class="row items-center">
             <q-icon name="supervisor_account" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">User Management</span>
@@ -215,6 +221,7 @@
 import auth from 'src/services/auth'
 import { useUserStore } from 'src/stores/userStore'
 import { usePatientBadgeStore } from 'src/stores/badgeStore'
+import { LocalStorage } from 'quasar'
 
 export default {
   name: 'MyLayout',
@@ -236,8 +243,83 @@ export default {
       leftDrawerOpen: false,
       expanded: true,
       expandedConsultation: false,
-      badgeInterval: null, // store interval reference
+      badgeInterval: null,
+      userRole: null,
+      rolePermissions: {
+        admin: [
+          'dashboard',
+          'patient-info',
+          'maifip',
+          'consultation',
+          'laboratory',
+          'billing',
+          'masterlist',
+          'user-management',
+        ],
+        social: ['dashboard', 'maifip'],
+        coder: ['dashboard', 'patient-info'],
+        doctor: ['dashboard', 'consultation'],
+        laboratory: ['dashboard', 'laboratory'],
+        billing: ['dashboard', 'billing'],
+      },
     }
+  },
+
+  computed: {
+    currentUserRole() {
+      return this.userRole || LocalStorage.getItem('role_name') || 'guest'
+    },
+
+    allowedModules() {
+      return this.rolePermissions[this.currentUserRole] || ['dashboard']
+    },
+
+    canAccessPatientInfo() {
+      return this.allowedModules.includes('patient-info')
+    },
+
+    canAccessMAIFIP() {
+      return this.allowedModules.includes('maifip')
+    },
+
+    canAccessConsultation() {
+      return this.allowedModules.includes('consultation')
+    },
+
+    canAccessLaboratory() {
+      return this.allowedModules.includes('laboratory')
+    },
+
+    canAccessBilling() {
+      return this.allowedModules.includes('billing')
+    },
+
+    canAccessMasterList() {
+      return this.allowedModules.includes('masterlist')
+    },
+
+    canAccessUserManagement() {
+      return this.allowedModules.includes('user-management')
+    },
+
+    dashboardRoute() {
+      switch (this.currentUserRole) {
+        case 'admin':
+          return '/dashboard'
+        case 'coder':
+          return '/dashboard-encoder'
+        case 'social':
+          return '/dashboard-social'
+        case 'doctor':
+          return '/dashboard-doctor'
+        case 'laboratory':
+          return '/dashboard-lab'
+        case 'billing':
+          return '/dashboard-billing'
+        default:
+          return '/:catchAll(.*)*'
+      }
+    },
   },
 
   methods: {
@@ -260,12 +342,26 @@ export default {
       const user = JSON.parse(sanitized_object)
       this.userStore.authenticatedUser = user.id
     },
+
+    // Method to check if user can access specific modules
+    canAccess(allowedRoles) {
+      return allowedRoles.includes(this.currentUserRole)
+    },
+
+    hasModuleAccess(moduleName) {
+      return this.allowedModules.includes(moduleName)
+    },
+
+    setUserRole() {
+      this.userRole = LocalStorage.getItem('role_name')
+    },
   },
 
   async mounted() {
     if (this.ausSrvc.isAuthenticated()) {
       this.ausSrvc.initializeAuth()
       this.GetUserID()
+      this.setUserRole()
       await this.badgeStore.fetchBadges()
 
       this.badgeInterval = setInterval(async () => {
