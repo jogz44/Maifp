@@ -353,7 +353,7 @@ export default {
 
         this.$q.notify({
           type: 'positive',
-          message: 'Consultation status updated to Medication',
+          message: 'New Consultation status updated to Medication',
         })
 
         // If you want, redirect to pharmacy page
@@ -361,7 +361,7 @@ export default {
       } catch (error) {
         this.$q.notify({
           type: 'negative',
-          message: `Failed to update consultation: ${error.message}`,
+          message: `Failed to update New Consultation: ${error.message}`,
         })
       }
     },
@@ -398,7 +398,7 @@ export default {
       } catch (error) {
         this.$q.notify({
           type: 'negative',
-          message: `Failed to process laboratory: ${error.message}`,
+          message: `Failed to process Laboratory: ${error.message}`,
         })
       }
     },
@@ -424,7 +424,7 @@ export default {
 
         this.$q.notify({
           type: 'positive',
-          message: 'Consultation status updated to Medication',
+          message: 'New Consultation status updated to Medication',
         })
 
         // If you want, redirect to pharmacy page
@@ -432,7 +432,7 @@ export default {
       } catch (error) {
         this.$q.notify({
           type: 'negative',
-          message: `Failed to update consultation: ${error.message}`,
+          message: `Failed to update New Consultation: ${error.message}`,
         })
       }
     },

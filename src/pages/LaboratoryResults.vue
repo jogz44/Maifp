@@ -498,7 +498,7 @@ export default {
       } catch (error) {
         this.$q.notify({
           type: 'negative',
-          message: `Failed to store consultation: ${error.message}`,
+          message: `Failed to store Laboratory: ${error.message}`,
         })
       }
     },
@@ -557,7 +557,7 @@ export default {
 
         this.$q.notify({
           type: "positive",
-          message: "Laboratory results saved successfully"
+          message: "Laboratory Services saved successfully"
         })
 
         this.labModalOpen = false
@@ -567,7 +567,7 @@ export default {
         console.error("Save Error:", error)
         this.$q.notify({
           type: "negative",
-          message: `Failed to save results: ${error.message}`
+          message: `Failed to save Services: ${error.message}`
         })
       }
 
@@ -598,10 +598,10 @@ export default {
         console.log("Loaded lab results:", this.results)
 
       } catch (error) {
-        console.error("Error loading lab results:", error)
+        console.error("Error loading Laboratory Services:", error)
         this.$q.notify({
           type: "negative",
-          message: "Failed to load laboratory results"
+          message: "Failed to load Laboratory Services"
         })
       }
     },
