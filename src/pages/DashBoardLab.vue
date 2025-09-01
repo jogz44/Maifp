@@ -98,15 +98,7 @@ export default {
 
   methods: {
     async loadStepPatients() {
-      const results = await Promise.allSettled([
-        this.patientStore.fetchPatientsAssessment(),
-        this.patientStore.fetchPatientsNew(),
-        this.patientStore.fetchPatientsLaboratory(),
-        this.patientStore.fetchPatientsReturned(),
-        this.patientStore.fetchPatientsMedicine(),
-        this.patientStore.fetchPatientsBilling(),
-        this.patientStore.fetchPatientsGL(),
-      ])
+      const results = await Promise.allSettled([this.patientStore.fetchPatientsLaboratory()])
 
       results.forEach((result, index) => {
         if (result.status === 'fulfilled') {
