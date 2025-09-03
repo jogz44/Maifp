@@ -649,8 +649,8 @@ export default {
         title: 'Delete Service ',
         message: `
           <div class="text-black text-semibold">
-            Are you sure you want to delete <br>
-            <span class="text-primary">"${service.label}"</span>?
+            Are you sure you want to delete
+            <span class="text-primary">"${service.label}"</span> ?
           </div>
         `,
         html: true,
