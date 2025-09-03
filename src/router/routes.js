@@ -114,6 +114,13 @@ const routes = [
         meta: { requiresAuth: true },
       },
 
+      //activity log
+      {
+        path: '/activity',
+        component: () => import('pages/ActivityLog.vue'),
+        meta: { requiresAuth: true },
+      },
+
       //user management
       {
         path: '/users/new',

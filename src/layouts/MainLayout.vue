@@ -200,6 +200,13 @@
           </div>
         </q-item>
 
+        <q-item v-if="canAccessMasterList" clickable v-ripple to="/activity">
+          <div class="row items-center">
+            <q-icon name="history" size="24px" class="q-mr-md" />
+            <span class="text-sm" style="padding-left: 16px">Activity Log</span>
+          </div>
+        </q-item>
+
         <!-- User Management - Available to admin only -->
         <q-item v-if="canAccessUserManagement" clickable v-ripple to="/users/list">
           <div class="row items-center">
