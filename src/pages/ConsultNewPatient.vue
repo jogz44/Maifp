@@ -294,8 +294,8 @@ export default {
         transaction_type: '',
         purpose: '',
         patient_id: null,
-        consultation_date: '', // ✅ added
-        status: 'pending', // ✅ added
+        consultation_date: '', //  added
+        status: 'pending', //  added
         height: '',
         weight: '',
         bmi: '',
@@ -380,8 +380,8 @@ export default {
       if (newVal) {
         // Set defaults when modal opens
         this.newTransaction.transaction_date = date.formatDate(new Date(), 'YYYY-MM-DD')
-        this.newTransaction.consultation_date = date.formatDate(new Date(), 'YYYY-MM-DD') // ✅ added
-        this.newTransaction.status = 'pending' // ✅ default status
+        this.newTransaction.consultation_date = date.formatDate(new Date(), 'YYYY-MM-DD') //  added
+        this.newTransaction.status = 'pending' //  default status
         this.newTransaction.patient_id = this.patient.id
       }
     },
@@ -523,7 +523,11 @@ export default {
       console.log('Viewing transaction:', transaction)
       this.$router.push({
         path: '/customers/newPatientDetails',
-        query: { patientId: this.patient.id, transactionId: transaction.id },
+        query: {
+          patientId: this.patient.id,
+          transactionId: transaction.id,
+          showDoctorToast: true   //  add this flag
+        },
       })
     },
 
@@ -545,8 +549,8 @@ export default {
         transaction_type: '',
         purpose: '',
         patient_id: this.patient.id,
-        consultation_date: date.formatDate(new Date(), 'YYYY-MM-DD'), // ✅ reset default
-        status: 'pending', // ✅ reset default
+        consultation_date: date.formatDate(new Date(), 'YYYY-MM-DD'), //  reset default
+        status: 'pending', //  reset default
         height: '',
         weight: '',
         bmi: '',
@@ -585,7 +589,7 @@ export default {
 
     async createNewTransaction() {
       try {
-        // ✅ validate consultation_date + status too
+        // validate consultation_date + status too
         if (!this.newTransaction.consultation_date) {
           this.$q.notify({
             type: 'negative',

@@ -271,9 +271,7 @@
             class="q-mt-md"
           >
             <template v-slot:body-cell-amount="props">
-              <q-td :props="props">
-                ₱{{ props.row.amount }}
-              </q-td>
+              <q-td :props="props"> ₱{{ props.row.amount }} </q-td>
             </template>
           </q-table>
         </q-card-section>
@@ -282,7 +280,36 @@
         <q-dialog v-model="labModalOpen" persistent>
           <q-card style="min-width: 900px">
             <q-card-section>
-              <div class="text-h6">Add Laboratory Results</div>
+              <div class="row items-center justify-between">
+                <div class="text-h6">Add Laboratory Results</div>
+                <div class="relative-position">
+                  <!-- Info button -->
+                  <q-btn
+                    round
+                    dense
+                    flat
+                    icon="info"
+                    color="primary"
+                    @click="serviceModalOpen = true"
+                  />
+
+                  <!-- Floating toast -->
+                  <transition name="fade-slide">
+                    <div
+                      v-if="showServiceHint"
+                      class="q-pa-sm text-white text-caption shadow-4 absolute-top-right"
+                      style="
+                        margin-right: 35px; /* push it left of the info button */
+                        border-radius: 10px;
+                        background: rgba(33, 150, 243, 0.75);
+                        backdrop-filter: blur(6px);
+                        white-space: nowrap;"
+                      >
+                      Manage Laboratory Services
+                    </div>
+                  </transition>
+                </div>
+              </div>
             </q-card-section>
 
             <q-card-section>
@@ -302,18 +329,25 @@
                     dense
                     v-model="result.laboratory_type"
                     :options="laboratoryOptions"
-                    use-input
-                    fill-input
-                    hide-selected
-                    input-debounce="0"
+                    option-label="label"
+                    option-value="value"
+                    emit-value
+                    map-options
                     label="Type of Laboratory"
-                    hint="Select or type a laboratory test"
-                    @new-value="val => addNewLabType(val)"
-                  />
+                    @update:model-value="onLabChange(result)"
+                  >
+                  </q-select>
                 </div>
                 <div class="col-12 col-md-3 row">
                   <q-input dense v-model="result.amount" label="Amount" type="number" class="col" />
-                  <q-btn round dense flat color="red" icon="delete" @click="removeResultRow(index)" />
+                  <q-btn
+                    round
+                    dense
+                    flat
+                    color="red"
+                    icon="delete"
+                    @click="removeResultRow(index)"
+                  />
                 </div>
               </div>
 
@@ -327,6 +361,128 @@
                 @click="addResultRow"
               />
             </q-card-section>
+
+            <!-- Manage Laboratory Services -->
+              <q-dialog v-model="serviceModalOpen" persistent>
+                <q-card style="min-width: 600px">
+                  <q-card-section>
+                    <div class="text-h6">Manage Laboratory Services</div>
+                  </q-card-section>
+
+                  <q-card-section>
+                    <!-- Table of Services -->
+                    <q-table
+                      :rows="laboratoryOptions"
+                      :columns="[
+                        { name: 'label', label: 'Service', field: 'label', align: 'left'},
+                        { name: 'fee', label: 'Fee', field: 'fee', align: 'right' },
+                        { name: 'actions', label: 'Actions', field: 'actions', align: 'center' },
+                      ]"
+                      row-key="value"
+                      flat
+                      dense
+                    >
+                      <template v-slot:body-cell-actions="props">
+                        <q-td :props="props">
+                          <q-btn
+                            flat
+                            dense
+                            round
+                            size="sm"
+                            icon="edit"
+                            color="blue"
+                            @click="editService(props.row)"
+                          />
+                          <q-btn
+                            flat
+                            dense
+                            round
+                            size="sm"
+                            icon="delete"
+                            color="red"
+                            @click="confirmDelete(props.row)"
+                          />
+                        </q-td>
+                      </template>
+                    </q-table>
+
+                    <!-- Add New Service -->
+                    <div class="row items-end q-col-gutter-md q-mt-md">
+                      <div class="col">
+                        <q-input
+                          v-model="newServiceName"
+                          label="Service Name"
+                          outlined
+                          dense
+                          clearable
+                        />
+                      </div>
+
+                      <!-- Service Fee -->
+                      <div class="col-3">
+                        <q-input
+                          v-model="newServiceFee"
+                          label="Fee"
+                          type="number"
+                          outlined
+                          dense
+                          clearable
+                          prefix="₱"
+                        />
+                      </div>
+
+                      <!-- Add Button -->
+                      <div class="col-auto">
+                        <q-btn
+                          color="green"
+                          icon="add"
+                          label="Add"
+                          unelevated
+                          @click="addService"
+                        />
+                      </div>
+                    </div>
+                  </q-card-section>
+
+                  <!-- Edit Service Dialog -->
+                  <q-dialog v-model="editDialogOpen" persistent>
+                    <q-card style="min-width: 500px">
+                      <q-card-section>
+                        <div class="text-h6">Update Service</div>
+                      </q-card-section>
+
+                      <q-card-section>
+                        <q-input
+                          v-model="editServiceName"
+                          label="Service Name"
+                          outlined
+                          dense
+                          clearable
+                        />
+                        <q-input
+                          v-model="editServiceFee"
+                          label="Fee"
+                          type="number"
+                          outlined
+                          dense
+                          clearable
+                          prefix="₱"
+                          class="q-mt-md"
+                        />
+                      </q-card-section>
+
+                      <q-card-actions align="right">
+                        <q-btn flat label="Cancel" color="grey" @click="editDialogOpen = false" />
+                        <q-btn color="primary" label="Save" @click="updateService" />
+                      </q-card-actions>
+                    </q-card>
+                  </q-dialog>
+
+                  <q-card-actions align="right">
+                    <q-btn flat label="Close" color="grey" @click="serviceModalOpen = false" />
+                  </q-card-actions>
+                </q-card>
+              </q-dialog>
 
             <q-card-actions align="right">
               <q-btn flat label="Cancel" color="grey" @click="labModalOpen = false" />
@@ -376,36 +532,39 @@ export default {
       isTransactionEditMode: false,
       isVitalSignsEditMode: false,
       isResultsEditMode: false,
-      labModalOpen: false,   // ADD THIS
+      labModalOpen: false, // ADD THIS
 
       // Backup data
       originalTransactionData: null,
       originalVitalSigns: null,
       originalResults: null,
 
+      //New Services
+      serviceModalOpen: false,
+      showServiceHint: false,
+      newServiceName: '',
+      newServiceFee: '',
+
+      //Update Services
+      editDialogOpen: false,
+      editServiceId: null,
+      editServiceName: '',
+      editServiceFee: '',
+
       // Results
-      laboratoryOptions: [
-        'X-ray',
-        'Blood Test',
-        'Urinalysis',
-        'Stool Exam',
-        'ECG',
-        'Ultrasound'
-      ],
+      laboratoryOptions: [],
       results: [],
-      resultsForm: [
-        { laboratory_type: '', time: '', date: '', amount: '' },
-      ],
+      resultsForm: [{ laboratory_type: '', time: '', date: '', amount: '' }],
       labColumns: [
         { name: 'laboratory_type', label: 'Laboratory', field: 'laboratory_type', align: 'left' },
         { name: 'amount', label: 'Amount', field: 'amount', align: 'right' },
         { name: 'status', label: 'Status', field: 'status', align: 'center' },
         { name: 'date', label: 'Date', field: 'date', align: 'center' },
-        { name: 'time', label: 'Time', field: 'time', align: 'center' }
+        { name: 'time', label: 'Time', field: 'time', align: 'center' },
+        { name: 'actions', label: '', field: 'actions', align: 'center' },
       ],
     }
   },
-
 
   computed: {
     patientStore() {
@@ -418,12 +577,14 @@ export default {
     this.transactionId = this.$route.query.transactionId
 
     console.log(
-      `Mounted TransactionDetails. Patient ID: ${this.patientId}, Transaction ID: ${this.transactionId}`
+      `Mounted TransactionDetails. Patient ID: ${this.patientId}, Transaction ID: ${this.transactionId}`,
     )
+
+    this.loadLaboratoryOptions()
 
     if (this.transactionId) {
       this.loadTransactionData()
-      this.loadLaboratoryResults(this.transactionId) // ✅ fetch saved labs
+      this.loadLaboratoryResults(this.transactionId) // fetch saved labs
     } else {
       this.$q.notify({
         type: 'negative',
@@ -435,8 +596,84 @@ export default {
     }
   },
 
-
   methods: {
+    //SERVICE LIBRARY
+    async addService() {
+      try {
+        const payload = { lab_name: this.newServiceName, lab_amount: this.newServiceFee }
+        await this.patientStore.addLaboratoryService(payload)
+        this.$q.notify({ type: 'positive', message: 'Service added!' })
+        this.loadLaboratoryOptions()
+        this.newServiceName = ''
+        this.newServiceFee = ''
+      } catch {
+        this.$q.notify({ type: 'negative', message: 'Failed to add service' })
+      }
+    },
+
+    editService(service) {
+      this.editServiceId = service.value
+      this.editServiceName = service.label
+      this.editServiceFee = service.fee
+      this.editDialogOpen = true
+    },
+
+    async updateService() {
+      try {
+        const payload = {
+          id: this.editServiceId,
+          lab_name: this.editServiceName,
+          lab_amount: this.editServiceFee
+        }
+        await this.patientStore.updateLaboratoryService(payload)
+        this.$q.notify({ type: 'positive', message: 'Service updated!' })
+        this.loadLaboratoryOptions()
+        this.editDialogOpen = false
+      } catch {
+        this.$q.notify({ type: 'negative', message: 'Failed to update service' })
+      }
+    },
+
+    // THIS PART DELETION WITHOUT WARNING MSSG
+    // async deleteService(service) {
+    //   try {
+    //     await this.patientStore.deleteLaboratoryService(service.value)
+    //     this.$q.notify({ type: 'positive', message: 'Service deleted!' })
+    //     this.loadLaboratoryOptions()
+    //   } catch {
+    //     this.$q.notify({ type: 'negative', message: 'Failed to delete service' })
+    //   }
+    // },
+    confirmDelete(service) {
+      this.$q.dialog({
+        title: 'Delete Service ',
+        message: `
+          <div class="text-black text-semibold">
+            Are you sure you want to delete <br>
+            <span class="text-primary">"${service.label}"</span>?
+          </div>
+        `,
+        html: true,
+        cancel: {
+          label: 'Cancel',
+          color: 'grey'
+        },
+        ok: {
+          label: 'Yes',
+          color: 'red'
+        },
+        persistent: true
+      }).onOk(async () => {
+        try {
+          await this.patientStore.deleteLaboratoryService(service.value)
+          this.$q.notify({ type: 'positive', message: 'Service deleted!' })
+          this.loadLaboratoryOptions()
+        } catch {
+          this.$q.notify({ type: 'negative', message: 'Failed to delete service' })
+        }
+      })
+    },
+
     async markReturn() {
       const patientStore = usePatientStore()
 
@@ -505,16 +742,22 @@ export default {
 
     openLabModal() {
       const now = new Date()
-      const currentDate = now.toISOString().split("T")[0] // YYYY-MM-DD
-      const currentTime = now.toTimeString().slice(0, 5)  // HH:MM
+      const currentDate = now.toISOString().split('T')[0] // YYYY-MM-DD
+      const currentTime = now.toTimeString().slice(0, 5) // HH:MM
 
-      this.resultsForm = [{
-        laboratory_type: '',
-        time: currentTime,
-        date: currentDate,
-        amount: ''
-      }]
+      this.resultsForm = [
+        {
+          laboratory_type: '',
+          time: currentTime,
+          date: currentDate,
+          amount: '',
+        },
+      ]
       this.labModalOpen = true
+      this.showServiceHint = true
+      setTimeout(() => {
+        this.showServiceHint = false
+      }, 2000)
     },
 
     addNewLabType(val) {
@@ -525,14 +768,14 @@ export default {
 
     addResultRow() {
       const now = new Date()
-      const currentDate = now.toISOString().split("T")[0]
+      const currentDate = now.toISOString().split('T')[0]
       const currentTime = now.toTimeString().slice(0, 5)
 
       this.resultsForm.push({
         laboratory_type: '',
         time: currentTime,
         date: currentDate,
-        amount: ''
+        amount: '',
       })
     },
 
@@ -543,34 +786,33 @@ export default {
     async saveLaboratoryResults() {
       try {
         const payload = {
-          patient_id: this.patientId,
           transaction_id: this.transactionId,
-          laboratories: this.resultsForm.map(result => ({
-            laboratory_type: result.laboratory_type,   // required
-            amount: result.amount,                     // required
-            consultation_date: result.date,
-            consultation_time: result.time,
-          }))
+          laboratories: this.resultsForm.map((result) => {
+            const service = this.laboratoryOptions.find((s) => s.value === result.laboratory_type)
+            return {
+              laboratory_type: service?.label || '', // ensure string name
+              amount: parseFloat(result.amount) || 0,
+              status: 'Pending',
+            }
+          }),
         }
 
         await this.patientStore.storeLaboratoryResult(payload)
 
         this.$q.notify({
-          type: "positive",
-          message: "Laboratory Services saved successfully"
+          type: 'positive',
+          message: 'Laboratory Services saved successfully',
         })
 
         this.labModalOpen = false
         this.results = [...this.results, ...this.resultsForm]
-
       } catch (error) {
-        console.error("Save Error:", error)
+        console.error('Save Error:', error)
         this.$q.notify({
-          type: "negative",
-          message: `Failed to save Services: ${error.message}`
+          type: 'negative',
+          message: `Failed to save Services: ${error.message}`,
         })
       }
-
     },
 
     async loadLaboratoryResults(transactionId) {
@@ -578,31 +820,48 @@ export default {
         const res = await this.patientStore.fetchLaboratoryResults(transactionId)
 
         // format created_at into date & time
-        this.results = (res || []).map(r => {
+        this.results = (res || []).map((r) => {
           const createdAt = new Date(r.created_at)
           return {
             ...r,
             date: createdAt.toLocaleDateString('en-PH', {
               year: 'numeric',
               month: 'short',
-              day: 'numeric'
+              day: 'numeric',
             }),
             time: createdAt.toLocaleTimeString('en-PH', {
               hour: '2-digit',
               minute: '2-digit',
-              second: '2-digit'
-            })
+              second: '2-digit',
+            }),
           }
         })
 
-        console.log("Loaded lab results:", this.results)
-
+        console.log('Loaded lab results:', this.results)
       } catch (error) {
-        console.error("Error loading Laboratory Services:", error)
+        console.error('Error loading Laboratory Services:', error)
         this.$q.notify({
-          type: "negative",
-          message: "Failed to load Laboratory Services"
+          type: 'negative',
+          message: 'Failed to load Laboratory Services',
         })
+      }
+    },
+
+    async loadLaboratoryOptions() {
+      await this.patientStore.fetchLaboratoryServices()
+
+      // Mapping API response into dropdown options
+      this.laboratoryOptions = this.patientStore.laboratoryServices.map((s) => ({
+        label: s.lab_name,
+        value: s.id,
+        fee: s.lab_amount,
+      }))
+    },
+
+    onLabChange(result) {
+      const service = this.laboratoryOptions.find((s) => s.value === result.laboratory_type)
+      if (service) {
+        result.amount = service.fee
       }
     },
 
@@ -715,7 +974,7 @@ export default {
           type: 'negative',
           message: 'Failed to update transaction',
           position: 'top',
-          timeout: 2000,
+          timeout: 3000,
         })
       }
     },
@@ -881,5 +1140,23 @@ export default {
   .q-btn {
     display: none !important;
   }
+}
+
+/* Transition classes */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.4s ease;
+}
+
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(20px); /* slides in/out horizontally */
+}
+
+.fade-slide-enter-to,
+.fade-slide-leave-from {
+  opacity: 0.2;
+  transform: translateX(0);
 }
 </style>

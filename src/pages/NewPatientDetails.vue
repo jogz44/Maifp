@@ -5,14 +5,99 @@
         <!-- Header with back button and title -->
         <q-card-section>
           <div class="row items-center q-mb-md">
+            <!-- Back Button -->
             <div class="col-auto">
               <q-btn icon="arrow_back" flat round dense @click="goBack" />
             </div>
+
+            <!-- Title -->
             <div class="col">
               <div class="text-h6 text-green-9 q-ml-md">Transaction Details</div>
             </div>
+
+            <!-- Toast + Info Button (Right Corner) -->
+            <div class="col-auto flex items-center">
+              <!-- Floating toast -->
+              <transition name="fade-slide">
+                <div
+                  v-if="showDoctorToast"
+                    class="q-pa-sm text-white text-caption shadow-4 absolute-top-right"
+                    style="
+                      margin-top: 15px;
+                      margin-right: 48px; /* push it left of the info button */
+                      border-radius: 10px;
+                      background: rgba(33, 150, 243, 0.75);
+                      backdrop-filter: blur(6px);
+                      white-space: nowrap;"
+                      >
+                      Doctor's fee loaded
+                </div>
+              </transition>
+              <!-- Info button -->
+              <q-btn
+                icon="info"
+                color="primary"
+                round
+                dense
+                flat
+                @click="openDoctorDialog"
+              />
+            </div>
           </div>
         </q-card-section>
+
+        <!-- Doctor Fee Dialog -->
+        <q-dialog v-model="doctorDialog" persistent>
+          <q-card style="min-width: 600px">
+            <q-card-section>
+              <div class="text-h6">Doctor's Fee</div>
+            </q-card-section>
+
+            <q-card-section>
+              <q-table
+                :rows="patientStore.doctors"
+                :columns="doctorColumns"
+                row-key="id"
+                flat
+                dense
+              >
+                <!-- Doctor Fee Column -->
+                <template v-slot:body-cell-doctor_amount="props">
+                  <q-td :props="props">
+                    <q-input
+                      v-model="props.row.doctor_amount"
+                      type="number"
+                      outlined
+                      dense
+                      :disable="!props.row.editMode"
+                    >
+                      <template v-slot:prepend>
+                        <q-td>₱</q-td>
+                      </template>
+                    </q-input>
+                  </q-td>
+                </template>
+
+                <!-- Actions Column -->
+                <template v-slot:body-cell-actions="props">
+                  <q-td :props="props">
+                    <div v-if="!props.row.editMode">
+                      <q-btn flat color="primary" label="Edit" size="sm" @click="props.row.editMode = true" />
+                    </div>
+                    <div v-else>
+                      <q-btn flat color="positive" label="Save" size="sm" @click="saveDoctorFee(props.row)" />
+                      <q-btn flat color="negative" label="Cancel" size="sm" @click="cancelEdit(props.row)" />
+                    </div>
+                  </q-td>
+                </template>
+              </q-table>
+            </q-card-section>
+
+            <q-card-actions align="right">
+              <q-btn flat label="Close" color="grey" v-close-popup />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
 
         <q-separator />
 
@@ -290,6 +375,12 @@ export default {
       patient: {},
       vitalSigns: {},
       loading: true,
+      showDoctorToast: false,
+      doctorDialog: false,
+      doctorColumns: [
+        { name: 'doctor_amount', label: "Doctor's Fee", field: 'doctor_amount', align: 'center' },
+        { name: 'actions', label: 'Actions', field: 'actions', align: 'center' }
+      ],
 
       // Separate edit modes for transaction and vital signs
       isTransactionEditMode: false,
@@ -307,16 +398,10 @@ export default {
     },
   },
 
-  mounted() {
-    // Get patientId and transactionId from route query parameters
+  mounted () {
     this.patientId = this.$route.query.patientId
     this.transactionId = this.$route.query.transactionId
 
-    console.log(
-      `Mounted TransactionDetails. Patient ID: ${this.patientId}, Transaction ID: ${this.transactionId}`,
-    )
-
-    // Load data once we have the required IDs
     if (this.transactionId) {
       this.loadTransactionData()
     } else {
@@ -328,9 +413,53 @@ export default {
       })
       this.loading = false
     }
+
+    // Trigger toast beside Info button
+    if (this.$route.query.showDoctorToast) {
+      this.showDoctorToast = true
+      setTimeout(() => {
+        this.showDoctorToast = false
+      }, 3000)
+    }
   },
 
   methods: {
+
+    async openDoctorDialog () {
+      try {
+        await this.patientStore.fetchDoctors()
+        this.doctorDialog = true
+      } catch {
+        this.$q.notify({
+          type: 'negative',
+          message: 'Failed to load doctor data'
+        })
+      }
+    },
+
+    async updateDoctorFee(row) {
+      try {
+        const payload = { id: row.id, doctor_amount: row.doctor_amount }
+        await this.patientStore.updateDoctorFee(payload)
+        this.$q.notify({ type: 'positive', message: "Doctor's fee updated!" })
+      } catch {
+        this.$q.notify({ type: 'negative', message: 'Failed to update fee' })
+      }
+    },
+    async saveDoctorFee(row) {
+      try {
+        const payload = { doctor_amount: row.doctor_amount }
+        await this.patientStore.updateDoctorFee(row.id, payload)
+        row.editMode = false
+        this.$q.notify({ type: 'positive', message: "Doctor's fee updated!" })
+      } catch {
+        this.$q.notify({ type: 'negative', message: 'Failed to update fee' })
+      }
+    },
+    cancelEdit(row) {
+      // Reset changes (optional: re-fetch data)
+      row.editMode = false
+    },
 
     async onRequireMedication() {
       const patientStore = usePatientStore()
@@ -712,5 +841,23 @@ export default {
   .q-btn {
     display: none !important;
   }
+}
+
+/* Transition classes */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.4s ease;
+}
+
+.fade-slide-enter-from,
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateX(20px); /* slides in/out horizontally */
+}
+
+.fade-slide-enter-to,
+.fade-slide-leave-from {
+  opacity: 0.2;
+  transform: translateX(0);
 }
 </style>
