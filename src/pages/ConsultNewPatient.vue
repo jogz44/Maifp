@@ -526,7 +526,7 @@ export default {
         query: {
           patientId: this.patient.id,
           transactionId: transaction.id,
-          showDoctorToast: true   //  add this flag
+          showDoctorToast: true
         },
       })
     },
