@@ -96,6 +96,8 @@
           </div>
 
           <div class="patient-info">
+            <div class="info-section-title">Patient Information</div>
+            <q-separator />
             <div class="row">
               <div class="col-6">
                 <p>
@@ -116,6 +118,30 @@
                 </p>
               </div>
             </div>
+
+            <!-- Only show representative section if data exists -->
+            <template v-if="hasRepresentativeData">
+              <div class="info-section-title">Representative Information</div>
+              <q-separator />
+              <div class="row">
+                <div class="col-6">
+                  <p>
+                    <strong>Representative Name:</strong>
+                    {{ patient.representative?.rep_name || 'N/A' }}
+                  </p>
+                  <p>
+                    <strong>Relationship:</strong>
+                    {{ patient.representative?.relationship || 'N/A' }}
+                  </p>
+                </div>
+                <div class="col-6">
+                  <p>
+                    <strong>Address:</strong>
+                    {{ patient.representative?.address || 'N/A' }}
+                  </p>
+                </div>
+              </div>
+            </template>
           </div>
 
           <div class="table-container">
@@ -136,7 +162,6 @@
                   <td class="text-left"></td>
                   <td class="text-left"></td>
                   <td class="text-left"></td>
-
                   <td class="text-right">{{ formatAmount(patient.consultation_amount) }}</td>
                 </tr>
                 <!-- Laboratories -->
@@ -216,6 +241,7 @@ const patient = ref({
   address: {},
   contact_number: '',
   transaction_date: '',
+  representative: {},
   consultation_amount: 0,
   laboratories: [],
   medication: [],
@@ -244,6 +270,16 @@ const preparerName = computed(() => {
   if (lastName) fullName += ' ' + lastName
 
   return fullName.trim() || 'Staff Member'
+})
+
+// Check if representative data exists
+const hasRepresentativeData = computed(() => {
+  return (
+    patient.value.representative &&
+    (patient.value.representative.rep_name ||
+      patient.value.representative.relationship ||
+      patient.value.representative.address)
+  )
 })
 
 onMounted(async () => {
@@ -322,38 +358,85 @@ async function handlePrint() {
   }
 
   try {
-    const canvas = await html2canvas(element, { scale: 2 })
-    const imgData = canvas.toDataURL('image/png')
+    // Pre-rendering adjustments for better text spacing
+    const allElements = element.querySelectorAll('*')
+    const originalStyles = []
+
+    // Store original styles and apply enhanced text rendering styles
+    allElements.forEach((el, index) => {
+      originalStyles[index] = {
+        letterSpacing: el.style.letterSpacing,
+        textRendering: el.style.textRendering,
+        webkitFontSmoothing: el.style.webkitFontSmoothing,
+        mozOsxFontSmoothing: el.style.mozOsxFontSmoothing,
+      }
+
+      // Apply enhanced text rendering for PDF
+      el.style.letterSpacing = '0.5px'
+      el.style.textRendering = 'optimizeLegibility'
+      el.style.webkitFontSmoothing = 'antialiased'
+      el.style.mozOsxFontSmoothing = 'grayscale'
+    })
+
+    // Wait for styles to be applied
+    await new Promise((resolve) => setTimeout(resolve, 100))
+
+    // Create a canvas from the element with improved settings
+    const canvas = await html2canvas(element, {
+      scale: 5,
+      useCORS: true,
+      allowTaint: true,
+      letterRendering: true,
+      logging: false,
+      backgroundColor: '#FFFFFF',
+    })
+
+    allElements.forEach((el, index) => {
+      if (originalStyles[index]) {
+        el.style.letterSpacing = originalStyles[index].letterSpacing
+        el.style.textRendering = originalStyles[index].textRendering
+        el.style.webkitFontSmoothing = originalStyles[index].webkitFontSmoothing
+        el.style.mozOsxFontSmoothing = originalStyles[index].mozOsxFontSmoothing
+      }
+    })
+
+    const imgData = canvas.toDataURL('image/jpeg', 1.0)
 
     const pdf = new jsPDF({
       orientation: 'portrait',
-      unit: 'pt',
+      unit: 'mm',
       format: 'letter',
+      compress: true,
     })
 
     const pageWidth = pdf.internal.pageSize.getWidth()
     const pageHeight = pdf.internal.pageSize.getHeight()
+
+    const margin = 0
+    const imgWidth = pageWidth - margin * 2
     const imgProps = pdf.getImageProperties(imgData)
-    const pdfWidth = pageWidth
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
+    const imgHeight = (imgProps.height * imgWidth) / imgProps.width
 
-    let position = 0
-    if (pdfHeight > pageHeight) {
-      let heightLeft = pdfHeight
-      while (heightLeft > 0) {
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight)
-        heightLeft -= pageHeight
-        if (heightLeft > 0) {
-          position = -(pdfHeight - heightLeft)
-          pdf.addPage()
-        }
-      }
+    if (imgHeight <= pageHeight - margin * 2) {
+      pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight)
     } else {
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight)
-    }
+      let heightLeft = imgHeight
+      let position = margin
+      let pageCount = 1
 
-    const pdfBlob = pdf.output('bloburl')
-    window.open(pdfBlob, '_blank')
+      pdf.addImage(imgData, 'JPEG', margin, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight - margin * 2
+
+      // Add subsequent pages as needed
+      while (heightLeft > 0) {
+        pdf.addPage()
+        pageCount++
+        position = margin - (pageHeight - margin * 2) * (pageCount - 1)
+        pdf.addImage(imgData, 'JPEG', margin, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight - margin * 2
+      }
+    }
+    window.open(pdf.output('bloburl'), '_blank')
   } catch (error) {
     console.error('Error generating PDF:', error)
     $q.notify({ type: 'negative', message: 'Failed to generate PDF', position: 'top' })
@@ -384,25 +467,29 @@ async function handlePrint() {
   line-height: 1.5;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   margin: 0 auto;
+  letter-spacing: 0.5px;
 }
 
 .report-content {
-  padding: 0.2in 0.5in 0.5in 0.5in;
+  padding: 10mm;
   min-height: 11in;
   position: relative;
   display: flex;
   flex-direction: column;
+  letter-spacing: 0.5px;
 }
 
 .header-container {
   margin-bottom: 20px;
   border: 1px solid #000;
   padding: 10px;
+  letter-spacing: 0.5px;
 }
 
 .header-table {
   width: 100%;
   border-collapse: collapse;
+  letter-spacing: 0.5px;
 }
 
 .logo-cell {
@@ -437,11 +524,13 @@ async function handlePrint() {
   font-size: 9pt;
   line-height: 1.3;
   padding: 5px;
+  letter-spacing: 0.5px;
 }
 
 .header-office {
   font-size: 11pt;
   font-weight: bold;
+  letter-spacing: 0.5px;
 }
 
 .office-heading {
@@ -449,6 +538,7 @@ async function handlePrint() {
   margin-bottom: 20px;
   border-bottom: 1px solid #ddd;
   padding-bottom: 10px;
+  letter-spacing: 0.5px;
 }
 
 .office-heading h3 {
@@ -458,49 +548,66 @@ async function handlePrint() {
   margin: 5px 0;
 }
 
+/* Patient info styles */
 .patient-info {
   margin-bottom: 25px;
   border: 1px solid #000;
   padding: 15px;
   border-radius: 4px;
+  letter-spacing: 0.5px;
+}
+
+.info-section-title {
+  font-size: 11pt;
+  font-weight: bold;
+  color: #2c3e50;
+  letter-spacing: 0.5px;
 }
 
 .patient-info p {
   margin: 6px 0;
   font-size: 10pt;
+  letter-spacing: 0.5px;
 }
 
 .patient-info strong {
   font-weight: bold;
   margin-right: 5px;
+  letter-spacing: 0.5px;
 }
 
+/* Table styles */
 .table-container {
   margin-bottom: 30px;
   overflow-x: auto;
+  letter-spacing: 0.5px;
 }
 
 .billing-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 10pt;
+  letter-spacing: 0.5px;
 }
 
 .billing-table th,
 .billing-table td {
   border: 1px solid #000;
   padding: 8px 12px;
+  letter-spacing: 0.5px;
 }
 
 .billing-table th {
   background-color: #f0f0f0;
   font-weight: bold;
   text-align: center;
+  letter-spacing: 0.5px;
 }
 
 .total-row {
-  border-top: 2px solid #000;
+  border-top: 1px solid #000;
   font-weight: bold;
+  letter-spacing: 0.5px;
 }
 
 .total-row td {
@@ -508,17 +615,21 @@ async function handlePrint() {
   border-bottom: 2px solid #000;
   font-weight: bold;
   background-color: #f0f0f0;
+  letter-spacing: 0.5px;
 }
 
+/* Footer styles */
 .footer {
   margin-top: auto;
   text-align: left;
   padding-top: 40px;
+  letter-spacing: 0.5px;
 }
 
 .signature-line {
   font-size: 10pt;
   margin-bottom: 5px;
+  letter-spacing: 0.5px;
 }
 
 .preparer-name {
@@ -528,11 +639,25 @@ async function handlePrint() {
   display: inline-block;
   min-width: 200px;
   text-align: center;
+  letter-spacing: 0.5px;
 }
 
+/* Global text spacing for better PDF rendering */
+.certification-report-container * {
+  letter-spacing: 0.5px !important;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Print-specific styles */
 @media print {
   .certification-report-container {
     box-shadow: none;
+  }
+
+  .certification-report-container * {
+    letter-spacing: 0.5px !important;
   }
 
   .billing-table th,
@@ -540,18 +665,32 @@ async function handlePrint() {
     border: 1px solid #000 !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+    letter-spacing: 0.5px !important;
   }
 
   .med-row td {
     background-color: #f7f7f7 !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+    letter-spacing: 0.5px !important;
   }
 
   .billing-table th {
     background-color: #f0f0f0 !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
+    letter-spacing: 0.5px !important;
+  }
+
+  /* Hide UI elements when printing directly */
+  .header-section,
+  .q-btn {
+    display: none !important;
+  }
+
+  body * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 }
 </style>
