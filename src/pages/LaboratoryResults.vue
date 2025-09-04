@@ -786,16 +786,19 @@ export default {
     async saveLaboratoryResults() {
       try {
         const payload = {
+          patient_id: this.patientId,
           transaction_id: this.transactionId,
           laboratories: this.resultsForm.map((result) => {
             const service = this.laboratoryOptions.find((s) => s.value === result.laboratory_type)
             return {
-              laboratory_type: service?.label || '', // ensure string name
+              laboratory_type: service?.label || '',
               amount: parseFloat(result.amount) || 0,
               status: 'Pending',
             }
           }),
         }
+
+        console.log("Saving lab services payload:", payload)
 
         await this.patientStore.storeLaboratoryResult(payload)
 
