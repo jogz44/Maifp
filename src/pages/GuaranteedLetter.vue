@@ -304,7 +304,11 @@ function formatAmount(amount) {
 }
 function formatAmountInWords(amount) {
   const num = parseFloat(amount)
-  if (num === 0) return 'ZERO PESOS'
+  if (isNaN(num)) return 'ZERO PESOS'
+
+  const wholePart = Math.floor(num)
+  const decimalPart = Math.round((num - wholePart) * 100)
+
   const ones = ['', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE']
   const teens = [
     'TEN',
@@ -330,14 +334,19 @@ function formatAmountInWords(amount) {
     'EIGHTY',
     'NINETY',
   ]
-  const convertHundreds = (n) => {
+
+  const convertLessThanThousand = (n) => {
+    if (n === 0) return ''
+
     let result = ''
     const hundreds = Math.floor(n / 100)
     const remainder = n % 100
+
     if (hundreds > 0) {
       result += ones[hundreds] + ' HUNDRED'
       if (remainder > 0) result += ' '
     }
+
     if (remainder >= 20) {
       const tensDigit = Math.floor(remainder / 10)
       const onesDigit = remainder % 10
@@ -348,16 +357,42 @@ function formatAmountInWords(amount) {
     } else if (remainder > 0) {
       result += ones[remainder]
     }
+
     return result
   }
+
   let result = ''
-  const millions = Math.floor(num / 1000000)
-  if (millions > 0) result += convertHundreds(millions) + ' MILLION '
-  const thousands = Math.floor((num % 1000000) / 1000)
-  if (thousands > 0) result += convertHundreds(thousands) + ' THOUSAND '
-  const hundreds = num % 1000
-  if (hundreds > 0) result += convertHundreds(hundreds)
-  return result.trim() + ' PESOS'
+  if (wholePart === 0) {
+    result = 'ZERO'
+  } else {
+    const billions = Math.floor(wholePart / 1000000000)
+    if (billions > 0) {
+      result += convertLessThanThousand(billions) + ' BILLION '
+    }
+
+    const millions = Math.floor((wholePart % 1000000000) / 1000000)
+    if (millions > 0) {
+      result += convertLessThanThousand(millions) + ' MILLION '
+    }
+
+    const thousands = Math.floor((wholePart % 1000000) / 1000)
+    if (thousands > 0) {
+      result += convertLessThanThousand(thousands) + ' THOUSAND '
+    }
+
+    const remainder = wholePart % 1000
+    if (remainder > 0) {
+      result += convertLessThanThousand(remainder)
+    }
+  }
+
+  result += ' PESOS'
+
+  if (decimalPart > 0) {
+    result += ' AND ' + convertLessThanThousand(decimalPart) + ' CENTAVOS'
+  }
+
+  return result.trim()
 }
 </script>
 
