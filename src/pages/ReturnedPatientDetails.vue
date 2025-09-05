@@ -260,6 +260,7 @@
             row-key="id"
             flat
             dense
+            :table-header-class="'bg-grey-3 text-black'"
           >
             <!-- Amount -->
             <template v-slot:body-cell-amount="props">
@@ -328,11 +329,11 @@ export default {
       originalVitalSigns: null,
 
       labColumns: [
-        { name: 'laboratory_type', label: 'Laboratory', field: 'laboratory_type', align: 'left' },
-        { name: 'amount', label: 'Amount', field: 'amount', align: 'right' },
-        { name: 'status', label: 'Status', field: 'status', align: 'center' },
-        { name: 'date', label: 'Date', field: 'date', align: 'center' },
-        { name: 'time', label: 'Time', field: 'time', align: 'center' }
+        { name: 'laboratory_type', label: 'Laboratory', field: 'laboratory_type', align: 'left', headerClasses: 'bg-grey-3 text-black' },
+        { name: 'amount', label: 'Amount', field: 'amount', align: 'right', headerClasses: 'bg-grey-3 text-black' },
+        // { name: 'status', label: 'Status', field: 'status', align: 'center' },
+        { name: 'date', label: 'Date', field: 'date', align: 'center', headerClasses: 'bg-grey-3 text-black' },
+        { name: 'time', label: 'Time', field: 'time', align: 'center', headerClasses: 'bg-grey-3 text-black' }
       ],
     }
   },

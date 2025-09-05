@@ -269,6 +269,7 @@
             flat
             dense
             class="q-mt-md"
+            :table-header-class="'bg-grey-3 text-black'"
           >
             <template v-slot:body-cell-amount="props">
               <q-td :props="props"> ₱{{ props.row.amount }} </q-td>
@@ -556,12 +557,11 @@ export default {
       results: [],
       resultsForm: [{ laboratory_type: '', time: '', date: '', amount: '' }],
       labColumns: [
-        { name: 'laboratory_type', label: 'Laboratory', field: 'laboratory_type', align: 'left' },
-        { name: 'amount', label: 'Amount', field: 'amount', align: 'right' },
-        { name: 'status', label: 'Status', field: 'status', align: 'center' },
-        { name: 'date', label: 'Date', field: 'date', align: 'center' },
-        { name: 'time', label: 'Time', field: 'time', align: 'center' },
-        { name: 'actions', label: '', field: 'actions', align: 'center' },
+        { name: 'laboratory_type', label: 'Laboratory', field: 'laboratory_type', align: 'left', headerClasses: 'bg-grey-3 text-black' },
+        { name: 'amount', label: 'Amount', field: 'amount', align: 'right', headerClasses: 'bg-grey-3 text-black'},
+        { name: 'date', label: 'Date', field: 'date', align: 'center', headerClasses: 'bg-grey-3 text-black' },
+        { name: 'time', label: 'Time', field: 'time', align: 'center', headerClasses: 'bg-grey-3 text-black' },
+        { name: 'actions', label: '', field: 'actions', align: 'center',headerClasses: 'bg-grey-3 text-black' },
       ],
     }
   },
