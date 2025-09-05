@@ -125,12 +125,14 @@
 import { ref, onMounted } from 'vue'
 import { usePatientStore } from 'src/stores/patientStore'
 import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
 import ReportHeader from 'src/components/ReportHeader.vue'
 import ReportFooter from 'src/components/ReportFooter.vue'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
 const store = usePatientStore()
+const $q = useQuasar()
 const router = useRouter()
 
 const loading = ref(true)
@@ -216,9 +218,13 @@ async function handleSubmit() {
     // Some APIs return { data: {...} }, some return directly {...}
     const result = response?.data ?? response
 
-    if (result?.success) {
-      showConfirmDialog.value = false
-      router.push('/gl')
+    if (result) {
+      $q.notify({
+        type: 'positive',
+        message: 'Funded successfully!',
+        position: 'top',
+      })
+      setTimeout(() => router.push('/billing'), 1500)
     } else {
       // ✅ Always display the actual message if present
       errorMessage.value = [

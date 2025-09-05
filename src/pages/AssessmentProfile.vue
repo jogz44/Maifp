@@ -5,12 +5,10 @@
         <!-- Patient Information Section -->
         <q-card-section>
           <div class="q-pa-sm flex justify-center">
-            <q-card class="q-pa-sm" style="max-width: 1000px; width: 100%">
-              <div class="row items-center justify-between">
-                <!-- Left: Patient Information -->
+            <q-card class="q-pa-md" style="max-width: 1000px; width: 100%">
+              <!-- Header -->
+              <div class="row items-center justify-between q-mb-md">
                 <div class="text-h6 text-green text-weight-bolder">Patient Information</div>
-
-                <!-- Right: Action Buttons -->
                 <div class="row q-gutter-sm">
                   <q-btn
                     v-if="!isEditMode"
@@ -31,165 +29,141 @@
                 </div>
               </div>
 
-              <q-separator></q-separator>
+              <q-separator />
 
-              <!-- Patient Personal Information -->
-              <div class="row q-gutter-sm">
-                <div class="col-12 col-md-3 q-pa-sm">
+              <!-- Personal Details -->
+              <div class="text-subtitle2 text-grey-8 q-mt-md q-mb-sm">Personal Details</div>
+              <div class="row q-col-gutter-md">
+                <div class="col-12 col-md-3">
                   <q-input
                     outlined
                     dense
                     v-model="patient.lastname"
-                    label="Last name"
-                    class="full-width text-caption"
+                    label="Last Name"
                     :readonly="!isEditMode"
                   />
                 </div>
-                <div class="col-12 col-md-3 q-pa-sm">
+                <div class="col-12 col-md-3">
                   <q-input
                     outlined
                     dense
                     v-model="patient.firstname"
-                    label="First name"
-                    class="full-width text-caption"
+                    label="First Name"
                     :readonly="!isEditMode"
                   />
                 </div>
-                <div class="col-12 col-md-3 q-pa-sm">
+                <div class="col-12 col-md-3">
                   <q-input
                     outlined
                     dense
                     v-model="patient.middlename"
-                    label="Middle name"
-                    class="full-width text-caption"
+                    label="Middle Name"
                     :readonly="!isEditMode"
                   />
                 </div>
-                <div class="col-12 col-md-2 q-pa-sm">
+                <div class="col-12 col-md-3">
                   <q-input
                     outlined
                     dense
                     v-model="patient.ext"
-                    label="Ext"
-                    class="full-width text-caption"
+                    label="Extension"
                     :readonly="!isEditMode"
                   />
                 </div>
               </div>
 
-              <!-- Additional Patient Information -->
-              <div class="row q-gutter-sm">
-                <div class="col-12 col-md-2 q-pa-sm">
-                  <q-select
-                    v-if="isEditMode"
+              <div class="row q-col-gutter-md q-mt-sm">
+                <div class="col-12 col-md-3">
+                  <component
+                    :is="isEditMode ? 'q-select' : 'q-input'"
                     outlined
                     dense
                     v-model="patient.gender"
-                    :options="patientStore.genderOptions"
+                    :options="isEditMode ? patientStore.genderOptions : undefined"
                     label="Gender"
-                    class="full-width text-caption"
-                  />
-                  <q-input
-                    v-else
-                    outlined
-                    dense
-                    v-model="patient.gender"
-                    label="Gender"
-                    class="full-width text-caption"
-                    readonly
+                    :readonly="!isEditMode"
                   />
                 </div>
-                <div class="col-12 col-md-1 q-pa-sm">
-                  <q-input
-                    outlined
-                    dense
-                    v-model="patient.age"
-                    label="Age"
-                    class="full-width text-caption"
-                    readonly
-                  />
+                <div class="col-12 col-md-2">
+                  <q-input outlined dense v-model="patient.age" label="Age" readonly />
                 </div>
-                <div class="col-12 col-md-2 q-pa-sm">
+                <div class="col-12 col-md-3">
                   <q-input
                     outlined
                     dense
+                    type="date"
                     v-model="patient.birthdate"
                     label="Birthdate"
-                    class="full-width text-caption"
                     :readonly="!isEditMode"
-                    type="date"
                     @update:model-value="updateAge"
                   />
                 </div>
-                <div class="col-12 col-md-4 q-pa-sm">
+                <div class="col-12 col-md-4">
                   <q-input
                     outlined
                     dense
+                    type="number"
                     v-model="patient.contact_number"
                     label="Contact Number"
-                    class="full-width text-caption"
-                    :readonly="!isEditMode"
-                  />
-                </div>
-                <div class="col-12 col-md-2 q-pa-sm">
-                  <q-input
-                    outlined
-                    dense
-                    v-model="patient.category"
-                    label="Category"
-                    class="full-width text-caption"
                     :readonly="!isEditMode"
                   />
                 </div>
               </div>
 
-              <!-- Address Information -->
-              <div class="row q-gutter-sm">
-                <div class="col-12 col-md-2 q-pa-sm">
+              <!-- Address Section -->
+              <div class="text-subtitle2 text-grey-8 q-mt-lg q-mb-sm">Address</div>
+              <div class="row q-col-gutter-md">
+                <div class="col-12 col-md-2">
                   <q-input
                     outlined
                     dense
                     v-model="patient.purok"
                     label="Purok"
-                    class="full-width text-caption"
                     :readonly="!isEditMode"
                   />
                 </div>
-                <div class="col-12 col-md-3 q-pa-sm">
+                <div class="col-12 col-md-3">
                   <q-input
                     outlined
                     dense
                     v-model="patient.street"
                     label="Street"
-                    class="full-width text-caption"
                     :readonly="!isEditMode"
                   />
                 </div>
-                <div class="col-12 col-md-3 q-pa-sm">
+                <div class="col-12 col-md-3">
                   <q-input
                     outlined
                     dense
                     v-model="patient.barangay"
                     label="Barangay"
-                    class="full-width text-caption"
                     :readonly="!isEditMode"
                   />
                 </div>
-                <div class="col-12 col-md-3 q-pa-sm">
+                <div class="col-12 col-md-4">
                   <q-input
                     outlined
                     dense
                     v-model="patient.city"
                     label="City"
-                    class="full-width text-caption"
                     :readonly="!isEditMode"
                   />
                 </div>
               </div>
 
-              <!-- Status Indicators -->
-              <div class="row q-gutter-sm q-mt-xs">
-                <div class="col-12 col-md-2 q-pa-sm">
+              <!-- Other Information -->
+              <div class="text-subtitle2 text-grey-8 q-mt-lg q-mb-sm">Other Details</div>
+              <div class="row q-col-gutter-md">
+                <div class="col-12 col-md-3">
+                  <q-input
+                    outlined
+                    dense
+                    v-model="patient.category"
+                    label="Category"
+                    :readonly="!isEditMode"
+                  />
+                </div>
+                <div class="col-12 col-md-2 flex items-center">
                   <q-checkbox
                     v-model="patient.is_pwd"
                     label="PWD"
@@ -197,7 +171,7 @@
                     :disable="!isEditMode"
                   />
                 </div>
-                <div class="col-12 col-md-2 q-pa-sm">
+                <div class="col-12 col-md-3 flex items-center">
                   <q-checkbox
                     v-model="patient.is_solo"
                     label="Solo Parent"
@@ -213,17 +187,20 @@
         <!-- Patient Transactions Section -->
         <q-card-section>
           <div class="q-pa-sm flex justify-center">
-            <q-card class="q-pa-sm" style="max-width: 1200px; width: 100%">
-              <div class="text-h6 text-green text-weight-bolder">Patient Transaction History</div>
-              <q-input
-                v-model="filterDate"
-                label="Filter by Date"
-                type="date"
-                outlined
-                denses
-                class="q-mb-md"
-                :max="today"
-              />
+            <q-card class="q-pa-sm" style="max-width: 1000px; width: 100%">
+              <!-- Header with title and filter side by side -->
+              <div class="row items-center justify-between q-mb-md">
+                <div class="text-h6 text-green text-weight-bolder">Patient Transaction History</div>
+                <q-input
+                  v-model="filterDate"
+                  label="Filter by Date"
+                  type="date"
+                  outlined
+                  dense
+                  style="width: 200px"
+                  :max="today"
+                />
+              </div>
               <q-separator />
 
               <q-table
@@ -249,9 +226,6 @@
                     </q-td>
                     <q-td key="transaction_type" style="font-size: 11px" align="left">
                       {{ props.row.transaction_type || 'N/A' }}
-                    </q-td>
-                    <q-td key="transaction_mode" style="font-size: 11px" align="left">
-                      {{ props.row.transaction_mode || 'N/A' }}
                     </q-td>
                     <q-td key="purpose" style="font-size: 11px" align="left">
                       {{ props.row.purpose || 'N/A' }}
@@ -429,14 +403,6 @@ export default {
           name: 'transaction_type',
           label: 'Type',
           field: 'transaction_type',
-          sortable: true,
-          align: 'left',
-          headerClasses: 'bg-grey-7 text-white',
-        },
-        {
-          name: 'transaction_mode',
-          label: 'Mode',
-          field: 'transaction_mode',
           sortable: true,
           align: 'left',
           headerClasses: 'bg-grey-7 text-white',
@@ -720,7 +686,7 @@ export default {
     viewTransactionDetails(transaction) {
       console.log('Viewing transaction:', transaction)
       this.$router.push({
-        path: '/customers/profile/transaction',
+        path: '/assessment/profile/transaction',
         query: { patientId: this.patient.id, transactionId: transaction.id },
       })
     },

@@ -5,7 +5,7 @@
       <q-toolbar>
         <q-btn flat dense round @click="toggleLeftDrawer()" aria-label="Menu" icon="menu" />
         <q-btn flat no-caps no-wrap class="q-ml-xs">
-          <q-icon name="local_pharmacy" color="red" size="28px" />
+          <img src="/CHO-logo.png" alt="CHO Logo" width="28" />
           <q-toolbar-title shrink class="text-weight-bold"> MAIFIP System </q-toolbar-title>
         </q-btn>
 

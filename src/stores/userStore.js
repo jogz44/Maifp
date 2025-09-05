@@ -169,9 +169,13 @@ export const useUserStore = defineStore('users', {
         console.log(response.data)
 
         if (response.data.success) {
+          // Store the token and user data
           LocalStorage.set('auth_token', response.data.data.token)
           LocalStorage.set('user', response.data.data.user)
           LocalStorage.set('role_name', response.data.data.user.role_name)
+
+          // Set the auth header immediately
+          api.defaults.headers.common['Authorization'] = `Bearer ${response.data.data.token}`
 
           return response.data
         }

@@ -165,7 +165,7 @@
                   <td class="text-right">{{ formatAmount(patient.consultation_amount) }}</td>
                 </tr>
                 <!-- Laboratories -->
-                <tr v-for="lab in patient.laboratories" :key="'lab-' + lab.id">
+                <tr v-for="lab in patient.laboratories_details" :key="'lab-' + lab.id">
                   <td>{{ lab.laboratory_type }}</td>
                   <td class="text-left"></td>
                   <td class="text-left"></td>
@@ -243,7 +243,7 @@ const patient = ref({
   transaction_date: '',
   representative: {},
   consultation_amount: 0,
-  laboratories: [],
+  laboratories_details: [],
   medication: [],
   total_billing: 0,
   discount: 0,
@@ -480,7 +480,6 @@ async function handlePrint() {
 }
 
 .header-container {
-  margin-bottom: 20px;
   border: 1px solid #000;
   padding: 10px;
   letter-spacing: 0.5px;
@@ -535,25 +534,21 @@ async function handlePrint() {
 
 .office-heading {
   text-align: center;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 10px;
   letter-spacing: 0.5px;
 }
 
 .office-heading h3 {
-  font-size: 18pt;
+  font-size: 15pt;
   font-weight: bold;
   letter-spacing: 2px;
-  margin: 5px 0;
+  margin: 0;
 }
 
 /* Patient info styles */
 .patient-info {
   margin-bottom: 25px;
   border: 1px solid #000;
-  padding: 15px;
-  border-radius: 4px;
+  padding: 7px;
   letter-spacing: 0.5px;
 }
 
@@ -586,14 +581,14 @@ async function handlePrint() {
 .billing-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 10pt;
+  font-size: 9pt;
   letter-spacing: 0.5px;
 }
 
 .billing-table th,
 .billing-table td {
   border: 1px solid #000;
-  padding: 8px 12px;
+  padding: 3px 12px;
   letter-spacing: 0.5px;
 }
 
@@ -611,8 +606,8 @@ async function handlePrint() {
 }
 
 .total-row td {
-  border-top: 2px solid #000;
-  border-bottom: 2px solid #000;
+  border-top: 1px solid #000;
+  border-bottom: 1px solid #000;
   font-weight: bold;
   background-color: #f0f0f0;
   letter-spacing: 0.5px;

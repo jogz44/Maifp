@@ -100,7 +100,7 @@ export default {
             billing: '/dashboard-billing',
           }
 
-          this.$router.push(roleRoutes[role] || '/dashboard')
+          this.$router.push(roleRoutes[role] || '/:catchAll(.*)*')
         }
       } catch (error) {
         this.$q.notify({ type: 'negative', message: error.message })

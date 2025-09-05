@@ -95,12 +95,10 @@ class AuthService {
     return LocalStorage.getItem('user')
   }
 
-
-  getCredentials(){
+  getCredentials() {
     this.initializeAuth()
     try {
-
-        console.error('getting credentials:')
+      console.error('getting credentials:')
     } catch (error) {
       console.error('Error getting credentials:', error)
       return null

@@ -75,6 +75,11 @@ const routes = [
         component: () => import('pages/AssessmentProfile.vue'),
         meta: { requiresAuth: true },
       },
+      {
+        path: '/assessment/profile/transaction',
+        component: () => import('pages/PatientDetailsAssessment.vue'),
+        meta: { requiresAuth: true },
+      },
 
       //fundings
       {
