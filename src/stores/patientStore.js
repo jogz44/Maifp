@@ -202,6 +202,7 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
+    // laboratoryReturn NOT IN USE rn because change of status to 'laboratoryStatus'
     async laboratoryReturn(id, payload) {
       this.loading = true
       this.error = null
@@ -295,7 +296,6 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
-    // fetchLaboratoryResults NOT IN USE rn because change of status
     async fetchLaboratoryResults(transactionId) {
       try {
         const response = await api.get(`/transactions/${transactionId}`)
