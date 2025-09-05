@@ -252,10 +252,10 @@
         </q-card-section>
 
         <!-- Laboratory Results Table -->
-        <q-card-section v-if="transaction.laboratories && transaction.laboratories.length">
+        <q-card-section v-if="transaction.laboratories_details && transaction.laboratories_details.length">
           <div class="text-subtitle2 q-mb-sm">Availed Laboratory Services</div>
           <q-table
-            :rows="transaction.laboratories"
+            :rows="transaction.laboratories_details"
             :columns="labColumns"
             row-key="id"
             flat

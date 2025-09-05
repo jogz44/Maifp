@@ -557,7 +557,7 @@ export default {
         })
 
         // If you want, redirect to pharmacy page
-        this.$router.push({ path: '/customers/returnConsultation' })
+        this.$router.push({ path: '/customers/newConsultation' })
       } catch (error) {
         this.$q.notify({
           type: 'negative',

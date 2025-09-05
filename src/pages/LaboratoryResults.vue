@@ -690,19 +690,18 @@ export default {
       }
 
       try {
-        await patientStore.laboratoryReturn(this.transactionId, payload)
+        await patientStore.laboratoryStatus(payload)
 
         this.$q.notify({
           type: 'positive',
           message: 'Laboratory returned successfully',
         })
 
-        // Redirect to new consultation page
         this.$router.push({ path: '/customers/laboratory' })
       } catch (error) {
         this.$q.notify({
           type: 'negative',
-          message: `Failed to store consultation: ${error.message}`,
+          message: `Failed to update status: ${error.message}`,
         })
       }
     },
@@ -711,8 +710,8 @@ export default {
       const patientStore = usePatientStore()
 
       const now = new Date()
-      const consultationDate = now.toISOString().split('T')[0] // YYYY-MM-DD
-      const consultationTime = now.toTimeString().split(' ')[0] // HH:MM:SS
+      const consultationDate = now.toISOString().split('T')[0]
+      const consultationTime = now.toTimeString().split(' ')[0]
 
       const payload = {
         patient_id: this.patientId,
@@ -723,19 +722,18 @@ export default {
       }
 
       try {
-        await patientStore.laboratoryReturn(this.transactionId, payload)
+        await patientStore.laboratoryStatus(payload)
 
         this.$q.notify({
           type: 'positive',
-          message: 'Laboratory done successfully',
+          message: 'Laboratory marked as done successfully',
         })
 
-        // Redirect to new consultation page
         this.$router.push({ path: '/customers/laboratory' })
       } catch (error) {
         this.$q.notify({
           type: 'negative',
-          message: `Failed to store Laboratory: ${error.message}`,
+          message: `Failed to update status: ${error.message}`,
         })
       }
     },
@@ -822,7 +820,6 @@ export default {
       try {
         const res = await this.patientStore.fetchLaboratoryResults(transactionId)
 
-        // format created_at into date & time
         this.results = (res || []).map((r) => {
           const createdAt = new Date(r.created_at)
           return {

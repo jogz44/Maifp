@@ -182,6 +182,26 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
+    async laboratoryStatus(payload) {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.post(`/laboratory/status`, payload)
+
+        if (response.data && response.data.patient) {
+          this.patients.push(response.data.patient)
+        }
+
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
     async laboratoryReturn(id, payload) {
       this.loading = true
       this.error = null
@@ -275,11 +295,12 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
+    // fetchLaboratoryResults NOT IN USE rn because change of status
     async fetchLaboratoryResults(transactionId) {
       try {
         const response = await api.get(`/transactions/${transactionId}`)
-        // response.data is a transaction object with .laboratories inside
-        this.laboratoryResults = response.data.laboratories || []
+        // response.data is a transaction object with .laboratories_details inside
+        this.laboratoryResults = response.data.laboratories_details || []
         return this.laboratoryResults
       } catch (error) {
         console.error('API Error (getLaboratoryResults):', error)
@@ -314,7 +335,7 @@ export const usePatientStore = defineStore('patient', {
 
       try {
         const response = await api.get('/doctor')
-        this.doctors = response.data.map(doc => ({ ...doc, editMode: false })) // 👈 add editMode
+        this.doctors = response.data.map((doc) => ({ ...doc, editMode: false })) // 👈 add editMode
         return this.doctors
       } catch (error) {
         this.handleApiError(error)
