@@ -4,11 +4,6 @@
       <q-spinner size="3em" color="primary" />
       <div class="q-mt-sm">Loading patient data...</div>
     </div>
-    <div v-else-if="error" class="text-center text-negative">
-      <q-icon name="error" size="3em" />
-      <div class="q-mt-sm">{{ error }}</div>
-      <q-btn color="primary" class="q-mt-md" label="Back" @click="handleBack" />
-    </div>
     <div v-else class="page-container">
       <!-- HEADER with Buttons -->
       <div class="header-section">
@@ -66,7 +61,6 @@
         <div class="footer">
           <ReportFooter :phone="footerPhone" :email="footerEmail" />
         </div>
-        >
       </div>
 
       <!-- Confirm Dialog -->
@@ -84,8 +78,36 @@
             </div>
           </q-card-section>
           <q-card-actions align="right" class="text-primary">
-            <q-btn flat label="Cancel" @click="showConfirmDialog = false" :disable="submitting" color="dark" />
-            <q-btn flat label="Confirm" @click="handleSubmit" :loading="submitting" color="green-9" />
+            <q-btn
+              flat
+              label="Cancel"
+              @click="showConfirmDialog = false"
+              :disable="submitting"
+              color="dark"
+            />
+            <q-btn
+              flat
+              label="Confirm"
+              @click="handleSubmit"
+              :loading="submitting"
+              color="green-9"
+            />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+
+      <!-- Error Dialog -->
+      <q-dialog v-model="showErrorDialog" persistent>
+        <q-card style="min-width: 350px">
+          <q-card-section class="row items-center">
+            <q-avatar icon="error" color="negative" text-color="white" />
+            <span class="q-ml-sm text-h6">Error</span>
+          </q-card-section>
+          <q-card-section>
+            <div class="text-body1">{{ errorMessage[0] }}</div>
+          </q-card-section>
+          <q-card-actions align="right">
+            <q-btn flat label="Back" color="primary" @click="handleBack" />
           </q-card-actions>
         </q-card>
       </q-dialog>
@@ -97,18 +119,22 @@
 import { ref, onMounted } from 'vue'
 import { usePatientStore } from 'src/stores/patientStore'
 import { useRouter } from 'vue-router'
+import { useQuasar } from 'quasar'
 import ReportHeader from 'src/components/ReportHeader.vue'
 import ReportFooter from 'src/components/ReportFooter.vue'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
 const store = usePatientStore()
+const $q = useQuasar()
 const router = useRouter()
 
 const loading = ref(true)
-const error = ref(null)
 const submitting = ref(false)
 const showConfirmDialog = ref(false)
+
+const showErrorDialog = ref(false)
+const errorMessage = ref([])
 
 const transaction_id = ref(null)
 const transaction_type = ref('')
@@ -121,6 +147,7 @@ const address = ref({ street: '', purok: '', barangay: '' })
 const transaction_date = ref('')
 const consultation_amount = ref(0)
 const laboratory_total = ref(0)
+const medication_total = ref(0)
 const total_billing = ref(0)
 const laboratories = ref([])
 const issueDate = ref(new Date())
@@ -131,14 +158,16 @@ const footerEmail = 'tagumcho@gmail.com'
 
 onMounted(async () => {
   if (!store.transaction_id) {
-    error.value = 'No transaction selected. Please select a patient from the billing list.'
+    errorMessage.value = ['No transaction selected. Please select a patient from the billing list.']
+    showErrorDialog.value = true
     loading.value = false
     return
   }
   try {
     const data = await store.getBillingDetails(store.transaction_id)
     if (!data) {
-      error.value = 'No billing data found'
+      errorMessage.value = ['No billing data found']
+      showErrorDialog.value = true
       loading.value = false
       return
     }
@@ -153,11 +182,13 @@ onMounted(async () => {
     transaction_date.value = data.transaction_date
     consultation_amount.value = data.consultation_amount
     laboratory_total.value = data.laboratory_total
+    medication_total.value = data.medication_total
     total_billing.value = data.total_billing
     laboratories.value = data.laboratories || []
     issueDate.value = new Date()
   } catch {
-    error.value = 'Failed to load billing data'
+    errorMessage.value = ['Failed to load billing data']
+    showErrorDialog.value = true
   } finally {
     loading.value = false
   }
@@ -170,36 +201,52 @@ async function handleSubmit() {
       patient_id: store.patient_id,
       transaction_id: transaction_id.value,
       laboratory_total: laboratory_total.value,
+      medication_total: medication_total.value,
       total_billing: total_billing.value,
       consultation_amount: consultation_amount.value,
     }
-    const result = await store.addGL(payload)
+
+    // Await API call
+    const response = await store.addGL(payload)
+
+    // Some APIs return { data: {...} }, some return directly {...}
+    const result = response?.data ?? response
+
     if (result) {
-      showConfirmDialog.value = false
-      window.$q.notify({
+      $q.notify({
         type: 'positive',
-        message: 'Guaranteed Letter successfully funded!',
+        message: 'Funded successfully!',
         position: 'top',
-        timeout: 3000,
       })
-      router.push('/gl')
+      setTimeout(() => router.push('/billing'), 1500)
     } else {
-      window.$q.notify({
-        type: 'negative',
-        message: 'Failed to fund guaranteed letter. Please try again.',
-        position: 'top',
-        timeout: 3000,
-      })
+      // ✅ Always display the actual message if present
+      errorMessage.value = [
+        result?.message || 'Not enough funds. Please add more funds before creating this billing.',
+      ]
+      showErrorDialog.value = true
+      console.error('API Error:', errorMessage.value[0])
     }
-  } catch {
-    window.$q.notify({
-      type: 'negative',
-      message: 'An error occurred while funding the guaranteed letter.',
-      position: 'top',
-      timeout: 3000,
-    })
+  } catch (error) {
+    let msg = 'An error occurred while funding the guaranteed letter.'
+
+    if (error.response?.data) {
+      const data = error.response.data
+      if (data.message) {
+        msg = data.message // ✅ Catch backend message
+      } else if (data.errors) {
+        msg = Array.isArray(data.errors) ? data.errors[0] : JSON.stringify(data.errors)
+      }
+    } else if (error.message) {
+      msg = error.message
+    }
+
+    errorMessage.value = [msg]
+    showErrorDialog.value = true
+    console.error('Catch Error:', errorMessage.value[0])
   } finally {
     submitting.value = false
+    showConfirmDialog.value = false
   }
 }
 
@@ -207,9 +254,6 @@ function handleBack() {
   router.back()
 }
 
-/**
- * Export certification-report-container as PDF preview in new tab
- */
 async function handlePrint() {
   const element = document.getElementById('report-container')
   if (!element) return
@@ -217,7 +261,7 @@ async function handlePrint() {
   const canvas = await html2canvas(element, { scale: 2, useCORS: true })
   const imgData = canvas.toDataURL('image/png')
 
-  const pdf = new jsPDF('p', 'mm', 'letter') // US Letter
+  const pdf = new jsPDF('p', 'mm', 'letter')
   const pdfWidth = pdf.internal.pageSize.getWidth()
   const pdfHeight = (canvas.height * pdfWidth) / canvas.width
 
@@ -254,7 +298,11 @@ function formatAmount(amount) {
 }
 function formatAmountInWords(amount) {
   const num = parseFloat(amount)
-  if (num === 0) return 'ZERO PESOS'
+  if (isNaN(num)) return 'ZERO PESOS'
+
+  const wholePart = Math.floor(num)
+  const decimalPart = Math.round((num - wholePart) * 100)
+
   const ones = ['', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE']
   const teens = [
     'TEN',
@@ -280,14 +328,19 @@ function formatAmountInWords(amount) {
     'EIGHTY',
     'NINETY',
   ]
-  const convertHundreds = (n) => {
+
+  const convertLessThanThousand = (n) => {
+    if (n === 0) return ''
+
     let result = ''
     const hundreds = Math.floor(n / 100)
     const remainder = n % 100
+
     if (hundreds > 0) {
       result += ones[hundreds] + ' HUNDRED'
       if (remainder > 0) result += ' '
     }
+
     if (remainder >= 20) {
       const tensDigit = Math.floor(remainder / 10)
       const onesDigit = remainder % 10
@@ -298,16 +351,42 @@ function formatAmountInWords(amount) {
     } else if (remainder > 0) {
       result += ones[remainder]
     }
+
     return result
   }
+
   let result = ''
-  const millions = Math.floor(num / 1000000)
-  if (millions > 0) result += convertHundreds(millions) + ' MILLION '
-  const thousands = Math.floor((num % 1000000) / 1000)
-  if (thousands > 0) result += convertHundreds(thousands) + ' THOUSAND '
-  const hundreds = num % 1000
-  if (hundreds > 0) result += convertHundreds(hundreds)
-  return result.trim() + ' PESOS'
+  if (wholePart === 0) {
+    result = 'ZERO'
+  } else {
+    const billions = Math.floor(wholePart / 1000000000)
+    if (billions > 0) {
+      result += convertLessThanThousand(billions) + ' BILLION '
+    }
+
+    const millions = Math.floor((wholePart % 1000000000) / 1000000)
+    if (millions > 0) {
+      result += convertLessThanThousand(millions) + ' MILLION '
+    }
+
+    const thousands = Math.floor((wholePart % 1000000) / 1000)
+    if (thousands > 0) {
+      result += convertLessThanThousand(thousands) + ' THOUSAND '
+    }
+
+    const remainder = wholePart % 1000
+    if (remainder > 0) {
+      result += convertLessThanThousand(remainder)
+    }
+  }
+
+  result += ' PESOS'
+
+  if (decimalPart > 0) {
+    result += ' AND ' + convertLessThanThousand(decimalPart) + ' CENTAVOS'
+  }
+
+  return result.trim()
 }
 </script>
 

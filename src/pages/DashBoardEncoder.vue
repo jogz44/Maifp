@@ -1,7 +1,7 @@
 <template>
   <q-page padding>
     <!-- Header Fund Cards -->
-    <div class="row q-col-gutter-md q-mb-lg">
+    <!-- <div class="row q-col-gutter-md q-mb-lg">
       <div class="col-xs-12 col-sm-4">
         <q-card>
           <q-card-section>
@@ -26,7 +26,7 @@
           </q-card-section>
         </q-card>
       </div>
-    </div>
+    </div> -->
 
     <!-- Patient Monitoring Section -->
     <div class="text-h6 text-green-9 font-bold q-mt-none q-mb-md">Patient Monitoring</div>
@@ -34,36 +34,30 @@
     <!-- Steps -->
     <div class="row q-col-gutter-md">
       <div v-for="(step, index) in steps" :key="index" class="col-xs-12 col-sm-6 col-md">
-        <router-link :to="step.route" class="no-decoration">
-          <q-card class="h-100 cursor-pointer" hover>
-            <!-- Header -->
-            <q-card-section class="bg-green-9 text-white flex justify-between items-center">
-              <div class="text-h7">Step {{ index + 1 }}: {{ step.name }}</div>
-              <q-badge rounded :color="step.patients.length > 0 ? 'red-9' : 'grey'" class="q-ml-sm">
-                {{ step.patients.length }}
-              </q-badge>
-            </q-card-section>
+        <q-card class="h-100 cursor-pointer" hover>
+          <!-- Header -->
+          <q-card-section class="bg-green-9 text-white flex justify-between items-center">
+            <div class="text-h7">Step {{ index + 1 }}: {{ step.name }}</div>
+            <q-badge rounded :color="step.patients.length > 0 ? 'red-9' : 'grey'" class="q-ml-sm">
+              {{ step.patients.length }}
+            </q-badge>
+          </q-card-section>
 
-            <q-separator />
+          <q-separator />
 
-            <!-- Patients -->
-            <q-card-section class="scroll-hidden">
-              <div class="row q-col-gutter-sm">
-                <div
-                  v-for="(patient, pIndex) in step.patients"
-                  :key="pIndex"
-                  class="col-12 q-mb-xs"
-                >
-                  {{ patient.firstname }} {{ patient.lastname }}
-                </div>
-
-                <div v-if="step.patients.length === 0" class="col-12 text-grey text-center">
-                  No patients
-                </div>
+          <!-- Patients -->
+          <q-card-section class="scroll-hidden">
+            <div class="row q-col-gutter-sm">
+              <div v-for="(patient, pIndex) in step.patients" :key="pIndex" class="col-12 q-mb-xs">
+                {{ patient.firstname }} {{ patient.lastname }}
               </div>
-            </q-card-section>
-          </q-card>
-        </router-link>
+
+              <div v-if="step.patients.length === 0" class="col-12 text-grey text-center">
+                No patients
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
       </div>
     </div>
   </q-page>
@@ -79,13 +73,13 @@ export default {
   data() {
     return {
       steps: [
-        { name: 'Assessment', patients: [], route: '/assessment' },
-        { name: 'New', patients: [], route: '/customers/newconsultation' },
-        { name: 'Laboratory', patients: [], route: '/customers/laboratory' },
-        { name: 'Returned', patients: [], route: '/customers/returnconsultation' },
+        { name: 'Assessment', patients: [] },
+        { name: 'New', patients: [] },
+        { name: 'Laboratory', patients: [] },
+        { name: 'Returned', patients: [] },
         { name: 'Medicine', patients: [] },
-        { name: 'Billing', patients: [], route: '/billing' },
-        { name: 'GL', patients: [], route: '/gl' },
+        { name: 'Billing', patients: [] },
+        { name: 'GL', patients: [] },
       ],
       intervalId: null,
       fundStore: null,

@@ -1,10 +1,11 @@
 <template>
   <q-layout view="hHh Lpr lFf">
+    <!-- HEADER -->
     <q-header elevated class="bg-white text-grey-8 q-py-xs" height-hint="58">
       <q-toolbar>
         <q-btn flat dense round @click="toggleLeftDrawer()" aria-label="Menu" icon="menu" />
         <q-btn flat no-caps no-wrap class="q-ml-xs">
-          <q-icon name="local_pharmacy" color="red" size="28px" />
+          <img src="/CHO-logo.png" alt="CHO Logo" width="28" />
           <q-toolbar-title shrink class="text-weight-bold"> MAIFIP System </q-toolbar-title>
         </q-btn>
 
@@ -40,24 +41,31 @@
         </div>
       </q-toolbar>
     </q-header>
+
+    <!-- DRAWER -->
     <q-drawer v-model="leftDrawerOpen" show-if-above bordered class="bg-green-10 text-white">
       <q-list>
         <q-item></q-item>
-        <q-item clickable v-ripple to="/dashboard">
+
+        <!-- Dashboard - Available to all roles -->
+        <q-item clickable v-ripple :to="dashboardRoute">
           <div class="row items-center">
             <q-icon name="dashboard" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Dashboard</span>
           </div>
         </q-item>
 
-        <q-item clickable v-ripple to="/customers">
+        <!-- Patient Info - Available to admin and coder -->
+        <q-item v-if="canAccessPatientInfo" clickable v-ripple to="/customers">
           <div class="row items-center">
             <q-icon name="person" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Patient Info</span>
           </div>
         </q-item>
 
+        <!-- MAIFIP MENU - Available to admin and social -->
         <q-expansion-item
+          v-if="canAccessMAIFIP"
           label="MAIFIP"
           icon="volunteer_activism"
           icon-class="q-mr-xs"
@@ -67,27 +75,52 @@
           <q-item clickable v-ripple to="/assessment">
             <q-item-section class="q-ml-sm">
               <q-item-label class="text-caption">
-                <q-icon name="assignment" class="q-ml-md q-mr-lg" size="24px" />Assessment
+                <q-icon name="assignment" class="q-ml-md q-mr-lg" size="24px" />
+                Assessment
               </q-item-label>
             </q-item-section>
+            <q-item-section side>
+              <q-badge
+                v-if="badgeStore.assessed > 0"
+                :label="badgeStore.assessed"
+                color="red-9"
+                rounded
+                class="q-ml-sm"
+              />
+            </q-item-section>
           </q-item>
+
           <q-item clickable v-ripple to="/gl">
             <q-item-section class="q-ml-sm">
               <q-item-label class="text-caption">
-                <q-icon name="category" class="q-ml-md q-mr-lg" size="24px" />Guaranteed Letter
+                <q-icon name="category" class="q-ml-md q-mr-lg" size="24px" />
+                Guaranteed Letter
               </q-item-label>
             </q-item-section>
+            <q-item-section side>
+              <q-badge
+                v-if="badgeStore.gl > 0"
+                :label="badgeStore.gl"
+                color="red-9"
+                rounded
+                class="q-ml-sm"
+              />
+            </q-item-section>
           </q-item>
+
           <q-item clickable v-ripple to="/fundings">
             <q-item-section class="q-ml-sm">
               <q-item-label class="text-caption">
-                <q-icon name="wallet" class="q-ml-md q-mr-lg" size="24px" />Fundings
+                <q-icon name="wallet" class="q-ml-md q-mr-lg" size="24px" />
+                Fundings
               </q-item-label>
             </q-item-section>
           </q-item>
         </q-expansion-item>
 
+        <!-- CONSULTATION MENU - Available to admin and doctor -->
         <q-expansion-item
+          v-if="canAccessConsultation"
           label="Consultation"
           icon="forum"
           icon-class="q-mr-xs"
@@ -101,12 +134,11 @@
                 New Consultation
               </q-item-label>
             </q-item-section>
-
             <q-item-section side>
               <q-badge
-                v-if="patientStore.totalQualifiedCount > 0"
-                :label="patientStore.totalQualifiedCount"
-                color="red"
+                v-if="badgeStore.qualified > 0"
+                :label="badgeStore.qualified"
+                color="red-9"
                 rounded
                 class="q-ml-sm"
               />
@@ -120,12 +152,11 @@
                 Return Consultation
               </q-item-label>
             </q-item-section>
-
             <q-item-section side>
               <q-badge
-                v-if="patientStore.totalReturnedCount > 0"
-                :label="patientStore.totalReturnedCount"
-                color="red"
+                v-if="badgeStore.returned > 0"
+                :label="badgeStore.returned"
+                color="red-9"
                 rounded
                 class="q-ml-sm"
               />
@@ -133,29 +164,51 @@
           </q-item>
         </q-expansion-item>
 
-        <q-item clickable v-ripple to="/customers/laboratory">
+        <q-item v-if="canAccessLaboratory" clickable v-ripple to="/customers/laboratory">
           <div class="row items-center">
             <q-icon name="science" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Laboratory</span>
-
             <q-badge
-              v-if="patientStore.totalLaboratoryCount > 0"
-              :label="patientStore.totalLaboratoryCount"
-              color="red"
+              v-if="badgeStore.laboratory > 0"
+              :label="badgeStore.laboratory"
+              color="red-9"
               rounded
               class="q-ml-sm"
             />
           </div>
         </q-item>
 
-        <q-item clickable v-ripple to="/billing">
+        <q-item v-if="canAccessBilling" clickable v-ripple to="/billing">
           <div class="row items-center">
             <q-icon name="receipt_long" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Billing</span>
+            <q-badge
+              v-if="badgeStore.billing > 0"
+              :label="badgeStore.billing"
+              color="red-9"
+              rounded
+              class="q-ml-sm"
+            />
           </div>
         </q-item>
 
-        <q-item clickable v-ripple to="/users/list">
+        <!-- Master List - Available to admin only -->
+        <q-item v-if="canAccessMasterList" clickable v-ripple to="/masterlist">
+          <div class="row items-center">
+            <q-icon name="list" size="24px" class="q-mr-md" />
+            <span class="text-sm" style="padding-left: 16px">Master List</span>
+          </div>
+        </q-item>
+
+        <q-item v-if="canAccessMasterList" clickable v-ripple to="/activity">
+          <div class="row items-center">
+            <q-icon name="history" size="24px" class="q-mr-md" />
+            <span class="text-sm" style="padding-left: 16px">Activity Log</span>
+          </div>
+        </q-item>
+
+        <!-- User Management - Available to admin only -->
+        <q-item v-if="canAccessUserManagement" clickable v-ripple to="/users/list">
           <div class="row items-center">
             <q-icon name="supervisor_account" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">User Management</span>
@@ -164,6 +217,7 @@
       </q-list>
     </q-drawer>
 
+    <!-- PAGE CONTENT -->
     <q-page-container>
       <router-view />
     </q-page-container>
@@ -173,7 +227,8 @@
 <script>
 import auth from 'src/services/auth'
 import { useUserStore } from 'src/stores/userStore'
-import { usePatientStore } from 'src/stores/patientStore'
+import { usePatientBadgeStore } from 'src/stores/badgeStore'
+import { LocalStorage } from 'quasar'
 
 export default {
   name: 'MyLayout',
@@ -181,17 +236,12 @@ export default {
   setup() {
     const ausSrvc = auth
     const userStore = useUserStore()
-    const patientStore = usePatientStore()
-
-    // fetch patients when mounted
-    patientStore.fetchQualifiedPatients()
-    patientStore.fetchReturnedPatients()
-    patientStore.fetchLaboratoryPatients()
+    const badgeStore = usePatientBadgeStore()
 
     return {
       ausSrvc,
       userStore,
-      patientStore,
+      badgeStore,
     }
   },
 
@@ -200,7 +250,83 @@ export default {
       leftDrawerOpen: false,
       expanded: true,
       expandedConsultation: false,
+      badgeInterval: null,
+      userRole: null,
+      rolePermissions: {
+        admin: [
+          'dashboard',
+          'patient-info',
+          'maifip',
+          'consultation',
+          'laboratory',
+          'billing',
+          'masterlist',
+          'user-management',
+        ],
+        social: ['dashboard', 'maifip'],
+        coder: ['dashboard', 'patient-info'],
+        doctor: ['dashboard', 'consultation'],
+        laboratory: ['dashboard', 'laboratory'],
+        billing: ['dashboard', 'billing'],
+      },
     }
+  },
+
+  computed: {
+    currentUserRole() {
+      return this.userRole || LocalStorage.getItem('role_name') || 'guest'
+    },
+
+    allowedModules() {
+      return this.rolePermissions[this.currentUserRole] || ['dashboard']
+    },
+
+    canAccessPatientInfo() {
+      return this.allowedModules.includes('patient-info')
+    },
+
+    canAccessMAIFIP() {
+      return this.allowedModules.includes('maifip')
+    },
+
+    canAccessConsultation() {
+      return this.allowedModules.includes('consultation')
+    },
+
+    canAccessLaboratory() {
+      return this.allowedModules.includes('laboratory')
+    },
+
+    canAccessBilling() {
+      return this.allowedModules.includes('billing')
+    },
+
+    canAccessMasterList() {
+      return this.allowedModules.includes('masterlist')
+    },
+
+    canAccessUserManagement() {
+      return this.allowedModules.includes('user-management')
+    },
+
+    dashboardRoute() {
+      switch (this.currentUserRole) {
+        case 'admin':
+          return '/dashboard'
+        case 'coder':
+          return '/dashboard-encoder'
+        case 'social':
+          return '/dashboard-social'
+        case 'doctor':
+          return '/dashboard-doctor'
+        case 'laboratory':
+          return '/dashboard-lab'
+        case 'billing':
+          return '/dashboard-billing'
+        default:
+          return '/:catchAll(.*)*'
+      }
+    },
   },
 
   methods: {
@@ -223,17 +349,38 @@ export default {
       const user = JSON.parse(sanitized_object)
       this.userStore.authenticatedUser = user.id
     },
+
+    // Method to check if user can access specific modules
+    canAccess(allowedRoles) {
+      return allowedRoles.includes(this.currentUserRole)
+    },
+
+    hasModuleAccess(moduleName) {
+      return this.allowedModules.includes(moduleName)
+    },
+
+    setUserRole() {
+      this.userRole = LocalStorage.getItem('role_name')
+    },
   },
 
-  mounted() {
+  async mounted() {
     if (this.ausSrvc.isAuthenticated()) {
       this.ausSrvc.initializeAuth()
       this.GetUserID()
-      this.patientStore.fetchQualifiedPatients()
-      this.patientStore.fetchReturnedPatients()
-      this.patientStore.fetchLaboratoryPatients()
+      this.setUserRole()
+      await this.badgeStore.fetchBadges()
+
+      this.badgeInterval = setInterval(async () => {
+        await this.badgeStore.fetchBadges()
+      }, 10000)
+    }
+  },
+
+  beforeUnmount() {
+    if (this.badgeInterval) {
+      clearInterval(this.badgeInterval)
     }
   },
 }
 </script>
-<style scoped></style>

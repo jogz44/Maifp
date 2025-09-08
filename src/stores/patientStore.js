@@ -25,7 +25,6 @@ export const usePatientStore = defineStore('patient', {
       contact_number: '',
       age: 0,
       gender: '',
-      is_not_tagum: false,
       street: '',
       purok: '',
       barangay: '',
@@ -34,6 +33,16 @@ export const usePatientStore = defineStore('patient', {
       category: '',
       is_pwd: false,
       is_solo: false,
+
+      // Representative information
+      rep_name: '',
+      rep_relationship: '',
+      rep_contact: '',
+      rep_barangay: '',
+      rep_purok: '',
+      rep_street: '',
+      rep_city: 'Tagum City',
+      rep_province: 'Davao del Norte',
 
       // Transaction information default values
       transaction_date: date.formatDate(new Date(), 'YYYY-MM-DD'),
@@ -113,6 +122,22 @@ export const usePatientStore = defineStore('patient', {
 
       try {
         const response = await api.get('/patients')
+        this.patients = response.data
+        return this.patients
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async fetchMasterListPatients() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/patients/master_list')
         this.patients = response.data
         return this.patients
       } catch (error) {
@@ -527,6 +552,37 @@ export const usePatientStore = defineStore('patient', {
       // Ensure BMI is calculated and stored as string
       patientData = this.updateBMI(patientData)
 
+      // Format data for submission - ensure all numeric values are strings
+      const numericFields = [
+        'height',
+        'weight',
+        'age',
+        'heart_rate',
+        'respiratory_rate',
+        'pulse_rate',
+        'temperature',
+        'sp02',
+        'waist',
+      ]
+
+      numericFields.forEach((field) => {
+        if (patientData[field]) {
+          patientData[field] = patientData[field].toString()
+        }
+      })
+
+      // Ensure rep_city and rep_province are set if representative is enabled
+      if (patientData.rep_name) {
+        if (!patientData.rep_city) patientData.rep_city = 'Tagum City'
+        if (!patientData.rep_province) patientData.rep_province = 'Davao del Norte'
+      }
+
+      console.log('Submitting patient with rep data:', {
+        rep_name: patientData.rep_name,
+        rep_city: patientData.rep_city,
+        rep_province: patientData.rep_province,
+      })
+
       try {
         const response = await api.post('/patients/store', patientData)
         // Add the new patient to the list
@@ -548,6 +604,31 @@ export const usePatientStore = defineStore('patient', {
 
       // Ensure BMI is calculated and stored as string
       patientData = this.updateBMI(patientData)
+
+      // Format data for submission - ensure all numeric values are strings
+      const numericFields = [
+        'height',
+        'weight',
+        'age',
+        'heart_rate',
+        'respiratory_rate',
+        'pulse_rate',
+        'temperature',
+        'sp02',
+        'waist',
+      ]
+
+      numericFields.forEach((field) => {
+        if (patientData[field]) {
+          patientData[field] = patientData[field].toString()
+        }
+      })
+
+      // Ensure rep_city and rep_province are set if representative is enabled
+      if (patientData.rep_name) {
+        if (!patientData.rep_city) patientData.rep_city = 'Tagum City'
+        if (!patientData.rep_province) patientData.rep_province = 'Davao del Norte'
+      }
 
       try {
         const response = await api.put(`/patients/update/${id}`, patientData)
@@ -674,6 +755,30 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
+    async updateRepresentative(id, representative) {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.put(`/transactions/representative/${id}`, representative)
+
+        // Update the current patient's transactions if they exist
+        if (this.currentPatient && this.currentPatient.Vital) {
+          const index = this.currentPatient.representative.findIndex((r) => r.id === id)
+          if (index !== -1) {
+            this.currentPatient.representative[index] = response.data
+          }
+        }
+
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
     // Create new transaction - UPDATED to send all data in single form
     async createNewTransaction(transactionData) {
       this.loading = true
@@ -725,6 +830,16 @@ export const usePatientStore = defineStore('patient', {
           sp02: transactionData.sp02 || '',
           LMP: transactionData.LMP || '',
           medicine: transactionData.medicine || '',
+
+          // Representative fields
+          rep_name: transactionData.rep_name || '',
+          rep_relationship: transactionData.rep_relationship || '',
+          rep_contact: transactionData.rep_contact || '',
+          rep_purok: transactionData.rep_purok || '',
+          rep_street: transactionData.rep_street || '',
+          rep_barangay: transactionData.rep_barangay || '',
+          rep_city: transactionData.rep_city || '',
+          rep_province: transactionData.rep_province || '',
         }
 
         console.log('Sending transaction data:', completeTransactionData)

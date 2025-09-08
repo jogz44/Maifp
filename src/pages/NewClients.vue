@@ -90,7 +90,10 @@
                 v-model="patientData.contact_number"
                 label="Contact Number"
                 class="text-caption"
-                type="number"
+                type="text"
+                maxlength="11"
+                :rules="[(val) => !val || val.length === 11 || 'Contact number must be 11 digits']"
+                mask="###########"
               />
             </div>
           </div>
@@ -102,12 +105,6 @@
             <div class="row items-center">
               <div class="text-subtitle2 q-mb-sm">Address Information</div>
               <q-space />
-              <q-checkbox
-                v-model="isNotFromCity"
-                label="Not From This City"
-                @change="handleLocationToggle"
-                class="text-caption"
-              />
             </div>
 
             <div class="row q-col-gutter-md">
@@ -116,7 +113,7 @@
                   outlined
                   dense
                   v-model="patientData.barangay"
-                  :options="isNotFromCity ? [] : TagumBarangay.barangay"
+                  :options="TagumBarangay.barangay"
                   label="Barangay *"
                   class="text-caption"
                   :input-debounce="0"
@@ -152,11 +149,7 @@
                   v-model="patientData.city"
                   label="City"
                   class="text-caption"
-                  :readonly="!isNotFromCity"
-                  lazy-rules
-                  :rules="[
-                    (val) => !isNotFromCity || !!val || 'City is required when not from Tagum City',
-                  ]"
+                  readonly
                 />
               </div>
               <div class="col-12 col-md-6">
@@ -166,12 +159,132 @@
                   v-model="patientData.province"
                   label="Province"
                   class="text-caption"
-                  :readonly="!isNotFromCity"
+                  readonly
+                />
+              </div>
+            </div>
+          </div>
+
+          <q-separator spaced inset />
+
+          <!-- Representative Section -->
+          <div>
+            <div class="row items-center">
+              <div class="text-subtitle2 q-mb-sm">Patient Representative</div>
+              <q-space />
+              <q-checkbox
+                v-model="hasRepresentative"
+                label="Has Patient Representative?"
+                class="text-caption"
+              />
+            </div>
+
+            <div v-if="hasRepresentative" class="row q-col-gutter-md q-mt-sm">
+              <div class="col-12 col-md-4">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.rep_name"
+                  label="Representative Name *"
+                  class="text-caption"
                   lazy-rules
                   :rules="[
-                    (val) =>
-                      !isNotFromCity || !!val || 'Province is required when not from Tagum City',
+                    (val) => !hasRepresentative || !!val || 'Representative name is required',
                   ]"
+                />
+              </div>
+              <div class="col-12 col-md-4">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.rep_relationship"
+                  label="Relationship to Patient *"
+                  class="text-caption"
+                  lazy-rules
+                  :rules="[(val) => !hasRepresentative || !!val || 'Relationship is required']"
+                />
+              </div>
+
+              <div class="col-12 col-md-4">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.rep_contact"
+                  label="Contact Number"
+                  class="text-caption"
+                  type="text"
+                  maxlength="11"
+                  mask="###########"
+                  :rules="[
+                    (val) => !val || val.length === 11 || 'Contact number must be 11 digits',
+                  ]"
+                />
+              </div>
+
+              <!-- Fix for address section header -->
+              <div class="col-12">
+                <div class="row items-center">
+                  <div class="text-subtitle2 q-mb-sm">Representative Address</div>
+                  <q-space />
+                  <q-checkbox
+                    v-model="sameAsPatientAddress"
+                    label="Same as Patient's Address"
+                    class="text-caption"
+                    @update:model-value="handleSameAddressChange"
+                  />
+                </div>
+              </div>
+
+              <div class="col-12 col-md-4" v-if="!sameAsPatientAddress">
+                <q-select
+                  outlined
+                  dense
+                  v-model="patientData.rep_barangay"
+                  :options="TagumBarangay.barangay"
+                  label="Barangay"
+                  class="text-caption"
+                  :input-debounce="0"
+                  use-input
+                  hide-selected
+                  fill-input
+                />
+              </div>
+              <div class="col-12 col-md-4" v-if="!sameAsPatientAddress">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.rep_purok"
+                  label="Purok"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-4" v-if="!sameAsPatientAddress">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.rep_street"
+                  label="Street"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-6" v-if="!sameAsPatientAddress">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.rep_city"
+                  label="City"
+                  class="text-caption"
+                  readonly
+                />
+              </div>
+              <div class="col-12 col-md-6" v-if="!sameAsPatientAddress">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.rep_province"
+                  label="Province"
+                  class="text-caption"
+                  readonly
                 />
               </div>
             </div>
@@ -331,7 +444,7 @@
               />
             </div>
 
-            <div class="col-12 col-md-6">
+            <div class="col-12 col-md-6" v-if="isFemale">
               <q-input
                 outlined
                 dense
@@ -373,18 +486,6 @@
                 :rules="[(val) => !!val || 'Date is required']"
               />
             </div>
-            <!-- <div class="col-12 col-md-6">
-              <q-select
-                outlined
-                dense
-                v-model="patientData.transaction_mode"
-                :options="patientStore.transactionModes"
-                label="Mode of Transaction"
-                class="text-caption"
-                lazy-rules
-                :rules="[(val) => !!val || 'Mode is required']"
-              />
-            </div> -->
             <div class="col-12">
               <q-select
                 outlined
@@ -457,12 +558,13 @@ export default defineComponent({
     const patientStore = usePatientStore()
     const patientForm = ref(null)
 
-    // Form data - use a single patientData object
+    // Form data
     const patientData = ref({ ...patientStore.patientInfoDefault })
+    const hasRepresentative = ref(false)
+    const sameAsPatientAddress = ref(true)
 
     // UI state
     const showError = ref(false)
-    const isNotFromCity = ref(false)
     const isChild = ref(false)
     const isAdult = ref(false)
     const isSenior = ref(false)
@@ -475,26 +577,32 @@ export default defineComponent({
       return patientStore.error
     })
 
+    const isFemale = computed(() => {
+      return patientData.value.gender === 'Female'
+    })
+
     // Initialize component
     onMounted(() => {
-      // Set default date for transaction
+      // Set default values
       patientData.value.transaction_date = date.formatDate(new Date(), 'YYYY-MM-DD')
-
-      // Reset any patient ID that might be stored
       patientStore.patient_id = null
       patientStore.isSave = true
 
-      // Set default city and province
+      // Set fixed city and province
       patientData.value.city = 'Tagum City'
       patientData.value.province = 'Davao del Norte'
+      patientData.value.rep_city = 'Tagum City'
+      patientData.value.rep_province = 'Davao del Norte'
+
+      // Reset representative values
+      resetRepresentativeData()
     })
 
-    // Clean up when component is destroyed
     onUnmounted(() => {
       patientStore.resetStore()
     })
 
-    // Watch for age changes to update category
+    // Set patient category based on age
     watch(
       () => patientData.value.age,
       (newAge) => {
@@ -517,26 +625,68 @@ export default defineComponent({
       },
     )
 
+    // Watch representative checkbox
+    watch(
+      () => hasRepresentative.value,
+      (hasRep) => {
+        if (!hasRep) {
+          resetRepresentativeData()
+        } else {
+          sameAsPatientAddress.value = true
+          updateRepAddressFromPatient()
+        }
+      },
+    )
+
     // Methods
+    const resetRepresentativeData = () => {
+      patientData.value.rep_name = ''
+      patientData.value.rep_relationship = ''
+      patientData.value.rep_barangay = ''
+      patientData.value.rep_purok = ''
+      patientData.value.rep_street = ''
+      patientData.value.rep_contact = ''
+      // Add these two lines to ensure defaults are set
+      patientData.value.rep_city = 'Tagum City'
+      patientData.value.rep_province = 'Davao del Norte'
+
+      sameAsPatientAddress.value = true
+    }
+
+    const updateRepAddressFromPatient = () => {
+      if (sameAsPatientAddress.value) {
+        patientData.value.rep_barangay = patientData.value.barangay
+        patientData.value.rep_purok = patientData.value.purok
+        patientData.value.rep_street = patientData.value.street
+        patientData.value.rep_city = patientData.value.city
+        patientData.value.rep_province = patientData.value.province
+
+        // Log for debugging
+        console.log('Updated rep address:', {
+          city: patientData.value.rep_city,
+          province: patientData.value.rep_province,
+        })
+      }
+    }
+
+    const handleSameAddressChange = () => {
+      if (sameAsPatientAddress.value) {
+        updateRepAddressFromPatient()
+      } else {
+        patientData.value.rep_barangay = ''
+        patientData.value.rep_purok = ''
+        patientData.value.rep_street = ''
+        patientData.value.rep_city = 'Tagum City'
+        patientData.value.rep_province = 'Davao del Norte'
+      }
+    }
+
     const handleBirthdateChange = () => {
       if (patientData.value.birthdate) {
         patientData.value.age = patientStore.calculateAge(patientData.value.birthdate)
       }
     }
 
-    const handleLocationToggle = () => {
-      patientData.value.is_not_tagum = isNotFromCity.value
-
-      if (!isNotFromCity.value) {
-        patientData.value.city = 'Tagum City'
-        patientData.value.province = 'Davao del Norte'
-      } else {
-        patientData.value.city = ''
-        patientData.value.province = ''
-      }
-    }
-
-    // Fixed BMI calculation function
     const calculateBMI = () => {
       const height = parseFloat(patientData.value.height)
       const weight = parseFloat(patientData.value.weight)
@@ -546,13 +696,8 @@ export default defineComponent({
         return
       }
 
-      // Convert height from cm to meters
       const heightInMeters = height / 100
-
-      // Calculate BMI: weight (kg) / (height (m) * height (m))
       const bmi = weight / (heightInMeters * heightInMeters)
-
-      // Round to 2 decimal places AND convert to string
       patientData.value.bmi = (Math.round(bmi * 100) / 100).toString()
     }
 
@@ -569,15 +714,18 @@ export default defineComponent({
       patientData.value.transaction_date = getCurrentDate()
       patientData.value.city = 'Tagum City'
       patientData.value.province = 'Davao del Norte'
+      // Ensure these are explicitly set after resetting the form
+      patientData.value.rep_city = 'Tagum City'
+      patientData.value.rep_province = 'Davao del Norte'
 
-      isNotFromCity.value = false
+      hasRepresentative.value = false
+      sameAsPatientAddress.value = true
       isChild.value = false
       isAdult.value = false
       isSenior.value = false
     }
 
     const submitPatientForm = async () => {
-      // Validate form
       const isValid = await patientForm.value.validate()
 
       if (!isValid) {
@@ -589,27 +737,18 @@ export default defineComponent({
         return
       }
 
-      // Make sure BMI is calculated and stored as string
+      // Calculate BMI again to ensure latest value
       calculateBMI()
 
-      // Ensure numeric fields are properly formatted for API
-      const formattedData = { ...patientData.value }
+      // Update representative address if needed
+      if (hasRepresentative.value && sameAsPatientAddress.value) {
+        updateRepAddressFromPatient()
+      }
 
-      // Convert numeric values to strings for the backend
-      if (formattedData.height) formattedData.height = formattedData.height.toString()
-      if (formattedData.weight) formattedData.weight = formattedData.weight.toString()
-      if (formattedData.age) formattedData.age = formattedData.age.toString()
-      if (formattedData.heart_rate) formattedData.heart_rate = formattedData.heart_rate.toString()
-      if (formattedData.respiratory_rate)
-        formattedData.respiratory_rate = formattedData.respiratory_rate.toString()
-      if (formattedData.pulse_rate) formattedData.pulse_rate = formattedData.pulse_rate.toString()
-      if (formattedData.temperature)
-        formattedData.temperature = formattedData.temperature.toString()
-      if (formattedData.sp02) formattedData.sp02 = formattedData.sp02.toString()
-      if (formattedData.waist) formattedData.waist = formattedData.waist.toString()
+      // Format data for submission
+      const formattedData = formatDataForSubmission()
 
       try {
-        // Create new patient
         await patientStore.newPatient(formattedData)
         $q.notify({
           type: 'positive',
@@ -619,12 +758,65 @@ export default defineComponent({
         })
         clearInputs()
 
-        // Navigate back to patient list
         router.push('/customers')
       } catch {
         showError.value = true
       }
     }
+
+    // Format data before submission
+    const formatDataForSubmission = () => {
+      const formattedData = { ...patientData.value }
+
+      // If representative is enabled but using same address, ensure city and province are copied
+      if (hasRepresentative.value && sameAsPatientAddress.value) {
+        formattedData.rep_city = patientData.value.city
+        formattedData.rep_province = patientData.value.province
+      }
+
+      // Convert numeric values to strings
+      const numericFields = [
+        'height',
+        'weight',
+        'age',
+        'heart_rate',
+        'respiratory_rate',
+        'pulse_rate',
+        'temperature',
+        'sp02',
+        'waist',
+      ]
+
+      numericFields.forEach((field) => {
+        if (formattedData[field]) {
+          formattedData[field] = formattedData[field].toString()
+        }
+      })
+
+      // Debug log the data before submission
+      console.log('Submitting patient data with rep city/province:', {
+        rep_city: formattedData.rep_city,
+        rep_province: formattedData.rep_province,
+      })
+
+      return formattedData
+    }
+
+    // Watch patient address fields to update rep address
+    watch(
+      [
+        () => patientData.value.barangay,
+        () => patientData.value.purok,
+        () => patientData.value.street,
+        () => patientData.value.city,
+        () => patientData.value.province,
+      ],
+      () => {
+        if (sameAsPatientAddress.value && hasRepresentative.value) {
+          updateRepAddressFromPatient()
+        }
+      },
+    )
 
     return {
       TagumBarangay,
@@ -633,18 +825,19 @@ export default defineComponent({
       patientData,
       showError,
       errorMessage,
-      isNotFromCity,
       isChild,
       isAdult,
       isSenior,
+      isFemale,
+      hasRepresentative,
+      sameAsPatientAddress,
 
-      // Methods
       handleBirthdateChange,
-      handleLocationToggle,
       calculateBMI,
-      getCurrentDate,
       clearInputs,
       submitPatientForm,
+      handleSameAddressChange,
+      updateRepAddressFromPatient,
     }
   },
 })

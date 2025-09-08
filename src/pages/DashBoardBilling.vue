@@ -78,15 +78,7 @@ export default {
 
   data() {
     return {
-      steps: [
-        { name: 'Assessment', patients: [], route: '/assessment' },
-        { name: 'New', patients: [], route: '/customers/newconsultation' },
-        { name: 'Laboratory', patients: [], route: '/customers/laboratory' },
-        { name: 'Returned', patients: [], route: '/customers/returnconsultation' },
-        { name: 'Medicine', patients: [] },
-        { name: 'Billing', patients: [], route: '/billing' },
-        { name: 'GL', patients: [], route: '/gl' },
-      ],
+      steps: [{ name: 'Billing', patients: [], route: '/billing' }],
       intervalId: null,
       fundStore: null,
       patientStore: null,
@@ -106,15 +98,7 @@ export default {
 
   methods: {
     async loadStepPatients() {
-      const results = await Promise.allSettled([
-        this.patientStore.fetchPatientsAssessment(),
-        this.patientStore.fetchPatientsNew(),
-        this.patientStore.fetchPatientsLaboratory(),
-        this.patientStore.fetchPatientsReturned(),
-        this.patientStore.fetchPatientsMedicine(),
-        this.patientStore.fetchPatientsBilling(),
-        this.patientStore.fetchPatientsGL(),
-      ])
+      const results = await Promise.allSettled([this.patientStore.fetchPatientsBilling()])
 
       results.forEach((result, index) => {
         if (result.status === 'fulfilled') {

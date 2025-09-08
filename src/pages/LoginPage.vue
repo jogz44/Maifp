@@ -52,10 +52,9 @@
       </q-form>
 
       <q-card-section class="text-center">
-        <span class="text-caption" style="color: gray"
-          >Powered by City information and Communications Technology Management Office - BPM
-          Division</span
-        >
+        <span class="text-caption" style="color: gray">
+          Powered by City Information and Communications Technology Management Office - BPM Division
+        </span>
       </q-card-section>
     </q-card>
   </div>
@@ -63,17 +62,12 @@
 
 <script>
 import { useUserStore } from 'src/stores/userStore'
-import auth from 'src/services/auth'
+import { LocalStorage } from 'quasar'
 
 export default {
   setup() {
     const loginStore = useUserStore()
-    const loginAuth = auth
-
-    return {
-      loginStore,
-      loginAuth,
-    }
+    return { loginStore }
   },
   data() {
     return {
@@ -81,33 +75,33 @@ export default {
         username: '',
         password: '',
       },
-      email: '',
-      password: '',
       loading: false,
     }
   },
   methods: {
     async handleLogin() {
       if (!this.userLogin.username || !this.userLogin.password) return
-
       this.loading = true
 
       try {
-        await this.loginAuth.login(this.userLogin)
-        // console.log('Show data => ',response)
-        //  this.loginStore.loginUser(this.userLogin)
+        const result = await this.loginStore.loginUser(this.userLogin)
 
-        // Simulate an API call
+        if (result.success) {
+          LocalStorage.set('role_name', result.data.user.role_name)
 
-        // Replace with actual API request
-        // await new Promise((resolve) => setTimeout(resolve, 1500))
+          const role = result.data.user.role_name
 
-        this.$q.notify({ type: 'positive', message: 'Login successful!' })
+          const roleRoutes = {
+            admin: '/dashboard',
+            doctor: '/dashboard-doctor',
+            laboratory: '/dashboard-lab',
+            social: '/dashboard-social',
+            coder: '/dashboard-encoder',
+            billing: '/dashboard-billing',
+          }
 
-        //localStorage.setItem('user_id', this.loginSession.user_id = 1)
-
-        // Redirect or perform other actions on success
-        this.$router.push('/main')
+          this.$router.push(roleRoutes[role] || '/:catchAll(.*)*')
+        }
       } catch (error) {
         this.$q.notify({ type: 'negative', message: error.message })
       } finally {
@@ -115,7 +109,6 @@ export default {
       }
     },
   },
-  computed: {},
 }
 </script>
 
