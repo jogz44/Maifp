@@ -16,14 +16,8 @@
           <q-btn flat round color="primary" icon="arrow_back" @click="handleBack" />
         </div>
         <div class="header-actions">
-          <q-btn
-            color="primary"
-            label="Submit"
-            icon="save"
-            class="q-mr-sm"
-            @click="showConfirmDialog = true"
-            :loading="submitting"
-          />
+          <q-btn color="primary" label="Submit" icon="save" class="q-mr-sm" @click="showConfirmDialog = true"
+            :loading="submitting" />
           <q-btn color="secondary" label="Preview PDF" icon="picture_as_pdf" @click="handlePrint" />
         </div>
       </div>
@@ -44,8 +38,8 @@
               </span>
               is a beneficiary of the
               <span class="bold">
-                Medical Assistance from the Indigenous and Farmers Program (MAIFIP) </span
-              >. Pursuant to {{ gender === 'male' ? 'his' : 'her' }} request for assistance, the
+                Medical Assistance to Indigent and Financially Incapacitated Patients (MAIFIP) </span>. Pursuant to {{
+              gender === 'male' ? 'his' : 'her' }} request for assistance, the
               amount of
               <span class="bold">
                 {{ formatAmountInWords(total_billing) }} (₱{{ formatAmount(total_billing) }})
@@ -90,20 +84,8 @@
             </div>
           </q-card-section>
           <q-card-actions align="right" class="text-primary">
-            <q-btn
-              flat
-              label="Cancel"
-              @click="showConfirmDialog = false"
-              :disable="submitting"
-              color="dark"
-            />
-            <q-btn
-              flat
-              label="Confirm"
-              @click="handleSubmit"
-              :loading="submitting"
-              color="green-9"
-            />
+            <q-btn flat label="Cancel" @click="showConfirmDialog = false" :disable="submitting" color="dark" />
+            <q-btn flat label="Confirm" @click="handleSubmit" :loading="submitting" color="green-9" />
           </q-card-actions>
         </q-card>
       </q-dialog>

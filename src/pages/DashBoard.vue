@@ -53,7 +53,7 @@
                 :key="patientIndex"
                 class="col-12 q-mb-xs"
               >
-                {{ patient.firstname }}
+                {{ patient.lastname }}, {{ patient.firstname }}
               </div>
 
               <div v-if="step.patients.length === 0" class="col-12 text-grey text-center">
@@ -82,9 +82,9 @@ export default {
     // Steps definition
     const steps = ref([
       { name: 'Assessment', patients: [] },
-      { name: 'New', patients: [] },
+      { name: 'New Consultation', patients: [] },
       { name: 'Laboratory', patients: [] },
-      { name: 'Returned', patients: [] },
+      { name: 'Returned Consultation', patients: [] },
       { name: 'Medicine', patients: [] },
       { name: 'Billing', patients: [] },
       { name: 'GL', patients: [] },
@@ -107,6 +107,7 @@ export default {
 
     onMounted(() => {
       fundStore.fetchFundsDashboard() // fetch funds on mount
+      
       loadStepPatients()
     })
 

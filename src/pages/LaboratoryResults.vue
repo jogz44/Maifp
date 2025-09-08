@@ -293,7 +293,7 @@
         <q-card-section v-if="!loading">
           <div class="row items-center justify-between">
             <div class="text-subtitle2 q-mb-sm">Availed Laboratory Services</div>
-            <q-btn color="green" dense icon="add" label="Add Result" @click="openLabModal" />
+            <q-btn color="green" dense icon="add" label="Add Services" @click="openLabModal" />
           </div>
 
           <!-- Table to display saved results -->
