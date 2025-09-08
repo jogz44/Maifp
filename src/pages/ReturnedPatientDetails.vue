@@ -24,24 +24,6 @@
         <q-card-section v-if="!loading">
           <div class="row items-center justify-between">
             <div class="text-subtitle2 q-mb-sm">Transaction Information</div>
-            <div class="row q-gutter-sm">
-              <q-btn
-                v-if="!isTransactionEditMode"
-                color="orange"
-                label="Edit"
-                @click="toggleTransactionEditMode"
-                :loading="patientStore.loading"
-              />
-              <template v-else>
-                <q-btn
-                  color="green"
-                  label="Save"
-                  @click="saveTransactionChanges"
-                  :loading="patientStore.loading"
-                />
-                <q-btn color="grey" label="Cancel" @click="cancelTransactionEdit" />
-              </template>
-            </div>
           </div>
 
           <div class="row q-col-gutter-md q-mt-sm">
@@ -117,24 +99,6 @@
         <q-card-section v-if="!loading && vitalSigns">
           <div class="row items-center justify-between">
             <div class="text-subtitle2 q-mb-sm">Vital Signs</div>
-            <div class="row q-gutter-sm">
-              <q-btn
-                v-if="!isVitalSignsEditMode"
-                color="orange"
-                label="Edit"
-                @click="toggleVitalSignsEditMode"
-                :loading="patientStore.loading"
-              />
-              <template v-else>
-                <q-btn
-                  color="green"
-                  label="Save"
-                  @click="saveVitalSignsChanges"
-                  :loading="patientStore.loading"
-                />
-                <q-btn color="grey" label="Cancel" @click="cancelVitalSignsEdit" />
-              </template>
-            </div>
           </div>
 
           <!-- Basic measurements -->
@@ -288,14 +252,15 @@
         </q-card-section>
 
         <!-- Laboratory Results Table -->
-        <q-card-section v-if="transaction.laboratories && transaction.laboratories.length">
+        <q-card-section v-if="transaction.laboratories_details && transaction.laboratories_details.length">
           <div class="text-subtitle2 q-mb-sm">Availed Laboratory Services</div>
           <q-table
-            :rows="transaction.laboratories"
+            :rows="transaction.laboratories_details"
             :columns="labColumns"
             row-key="id"
             flat
             dense
+            :table-header-class="'bg-grey-3 text-black'"
           >
             <!-- Amount -->
             <template v-slot:body-cell-amount="props">
@@ -364,11 +329,11 @@ export default {
       originalVitalSigns: null,
 
       labColumns: [
-        { name: 'laboratory_type', label: 'Laboratory', field: 'laboratory_type', align: 'left' },
-        { name: 'amount', label: 'Amount', field: 'amount', align: 'right' },
-        { name: 'status', label: 'Status', field: 'status', align: 'center' },
-        { name: 'date', label: 'Date', field: 'date', align: 'center' },
-        { name: 'time', label: 'Time', field: 'time', align: 'center' }
+        { name: 'laboratory_type', label: 'Laboratory', field: 'laboratory_type', align: 'left', headerClasses: 'bg-grey-3 text-black' },
+        { name: 'amount', label: 'Amount', field: 'amount', align: 'right', headerClasses: 'bg-grey-3 text-black' },
+        // { name: 'status', label: 'Status', field: 'status', align: 'center' },
+        { name: 'date', label: 'Date', field: 'date', align: 'center', headerClasses: 'bg-grey-3 text-black' },
+        { name: 'time', label: 'Time', field: 'time', align: 'center', headerClasses: 'bg-grey-3 text-black' }
       ],
     }
   },
@@ -425,7 +390,7 @@ export default {
 
         this.$q.notify({
           type: 'positive',
-          message: 'Consultation status updated to Medication',
+          message: 'Returned Consultation status updated to Medication',
         })
 
         // If you want, redirect to pharmacy page
@@ -433,7 +398,7 @@ export default {
       } catch (error) {
         this.$q.notify({
           type: 'negative',
-          message: `Failed to update consultation: ${error.message}`,
+          message: `Failed to update Returned Consultation: ${error.message}`,
         })
       }
     },
@@ -459,7 +424,7 @@ export default {
 
         this.$q.notify({
           type: 'positive',
-          message: 'Consultation status updated to Done',
+          message: 'Returned Consultation status updated to Done',
         })
 
         // If you want, redirect to pharmacy page
@@ -467,7 +432,7 @@ export default {
       } catch (error) {
         this.$q.notify({
           type: 'negative',
-          message: `Failed to update consultation: ${error.message}`,
+          message: `Failed to update Returned Consultation: ${error.message}`,
         })
       }
     },

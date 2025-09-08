@@ -69,6 +69,11 @@ const routes = [
         meta: { requiresAuth: true },
       },
       {
+        path: '/customers/newPatientDetails',
+        component: () => import('src/pages/NewPatientDetails.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
         path: '/customers/returnConsultation',
         component: () => import('pages/ReturnConsultation.vue'),
         meta: { requiresAuth: true },

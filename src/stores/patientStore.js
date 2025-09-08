@@ -8,9 +8,12 @@ export const usePatientStore = defineStore('patient', {
     error: null,
     currentPatient: null,
     patients: [],
+    doctors: [],
     qualifiedPatients: [],
     returnedPatients: [],
     laboratoryPatients: [],
+    laboratoryResults: [],
+    laboratoryServices: [],
     isSave: true,
     isEdit: false,
     patient_id: 0,
@@ -323,6 +326,27 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
+    async laboratoryStatus(payload) {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.post(`/laboratory/status`, payload)
+
+        if (response.data && response.data.patient) {
+          this.patients.push(response.data.patient)
+        }
+
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // laboratoryReturn NOT IN USE rn because change of status to 'laboratoryStatus'
     async laboratoryReturn(id, payload) {
       this.loading = true
       this.error = null
@@ -419,8 +443,8 @@ export const usePatientStore = defineStore('patient', {
     async fetchLaboratoryResults(transactionId) {
       try {
         const response = await api.get(`/transactions/${transactionId}`)
-        // response.data is a transaction object with .laboratories inside
-        this.laboratoryResults = response.data.laboratories || []
+        // response.data is a transaction object with .laboratories_details inside
+        this.laboratoryResults = response.data.laboratories_details || []
         return this.laboratoryResults
       } catch (error) {
         console.error('API Error (getLaboratoryResults):', error)
@@ -445,6 +469,111 @@ export const usePatientStore = defineStore('patient', {
         return null
       } finally {
         this.loading = false
+      }
+    },
+
+    // Fetch doctor fees
+    async fetchDoctors() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/doctor')
+        this.doctors = response.data.map((doc) => ({ ...doc, editMode: false })) // 👈 add editMode
+        return this.doctors
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Update doctor fee
+    async updateDoctorFee(id, payload) {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.post(`/doctor/update/${id}`, payload)
+
+        // update local store if successful
+        if (response.data && response.data.doctor) {
+          const index = this.doctors.findIndex((d) => d.id === id)
+          if (index !== -1) {
+            this.doctors[index] = response.data.doctor
+          }
+        }
+
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Fetch available services
+    async fetchLaboratoryServices() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/laboratory/index/lab_services')
+        this.laboratoryServices = response.data || [] // store services
+        return this.laboratoryServices
+      } catch (error) {
+        this.handleApiError(error)
+        this.laboratoryServices = []
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Add new service to library
+    async addLaboratoryService(payload) {
+      try {
+        const response = await api.post('/laboratory/store/lab_services', payload)
+        if (response.data && response.data.laboratory) {
+          this.laboratoryServices.push(response.data.laboratory)
+        }
+        return response.data.laboratory
+      } catch (error) {
+        this.handleApiError(error)
+        throw error
+      }
+    },
+
+    // Update existing service in library
+    async updateLaboratoryService(payload) {
+      try {
+        const response = await api.post(`/laboratory/update/lab_services/${payload.id}`, payload)
+        if (response.data && response.data.laboratory) {
+          const index = this.laboratoryServices.findIndex((s) => s.id === payload.id)
+          if (index !== -1) {
+            this.laboratoryServices[index] = response.data.laboratory
+          }
+        }
+        return response.data.laboratory
+      } catch (error) {
+        this.handleApiError(error)
+        throw error
+      }
+    },
+
+    // Delete service from library
+    async deleteLaboratoryService(id) {
+      try {
+        const response = await api.delete(`/laboratory/delete/lab_services/${id}`)
+        if (response.data.success) {
+          this.laboratoryServices = this.laboratoryServices.filter((s) => s.id !== id)
+        }
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        throw error
       }
     },
 

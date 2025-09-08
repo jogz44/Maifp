@@ -5,14 +5,99 @@
         <!-- Header with back button and title -->
         <q-card-section>
           <div class="row items-center q-mb-md">
+            <!-- Back Button -->
             <div class="col-auto">
               <q-btn icon="arrow_back" flat round dense @click="goBack" />
             </div>
+
+            <!-- Title -->
             <div class="col">
               <div class="text-h6 text-green-9 q-ml-md">Transaction Details</div>
             </div>
+
+            <!-- Toast + Info Button (Right Corner) -->
+            <div class="col-auto flex items-center">
+              <!-- Floating toast -->
+              <transition name="fade-slide">
+                <div
+                  v-if="showDoctorToast"
+                    class="q-pa-sm text-white text-caption shadow-4 absolute-top-right"
+                    style="
+                      margin-top: 15px;
+                      margin-right: 48px; /* push it left of the info button */
+                      border-radius: 10px;
+                      background: rgba(33, 150, 243, 0.75);
+                      backdrop-filter: blur(6px);
+                      white-space: nowrap;"
+                      >
+                      Doctor's fee loaded
+                </div>
+              </transition>
+              <!-- Info button -->
+              <q-btn
+                icon="info"
+                color="primary"
+                round
+                dense
+                flat
+                @click="openDoctorDialog"
+              />
+            </div>
           </div>
         </q-card-section>
+
+        <!-- Doctor Fee Dialog -->
+        <q-dialog v-model="doctorDialog" persistent>
+          <q-card style="min-width: 600px">
+            <q-card-section>
+              <div class="text-h6">Doctor's Fee</div>
+            </q-card-section>
+
+            <q-card-section>
+              <q-table
+                :rows="patientStore.doctors"
+                :columns="doctorColumns"
+                row-key="id"
+                flat
+                dense
+              >
+                <!-- Doctor Fee Column -->
+                <template v-slot:body-cell-doctor_amount="props">
+                  <q-td :props="props">
+                    <q-input
+                      v-model="props.row.doctor_amount"
+                      type="number"
+                      outlined
+                      dense
+                      :disable="!props.row.editMode"
+                    >
+                      <template v-slot:prepend>
+                        <q-td>₱</q-td>
+                      </template>
+                    </q-input>
+                  </q-td>
+                </template>
+
+                <!-- Actions Column -->
+                <template v-slot:body-cell-actions="props">
+                  <q-td :props="props">
+                    <div v-if="!props.row.editMode">
+                      <q-btn flat color="primary" label="Edit" size="sm" @click="props.row.editMode = true" />
+                    </div>
+                    <div v-else>
+                      <q-btn flat color="positive" label="Save" size="sm" @click="saveDoctorFee(props.row)" />
+                      <q-btn flat color="negative" label="Cancel" size="sm" @click="cancelEdit(props.row)" />
+                    </div>
+                  </q-td>
+                </template>
+              </q-table>
+            </q-card-section>
+
+            <q-card-actions align="right">
+              <q-btn flat label="Close" color="grey" v-close-popup />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
 
         <q-separator />
 
@@ -250,259 +335,21 @@
             </div>
           </div>
         </q-card-section>
-
-        <q-separator spaced inset v-if="!loading" />
-
-        <!-- LABORATORY RESULTS -->
-        <q-card-section v-if="!loading">
-          <div class="row items-center justify-between">
-            <div class="text-subtitle2 q-mb-sm">Availed Laboratory Services</div>
-            <q-btn color="green" dense icon="add" label="Add Services" @click="openLabModal" />
-          </div>
-
-          <!-- Table to display saved results -->
-          <q-table
-            v-if="results.length"
-            :rows="results"
-            :columns="labColumns"
-            row-key="id"
-            flat
-            dense
-            class="q-mt-md"
-            :table-header-class="'bg-grey-3 text-black'"
-          >
-            <template v-slot:body-cell-amount="props">
-              <q-td :props="props"> ₱{{ props.row.amount }} </q-td>
-            </template>
-          </q-table>
-        </q-card-section>
-
-        <!-- Add/Edit Laboratory Modal -->
-        <q-dialog v-model="labModalOpen" persistent>
-          <q-card style="min-width: 900px">
-            <q-card-section>
-              <div class="row items-center justify-between">
-                <div class="text-h6">Add Laboratory Results</div>
-                <div class="relative-position">
-                  <!-- Info button -->
-                  <q-btn
-                    round
-                    dense
-                    flat
-                    icon="info"
-                    color="primary"
-                    @click="serviceModalOpen = true"
-                  />
-
-                  <!-- Floating toast -->
-                  <transition name="fade-slide">
-                    <div
-                      v-if="showServiceHint"
-                      class="q-pa-sm text-white text-caption shadow-4 absolute-top-right"
-                      style="
-                        margin-right: 35px; /* push it left of the info button */
-                        border-radius: 10px;
-                        background: rgba(33, 150, 243, 0.75);
-                        backdrop-filter: blur(6px);
-                        white-space: nowrap;"
-                      >
-                      Manage Laboratory Services
-                    </div>
-                  </transition>
-                </div>
-              </div>
-            </q-card-section>
-
-            <q-card-section>
-              <div
-                v-for="(result, index) in resultsForm"
-                :key="index"
-                class="row q-col-gutter-md q-mt-sm text-caption"
-              >
-                <div class="col-12 col-md-2">
-                  <q-input dense v-model="result.time" label="Time" type="time" />
-                </div>
-                <div class="col-12 col-md-2">
-                  <q-input dense v-model="result.date" label="Date" type="date" />
-                </div>
-                <div class="col-12 col-md-3">
-                  <q-select
-                    dense
-                    v-model="result.laboratory_type"
-                    :options="laboratoryOptions"
-                    option-label="label"
-                    option-value="value"
-                    emit-value
-                    map-options
-                    label="Type of Laboratory"
-                    @update:model-value="onLabChange(result)"
-                  >
-                  </q-select>
-                </div>
-                <div class="col-12 col-md-3 row">
-                  <q-input dense v-model="result.amount" label="Amount" type="number" class="col" />
-                  <q-btn
-                    round
-                    dense
-                    flat
-                    color="red"
-                    icon="delete"
-                    @click="removeResultRow(index)"
-                  />
-                </div>
-              </div>
-
-              <!-- Add Row Button -->
-              <q-btn
-                flat
-                color="blue"
-                icon="add"
-                label="Add Another Service"
-                class="q-mt-md"
-                @click="addResultRow"
-              />
-            </q-card-section>
-
-            <!-- Manage Laboratory Services -->
-              <q-dialog v-model="serviceModalOpen" persistent>
-                <q-card style="min-width: 600px">
-                  <q-card-section>
-                    <div class="text-h6">Manage Laboratory Services</div>
-                  </q-card-section>
-
-                  <q-card-section>
-                    <!-- Table of Services -->
-                    <q-table
-                      :rows="laboratoryOptions"
-                      :columns="[
-                        { name: 'label', label: 'Service', field: 'label', align: 'left'},
-                        { name: 'fee', label: 'Fee', field: 'fee', align: 'right' },
-                        { name: 'actions', label: 'Actions', field: 'actions', align: 'center' },
-                      ]"
-                      row-key="value"
-                      flat
-                      dense
-                    >
-                      <template v-slot:body-cell-actions="props">
-                        <q-td :props="props">
-                          <q-btn
-                            flat
-                            dense
-                            round
-                            size="sm"
-                            icon="edit"
-                            color="blue"
-                            @click="editService(props.row)"
-                          />
-                          <q-btn
-                            flat
-                            dense
-                            round
-                            size="sm"
-                            icon="delete"
-                            color="red"
-                            @click="confirmDelete(props.row)"
-                          />
-                        </q-td>
-                      </template>
-                    </q-table>
-
-                    <!-- Add New Service -->
-                    <div class="row items-end q-col-gutter-md q-mt-md">
-                      <div class="col">
-                        <q-input
-                          v-model="newServiceName"
-                          label="Service Name"
-                          outlined
-                          dense
-                          clearable
-                        />
-                      </div>
-
-                      <!-- Service Fee -->
-                      <div class="col-3">
-                        <q-input
-                          v-model="newServiceFee"
-                          label="Fee"
-                          type="number"
-                          outlined
-                          dense
-                          clearable
-                          prefix="₱"
-                        />
-                      </div>
-
-                      <!-- Add Button -->
-                      <div class="col-auto">
-                        <q-btn
-                          color="green"
-                          icon="add"
-                          label="Add"
-                          unelevated
-                          @click="addService"
-                        />
-                      </div>
-                    </div>
-                  </q-card-section>
-
-                  <!-- Edit Service Dialog -->
-                  <q-dialog v-model="editDialogOpen" persistent>
-                    <q-card style="min-width: 500px">
-                      <q-card-section>
-                        <div class="text-h6">Update Service</div>
-                      </q-card-section>
-
-                      <q-card-section>
-                        <q-input
-                          v-model="editServiceName"
-                          label="Service Name"
-                          outlined
-                          dense
-                          clearable
-                        />
-                        <q-input
-                          v-model="editServiceFee"
-                          label="Fee"
-                          type="number"
-                          outlined
-                          dense
-                          clearable
-                          prefix="₱"
-                          class="q-mt-md"
-                        />
-                      </q-card-section>
-
-                      <q-card-actions align="right">
-                        <q-btn flat label="Cancel" color="grey" @click="editDialogOpen = false" />
-                        <q-btn color="primary" label="Save" @click="updateService" />
-                      </q-card-actions>
-                    </q-card>
-                  </q-dialog>
-
-                  <q-card-actions align="right">
-                    <q-btn flat label="Close" color="grey" @click="serviceModalOpen = false" />
-                  </q-card-actions>
-                </q-card>
-              </q-dialog>
-
-            <q-card-actions align="right">
-              <q-btn flat label="Cancel" color="grey" @click="labModalOpen = false" />
-              <q-btn color="green" icon="save" label="Save" @click="saveLaboratoryResults" />
-            </q-card-actions>
-          </q-card>
-        </q-dialog>
-
-        <!-- ACTION BUTTONS -->
+        <!-- Buttons BELOW the card -->
         <div class="q-mt-md flex justify-end q-gutter-sm">
           <q-btn
-            v-if="transaction.transaction_type === 'Consultation'"
+              color="primary"
+              label="Require Medication"
+              icon="medication"
+              @click="onRequireMedication"
+            />
+          <q-btn
             color="blue"
-            label="Return"
-            icon="ios_share"
-            @click="markReturn"
+            label="Process Lab"
+            icon="biotech"
+            @click="processLab"
           />
           <q-btn
-            v-if="transaction.transaction_type === 'Laboratory'"
             color="green"
             label="Done"
             icon="check_circle"
@@ -528,41 +375,20 @@ export default {
       patient: {},
       vitalSigns: {},
       loading: true,
+      showDoctorToast: false,
+      doctorDialog: false,
+      doctorColumns: [
+        { name: 'doctor_amount', label: "Doctor's Fee", field: 'doctor_amount', align: 'center' },
+        { name: 'actions', label: 'Actions', field: 'actions', align: 'center' }
+      ],
 
-      // UI states
+      // Separate edit modes for transaction and vital signs
       isTransactionEditMode: false,
       isVitalSignsEditMode: false,
-      isResultsEditMode: false,
-      labModalOpen: false, // ADD THIS
 
-      // Backup data
+      // Backup data for cancellation
       originalTransactionData: null,
       originalVitalSigns: null,
-      originalResults: null,
-
-      //New Services
-      serviceModalOpen: false,
-      showServiceHint: false,
-      newServiceName: '',
-      newServiceFee: '',
-
-      //Update Services
-      editDialogOpen: false,
-      editServiceId: null,
-      editServiceName: '',
-      editServiceFee: '',
-
-      // Results
-      laboratoryOptions: [],
-      results: [],
-      resultsForm: [{ laboratory_type: '', time: '', date: '', amount: '' }],
-      labColumns: [
-        { name: 'laboratory_type', label: 'Laboratory', field: 'laboratory_type', align: 'left', headerClasses: 'bg-grey-3 text-black' },
-        { name: 'amount', label: 'Amount', field: 'amount', align: 'right', headerClasses: 'bg-grey-3 text-black'},
-        { name: 'date', label: 'Date', field: 'date', align: 'center', headerClasses: 'bg-grey-3 text-black' },
-        { name: 'time', label: 'Time', field: 'time', align: 'center', headerClasses: 'bg-grey-3 text-black' },
-        { name: 'actions', label: '', field: 'actions', align: 'center',headerClasses: 'bg-grey-3 text-black' },
-      ],
     }
   },
 
@@ -572,19 +398,12 @@ export default {
     },
   },
 
-  mounted() {
+  mounted () {
     this.patientId = this.$route.query.patientId
     this.transactionId = this.$route.query.transactionId
 
-    console.log(
-      `Mounted TransactionDetails. Patient ID: ${this.patientId}, Transaction ID: ${this.transactionId}`,
-    )
-
-    this.loadLaboratoryOptions()
-
     if (this.transactionId) {
       this.loadTransactionData()
-      this.loadLaboratoryResults(this.transactionId) // fetch saved labs
     } else {
       this.$q.notify({
         type: 'negative',
@@ -594,87 +413,55 @@ export default {
       })
       this.loading = false
     }
+
+    // Trigger toast beside Info button
+    if (this.$route.query.showDoctorToast) {
+      this.showDoctorToast = true
+      setTimeout(() => {
+        this.showDoctorToast = false
+      }, 3000)
+    }
   },
 
   methods: {
-    //SERVICE LIBRARY
-    async addService() {
+
+    async openDoctorDialog () {
       try {
-        const payload = { lab_name: this.newServiceName, lab_amount: this.newServiceFee }
-        await this.patientStore.addLaboratoryService(payload)
-        this.$q.notify({ type: 'positive', message: 'Service added!' })
-        this.loadLaboratoryOptions()
-        this.newServiceName = ''
-        this.newServiceFee = ''
+        await this.patientStore.fetchDoctors()
+        this.doctorDialog = true
       } catch {
-        this.$q.notify({ type: 'negative', message: 'Failed to add service' })
+        this.$q.notify({
+          type: 'negative',
+          message: 'Failed to load doctor data'
+        })
       }
     },
 
-    editService(service) {
-      this.editServiceId = service.value
-      this.editServiceName = service.label
-      this.editServiceFee = service.fee
-      this.editDialogOpen = true
-    },
-
-    async updateService() {
+    async updateDoctorFee(row) {
       try {
-        const payload = {
-          id: this.editServiceId,
-          lab_name: this.editServiceName,
-          lab_amount: this.editServiceFee
-        }
-        await this.patientStore.updateLaboratoryService(payload)
-        this.$q.notify({ type: 'positive', message: 'Service updated!' })
-        this.loadLaboratoryOptions()
-        this.editDialogOpen = false
+        const payload = { id: row.id, doctor_amount: row.doctor_amount }
+        await this.patientStore.updateDoctorFee(payload)
+        this.$q.notify({ type: 'positive', message: "Doctor's fee updated!" })
       } catch {
-        this.$q.notify({ type: 'negative', message: 'Failed to update service' })
+        this.$q.notify({ type: 'negative', message: 'Failed to update fee' })
       }
     },
-
-    // THIS PART DELETION WITHOUT WARNING MSSG
-    // async deleteService(service) {
-    //   try {
-    //     await this.patientStore.deleteLaboratoryService(service.value)
-    //     this.$q.notify({ type: 'positive', message: 'Service deleted!' })
-    //     this.loadLaboratoryOptions()
-    //   } catch {
-    //     this.$q.notify({ type: 'negative', message: 'Failed to delete service' })
-    //   }
-    // },
-    confirmDelete(service) {
-      this.$q.dialog({
-        title: 'Delete Service ',
-        message: `
-          <div class="text-black text-semibold">
-            Are you sure you want to delete
-            <span class="text-primary">"${service.label}"</span> ?
-          </div>
-        `,
-        html: true,
-        cancel: {
-          label: 'Cancel',
-          color: 'grey'
-        },
-        ok: {
-          label: 'Yes',
-          color: 'red'
-        },
-        persistent: true
-      }).onOk(async () => {
-        try {
-          await this.patientStore.deleteLaboratoryService(service.value)
-          this.$q.notify({ type: 'positive', message: 'Service deleted!' })
-          this.loadLaboratoryOptions()
-        } catch {
-          this.$q.notify({ type: 'negative', message: 'Failed to delete service' })
-        }
-      })
+    async saveDoctorFee(row) {
+      try {
+        const payload = { doctor_amount: row.doctor_amount }
+        await this.patientStore.updateDoctorFee(row.id, payload)
+        row.editMode = false
+        this.$q.notify({ type: 'positive', message: "Doctor's fee updated!" })
+      } catch {
+        this.$q.notify({ type: 'negative', message: 'Failed to update fee' })
+      }
+    },
+    cancelEdit(row) {
+      // Reset changes (optional: re-fetch data)
+      row.editMode = false
     },
 
-    async markReturn() {
+    async onRequireMedication() {
       const patientStore = usePatientStore()
 
       const now = new Date()
@@ -686,22 +473,61 @@ export default {
         transaction_id: this.transactionId,
         consultation_date: consultationDate,
         consultation_time: consultationTime,
-        status: 'Returned',
+        status: 'Medication',
+        transaction_type: 'consultation',
       }
 
       try {
-        await patientStore.laboratoryStatus(payload)
+        await patientStore.storeNewConsultation(payload)
 
         this.$q.notify({
           type: 'positive',
-          message: 'Laboratory returned successfully',
+          message: 'New Consultation status updated to Medication',
         })
 
-        this.$router.push({ path: '/customers/laboratory' })
+        // If you want, redirect to pharmacy page
+        this.$router.push({ path: '/customers/newConsultation' })
       } catch (error) {
         this.$q.notify({
           type: 'negative',
-          message: `Failed to update status: ${error.message}`,
+          message: `Failed to update New Consultation: ${error.message}`,
+        })
+      }
+    },
+
+    async processLab() {
+      const patientStore = usePatientStore()
+
+      const now = new Date()
+      const consultationDate = now.toISOString().split('T')[0] // YYYY-MM-DD
+      const consultationTime = now.toTimeString().split(' ')[0] // HH:MM:SS
+
+      const payload = {
+        patient_id: this.patientId,
+        transaction_id: this.transactionId,
+        consultation_date: consultationDate,
+        consultation_time: consultationTime,
+        status: 'Processing',
+        transaction_type: 'consultation',
+      }
+
+      try {
+        await patientStore.storeLaboratoryPatient(payload)
+
+        this.$q.notify({
+          type: 'positive',
+          message: 'Patient sent to Laboratory successfully!',
+        })
+
+        // Refresh laboratory list
+        await patientStore.fetchLaboratoryPatients()
+
+        // (Optional) Navigate if you want to redirect
+        this.$router.push({ path: '/customers/newConsultation' })
+      } catch (error) {
+        this.$q.notify({
+          type: 'negative',
+          message: `Failed to process Laboratory: ${error.message}`,
         })
       }
     },
@@ -710,8 +536,8 @@ export default {
       const patientStore = usePatientStore()
 
       const now = new Date()
-      const consultationDate = now.toISOString().split('T')[0]
-      const consultationTime = now.toTimeString().split(' ')[0]
+      const consultationDate = now.toISOString().split('T')[0] // YYYY-MM-DD
+      const consultationTime = now.toTimeString().split(' ')[0] // HH:MM:SS
 
       const payload = {
         patient_id: this.patientId,
@@ -719,149 +545,24 @@ export default {
         consultation_date: consultationDate,
         consultation_time: consultationTime,
         status: 'Done',
+        transaction_type: 'consultation',
       }
 
       try {
-        await patientStore.laboratoryStatus(payload)
+        await patientStore.storeNewConsultation(payload)
 
         this.$q.notify({
           type: 'positive',
-          message: 'Laboratory marked as done successfully',
+          message: 'New Consultation status updated to Medication',
         })
 
-        this.$router.push({ path: '/customers/laboratory' })
+        // If you want, redirect to pharmacy page
+        this.$router.push({ path: '/customers/newConsultation' })
       } catch (error) {
         this.$q.notify({
           type: 'negative',
-          message: `Failed to update status: ${error.message}`,
+          message: `Failed to update New Consultation: ${error.message}`,
         })
-      }
-    },
-
-    openLabModal() {
-      const now = new Date()
-      const currentDate = now.toISOString().split('T')[0] // YYYY-MM-DD
-      const currentTime = now.toTimeString().slice(0, 5) // HH:MM
-
-      this.resultsForm = [
-        {
-          laboratory_type: '',
-          time: currentTime,
-          date: currentDate,
-          amount: '',
-        },
-      ]
-      this.labModalOpen = true
-      this.showServiceHint = true
-      setTimeout(() => {
-        this.showServiceHint = false
-      }, 2000)
-    },
-
-    addNewLabType(val) {
-      if (val && !this.laboratoryOptions.includes(val)) {
-        this.laboratoryOptions.push(val)
-      }
-    },
-
-    addResultRow() {
-      const now = new Date()
-      const currentDate = now.toISOString().split('T')[0]
-      const currentTime = now.toTimeString().slice(0, 5)
-
-      this.resultsForm.push({
-        laboratory_type: '',
-        time: currentTime,
-        date: currentDate,
-        amount: '',
-      })
-    },
-
-    removeResultRow(index) {
-      this.resultsForm.splice(index, 1)
-    },
-
-    async saveLaboratoryResults() {
-      try {
-        const payload = {
-          patient_id: this.patientId,
-          transaction_id: this.transactionId,
-          laboratories: this.resultsForm.map((result) => {
-            const service = this.laboratoryOptions.find((s) => s.value === result.laboratory_type)
-            return {
-              laboratory_type: service?.label || '',
-              amount: parseFloat(result.amount) || 0,
-              status: 'Pending',
-            }
-          }),
-        }
-
-        console.log("Saving lab services payload:", payload)
-
-        await this.patientStore.storeLaboratoryResult(payload)
-
-        this.$q.notify({
-          type: 'positive',
-          message: 'Laboratory Services saved successfully',
-        })
-
-        this.labModalOpen = false
-        this.results = [...this.results, ...this.resultsForm]
-      } catch (error) {
-        console.error('Save Error:', error)
-        this.$q.notify({
-          type: 'negative',
-          message: `Failed to save Services: ${error.message}`,
-        })
-      }
-    },
-
-    async loadLaboratoryResults(transactionId) {
-      try {
-        const res = await this.patientStore.fetchLaboratoryResults(transactionId)
-
-        this.results = (res || []).map((r) => {
-          const createdAt = new Date(r.created_at)
-          return {
-            ...r,
-            date: createdAt.toLocaleDateString('en-PH', {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-            }),
-            time: createdAt.toLocaleTimeString('en-PH', {
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-            }),
-          }
-        })
-
-        console.log('Loaded lab results:', this.results)
-      } catch (error) {
-        console.error('Error loading Laboratory Services:', error)
-        this.$q.notify({
-          type: 'negative',
-          message: 'Failed to load Laboratory Services',
-        })
-      }
-    },
-
-    async loadLaboratoryOptions() {
-      await this.patientStore.fetchLaboratoryServices()
-
-      // Mapping API response into dropdown options
-      this.laboratoryOptions = this.patientStore.laboratoryServices.map((s) => ({
-        label: s.lab_name,
-        value: s.id,
-        fee: s.lab_amount,
-      }))
-    },
-
-    onLabChange(result) {
-      const service = this.laboratoryOptions.find((s) => s.value === result.laboratory_type)
-      if (service) {
-        result.amount = service.fee
       }
     },
 
@@ -974,7 +675,7 @@ export default {
           type: 'negative',
           message: 'Failed to update transaction',
           position: 'top',
-          timeout: 3000,
+          timeout: 2000,
         })
       }
     },
