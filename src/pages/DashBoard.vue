@@ -83,7 +83,7 @@ export default {
         { name: 'New', patients: [], route: '/customers/newconsultation' },
         { name: 'Laboratory', patients: [], route: '/customers/laboratory' },
         { name: 'Returned', patients: [], route: '/customers/returnconsultation' },
-        { name: 'Medicine', patients: [] },
+        { name: 'Medicine', patients: [], route: '#' },
         { name: 'Billing', patients: [], route: '/billing' },
         { name: 'GL', patients: [], route: '/gl' },
       ],

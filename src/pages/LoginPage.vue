@@ -62,7 +62,7 @@
 
 <script>
 import { useUserStore } from 'src/stores/userStore'
-import { LocalStorage } from 'quasar'
+import { Notify } from 'quasar'
 
 export default {
   setup() {
@@ -80,14 +80,21 @@ export default {
   },
   methods: {
     async handleLogin() {
-      if (!this.userLogin.username || !this.userLogin.password) return
+      const isValid = await this.$refs.loginForm.validate()
+      if (!isValid) return
+
       this.loading = true
 
       try {
         const result = await this.loginStore.loginUser(this.userLogin)
 
         if (result.success) {
-          LocalStorage.set('role_name', result.data.user.role_name)
+          Notify.create({
+            type: 'positive',
+            message: 'Login successful!',
+            position: 'top',
+            timeout: 2000,
+          })
 
           const role = result.data.user.role_name
 
@@ -100,10 +107,24 @@ export default {
             billing: '/dashboard-billing',
           }
 
-          this.$router.push(roleRoutes[role] || '/:catchAll(.*)*')
+          const redirectPath = roleRoutes[role] || '/'
+          this.$router.push(redirectPath)
+        } else {
+          Notify.create({
+            type: 'negative',
+            message: result.error || 'Invalid username or password',
+            position: 'top',
+            timeout: 3000,
+          })
         }
       } catch (error) {
-        this.$q.notify({ type: 'negative', message: error.message })
+        console.error('Unexpected login error:', error)
+        Notify.create({
+          type: 'negative',
+          message: 'An unexpected error occurred. Please try again.',
+          position: 'center',
+          timeout: 3000,
+        })
       } finally {
         this.loading = false
       }

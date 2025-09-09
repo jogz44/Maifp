@@ -2,11 +2,9 @@
   <q-page>
     <div class="q-pa-md flex justify-center">
       <q-card class="q-pa-sm" style="max-width: 1820px; width: 100%">
-        <!-- Patient Information Section -->
         <q-card-section>
           <div class="q-pa-sm flex justify-center">
             <q-card class="q-pa-md" style="max-width: 1000px; width: 100%">
-              <!-- Header -->
               <div class="row items-center justify-between q-mb-md">
                 <div class="text-h6 text-green text-weight-bolder">Patient Information</div>
                 <div class="row q-gutter-sm">
@@ -31,7 +29,6 @@
 
               <q-separator />
 
-              <!-- Personal Details -->
               <div class="text-subtitle2 text-grey-8 q-mt-md q-mb-sm">Personal Details</div>
               <div class="row q-col-gutter-md">
                 <div class="col-12 col-md-3">
@@ -110,7 +107,6 @@
                 </div>
               </div>
 
-              <!-- Address Section -->
               <div class="text-subtitle2 text-grey-8 q-mt-lg q-mb-sm">Address</div>
               <div class="row q-col-gutter-md">
                 <div class="col-12 col-md-2">
@@ -152,7 +148,6 @@
                 </div>
               </div>
 
-              <!-- Other Information -->
               <div class="text-subtitle2 text-grey-8 q-mt-lg q-mb-sm">Other Details</div>
               <div class="row q-col-gutter-md">
                 <div class="col-12 col-md-3">
@@ -185,7 +180,6 @@
           </div>
         </q-card-section>
 
-        <!-- Patient Transactions Section -->
         <q-card-section>
           <div class="q-pa-sm flex justify-center">
             <q-card class="q-pa-sm" style="max-width: 1000px; width: 100%">
@@ -193,7 +187,7 @@
               <q-separator />
 
               <q-table
-                :loading
+                :loading="patientStore.loading"
                 bordered
                 dense
                 :rows="transactions"
@@ -202,7 +196,6 @@
                 no-data-label="No transaction history available"
                 hide-bottom
               >
-                <!-- Body slot -->
                 <template #body="props">
                   <q-tr :props="props">
                     <q-td key="id" style="font-size: 11px" align="left">
@@ -250,9 +243,8 @@
       </q-card>
     </div>
 
-    <!-- New Transaction Modal -->
     <q-dialog v-model="showNewTransactionModal" persistent>
-      <q-card style="min-width: 800px; max-width: 90vw">
+      <q-card style="width: 900px; max-width: 90vw; min-height: 600px">
         <q-card-section class="row items-center q-pb-none">
           <div class="text-h6 text-green-9 text-weight-bold">New Transaction</div>
           <q-space />
@@ -261,13 +253,7 @@
 
         <q-separator />
 
-        <q-card-section>
-          <div class="text-subtitle2 q-mb-md text-grey-8">
-            Patient: {{ patient.firstname }} {{ patient.middlename }} {{ patient.lastname }}
-            {{ patient.ext }}
-          </div>
-
-          <!-- Transaction Information -->
+        <q-card-section style="max-height: 70vh; overflow-y: auto">
           <div class="text-subtitle2 q-mb-sm text-weight-bold">Transaction Information</div>
           <div class="row q-col-gutter-md q-mb-md">
             <div class="col-12 col-md-4">
@@ -308,10 +294,9 @@
 
           <q-separator class="q-mb-md" />
 
-          <!-- Representative Information Section -->
-          <div>
+          <div style="min-height: 100px">
             <div class="row items-center">
-              <div class="text-subtitle2 q-mb-sm text-weight-bold">Patient Representative</div>
+              <div class="text-subtitle2 text-weight-bold">Patient Representative</div>
               <q-space />
               <q-checkbox
                 v-model="hasRepresentativeInfo"
@@ -361,7 +346,6 @@
                 />
               </div>
 
-              <!-- Representative Address with "Same as Patient" option -->
               <div class="col-12">
                 <div class="row items-center">
                   <div class="text-subtitle2 q-mb-sm">Representative Address</div>
@@ -427,10 +411,8 @@
 
           <q-separator class="q-mb-md" />
 
-          <!-- Vital Signs -->
           <div class="text-subtitle2 q-mb-sm text-weight-bold">Vital Signs</div>
 
-          <!-- Basic measurements -->
           <div class="text-caption text-grey-7 q-mb-sm">Basic Measurements</div>
           <div class="row q-col-gutter-md q-mb-md">
             <div class="col-12 col-md-3">
@@ -483,7 +465,6 @@
             </div>
           </div>
 
-          <!-- Vital signs -->
           <div class="text-caption text-grey-7 q-mb-sm">Vital Signs</div>
           <div class="row q-col-gutter-md q-mb-md">
             <div class="col-12 col-md-2">
@@ -549,10 +530,9 @@
             </div>
           </div>
 
-          <!-- Additional information -->
           <div class="text-caption text-grey-7 q-mb-sm">Additional Information</div>
           <div class="row q-col-gutter-md">
-            <div class="col-12 col-md-6">
+            <div class="col-12 col-md-6" v-if="isFemalePatient">
               <q-input
                 outlined
                 dense
@@ -562,7 +542,7 @@
                 class="text-caption"
               />
             </div>
-            <div class="col-12 col-md-6">
+            <div :class="isFemalePatient ? 'col-12 col-md-6' : 'col-12'">
               <q-input
                 outlined
                 dense
@@ -635,12 +615,8 @@ export default {
       },
       transactions: [],
       selectedTransaction: null,
-
-      // Representative related data
       hasRepresentativeInfo: false,
       sameAsPatientAddress: false,
-
-      // New Transaction Modal
       showNewTransactionModal: false,
       creatingTransaction: false,
       newTransaction: {
@@ -670,7 +646,6 @@ export default {
         rep_city: 'Tagum City',
         rep_province: 'Davao del Norte',
       },
-
       transactionColumns: [
         {
           name: 'id',
@@ -734,6 +709,9 @@ export default {
     patientStore() {
       return usePatientStore()
     },
+    isFemalePatient() {
+      return this.patient.gender && this.patient.gender.toLowerCase() === 'female'
+    },
   },
 
   watch: {
@@ -773,12 +751,6 @@ export default {
 
   methods: {
     async loadPatientData() {
-      const patientData = await this.patientStore.getPatient(this.patientId)
-      if (patientData && Array.isArray(patientData.transaction)) {
-        this.transactions = patientData.transaction
-      } else {
-        this.transactions = (await this.patientStore.getPatientTransactions(this.patientId)) || []
-      }
       try {
         if (!this.patientId) {
           this.$q.notify({
@@ -1031,8 +1003,6 @@ export default {
           transaction_type: this.newTransaction.transaction_type,
           transaction_mode: this.newTransaction.transaction_mode || 'Walk-in',
           purpose: this.newTransaction.purpose || '',
-
-          // Vital signs fields
           height: this.newTransaction.height || '',
           weight: this.newTransaction.weight || '',
           bmi: this.newTransaction.bmi || '',
@@ -1043,11 +1013,13 @@ export default {
           pulse_rate: this.newTransaction.pulse_rate || '',
           temperature: this.newTransaction.temperature || '',
           sp02: this.newTransaction.sp02 || '',
-          LMP: this.newTransaction.LMP || '',
           medicine: this.newTransaction.medicine || '',
         }
 
-        // Add representative data if enabled
+        if (this.isFemalePatient) {
+          payload.LMP = this.newTransaction.LMP || ''
+        }
+
         if (this.hasRepresentativeInfo) {
           if (this.sameAsPatientAddress) {
             Object.assign(payload, {
@@ -1084,11 +1056,7 @@ export default {
             position: 'top',
             timeout: 2000,
           })
-          await this.loadPatientData() // or await this.refreshTransactions()
-          this.showNewTransactionModal = false
-          this.resetNewTransaction()
-
-          // Close modal and reset form
+          await this.loadPatientData()
           this.showNewTransactionModal = false
           this.resetNewTransaction()
         }
