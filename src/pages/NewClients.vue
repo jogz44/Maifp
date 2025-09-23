@@ -8,8 +8,31 @@
 
       <q-form @submit.prevent="submitPatientForm" ref="patientForm">
         <q-card-section>
-          <!-- Personal Details Section -->
+          <!-- ID Numbers Section -->
           <div class="row q-col-gutter-md">
+            <div class="col-12 col-md-6">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.philsys_id"
+                label="PhilSys ID"
+                class="text-caption"
+                mask="####-####-####-####"
+              />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.philhealth_id"
+                label="PhilHealth ID"
+                class="text-caption"
+                mask="##-#########-#"
+              />
+            </div>
+          </div>
+          <!-- Personal Details Section -->
+          <div class="row q-col-gutter-md q-mt-sm">
             <div class="col-12 col-md-3">
               <q-input
                 outlined
@@ -98,16 +121,156 @@
             </div>
           </div>
 
+          <!-- Additional Personal Information -->
+          <div class="row q-col-gutter-md q-mt-sm">
+            <div class="col-12 col-md-4">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.place_of_birth"
+                label="Place of Birth"
+                class="text-caption"
+              />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-select
+                outlined
+                dense
+                v-model="patientData.civil_status"
+                :options="civilStatusOptions"
+                label="Civil Status"
+                class="text-caption"
+              />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-select
+                outlined
+                dense
+                v-model="patientData.religion"
+                :options="religionOptions"
+                label="Religion"
+                class="text-caption"
+                use-input
+                hide-selected
+                fill-input
+                input-debounce="0"
+              />
+            </div>
+          </div>
+
+          <div class="row q-col-gutter-md q-mt-sm">
+            <div class="col-12 col-md-4">
+              <q-select
+                outlined
+                dense
+                v-model="patientData.education_attainment"
+                :options="educationOptions"
+                label="Highest Education Attainment"
+                class="text-caption"
+              />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.occupation"
+                label="Occupation"
+                class="text-caption"
+              />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-select
+                outlined
+                dense
+                v-model="patientData.monthly_income"
+                :options="incomeOptions"
+                label="Monthly Income"
+                class="text-caption"
+              />
+            </div>
+          </div>
+
           <q-separator spaced inset />
 
-          <!-- Address Section -->
+          <!-- Permanent Address Section -->
           <div class="q-mb-md">
             <div class="row items-center">
-              <div class="text-subtitle2 q-mb-sm">Address Information</div>
+              <div class="text-subtitle2 q-mb-sm">Permanent Address</div>
               <q-space />
             </div>
 
             <div class="row q-col-gutter-md">
+              <div class="col-12 col-md-4">
+                <q-select
+                  outlined
+                  dense
+                  v-model="patientData.perm_barangay"
+                  :options="TagumBarangay.barangay"
+                  label="Barangay *"
+                  class="text-caption"
+                  :input-debounce="0"
+                  use-input
+                  hide-selected
+                  fill-input
+                  lazy-rules
+                  :rules="[(val) => !!val || 'Barangay is required']"
+                />
+              </div>
+              <div class="col-12 col-md-4">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.perm_purok"
+                  label="Purok"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-4">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.perm_street"
+                  label="Street"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-6">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.perm_city"
+                  label="City"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-6">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.perm_province"
+                  label="Province"
+                  class="text-caption"
+                />
+              </div>
+            </div>
+          </div>
+
+          <q-separator spaced inset />
+
+          <!-- Present Address Section -->
+          <div class="q-mb-md">
+            <div class="row items-center">
+              <div class="text-subtitle2 q-mb-sm">Present Address</div>
+              <q-space />
+              <q-checkbox
+                v-model="sameAsPermanentAddress"
+                label="Same as Permanent Address"
+                class="text-caption"
+                @update:model-value="handleSamePermAddressChange"
+              />
+            </div>
+
+            <div class="row q-col-gutter-md" v-if="!sameAsPermanentAddress">
               <div class="col-12 col-md-4">
                 <q-select
                   outlined
@@ -149,7 +312,6 @@
                   v-model="patientData.city"
                   label="City"
                   class="text-caption"
-                  readonly
                 />
               </div>
               <div class="col-12 col-md-6">
@@ -159,7 +321,6 @@
                   v-model="patientData.province"
                   label="Province"
                   class="text-caption"
-                  readonly
                 />
               </div>
             </div>
@@ -228,7 +389,7 @@
                   <q-space />
                   <q-checkbox
                     v-model="sameAsPatientAddress"
-                    label="Same as Patient's Address"
+                    label="Same as Patient's Present Address"
                     class="text-caption"
                     @update:model-value="handleSameAddressChange"
                   />
@@ -274,7 +435,6 @@
                   v-model="patientData.rep_city"
                   label="City"
                   class="text-caption"
-                  readonly
                 />
               </div>
               <div class="col-12 col-md-6" v-if="!sameAsPatientAddress">
@@ -284,7 +444,6 @@
                   v-model="patientData.rep_province"
                   label="Province"
                   class="text-caption"
-                  readonly
                 />
               </div>
             </div>
@@ -559,15 +718,68 @@ export default defineComponent({
     const patientForm = ref(null)
 
     // Form data
-    const patientData = ref({ ...patientStore.patientInfoDefault })
+    const patientData = ref({
+      ...patientStore.patientInfoDefault,
+      // Add new fields with default values
+      philsys_id: '',
+      philhealth_id: '',
+      place_of_birth: '',
+      civil_status: '',
+      religion: '',
+      education_attainment: '',
+      occupation: '',
+      monthly_income: '',
+      // Permanent address fields
+      perm_barangay: '',
+      perm_purok: '',
+      perm_street: '',
+      perm_city: 'Tagum City',
+      perm_province: 'Davao del Norte',
+    })
     const hasRepresentative = ref(false)
     const sameAsPatientAddress = ref(true)
+    const sameAsPermanentAddress = ref(true)
 
     // UI state
     const showError = ref(false)
     const isChild = ref(false)
     const isAdult = ref(false)
     const isSenior = ref(false)
+
+    // Options for new dropdown fields
+    const civilStatusOptions = ['Single', 'Married', 'Widow/er', 'Separated']
+
+    const religionOptions = [
+      'Islam',
+      'Roman Catholic',
+      'Iglesia ni Cristo',
+      'Born Again Christian',
+      'Protestant Christian',
+      'Baptist',
+      'Evangelical',
+      "Jehovah's Witnesses",
+      'Other Christian',
+      'No Religion',
+      'Indigenous Beliefs',
+      'Other',
+    ]
+
+    const educationOptions = [
+      'Elementary Education',
+      'Highschool Education',
+      'College',
+      'Postgraduate Program',
+      'No Formal Education',
+    ]
+
+    const incomeOptions = [
+      'At least ₱190,400',
+      'Between ₱114,240 - ₱190,400',
+      'Between ₱66,640 - ₱114,240',
+      'Between ₱38,080 - ₱66,640',
+      'Between ₱9,520 - ₱38,080',
+      'Less than ₱9,520',
+    ]
 
     // Computed properties
     const errorMessage = computed(() => {
@@ -588,14 +800,19 @@ export default defineComponent({
       patientStore.patient_id = null
       patientStore.isSave = true
 
-      // Set fixed city and province
+      // Set fixed city and province for all addresses
       patientData.value.city = 'Tagum City'
       patientData.value.province = 'Davao del Norte'
+      patientData.value.perm_city = 'Tagum City'
+      patientData.value.perm_province = 'Davao del Norte'
       patientData.value.rep_city = 'Tagum City'
       patientData.value.rep_province = 'Davao del Norte'
 
       // Reset representative values
       resetRepresentativeData()
+
+      // Initialize present address same as permanent
+      updatePresentAddressFromPermanent()
     })
 
     onUnmounted(() => {
@@ -646,11 +863,32 @@ export default defineComponent({
       patientData.value.rep_purok = ''
       patientData.value.rep_street = ''
       patientData.value.rep_contact = ''
-      // Add these two lines to ensure defaults are set
       patientData.value.rep_city = 'Tagum City'
       patientData.value.rep_province = 'Davao del Norte'
-
       sameAsPatientAddress.value = true
+    }
+
+    const updatePresentAddressFromPermanent = () => {
+      if (sameAsPermanentAddress.value) {
+        patientData.value.barangay = patientData.value.perm_barangay
+        patientData.value.purok = patientData.value.perm_purok
+        patientData.value.street = patientData.value.perm_street
+        patientData.value.city = patientData.value.perm_city
+        patientData.value.province = patientData.value.perm_province
+      }
+    }
+
+    const handleSamePermAddressChange = () => {
+      if (sameAsPermanentAddress.value) {
+        updatePresentAddressFromPermanent()
+      } else {
+        // Clear present address fields when unchecked
+        patientData.value.barangay = ''
+        patientData.value.purok = ''
+        patientData.value.street = ''
+        patientData.value.city = 'Tagum City'
+        patientData.value.province = 'Davao del Norte'
+      }
     }
 
     const updateRepAddressFromPatient = () => {
@@ -660,12 +898,6 @@ export default defineComponent({
         patientData.value.rep_street = patientData.value.street
         patientData.value.rep_city = patientData.value.city
         patientData.value.rep_province = patientData.value.province
-
-        // Log for debugging
-        console.log('Updated rep address:', {
-          city: patientData.value.rep_city,
-          province: patientData.value.rep_province,
-        })
       }
     }
 
@@ -710,16 +942,33 @@ export default defineComponent({
         patientForm.value.resetValidation()
       }
 
-      patientData.value = { ...patientStore.patientInfoDefault }
+      patientData.value = {
+        ...patientStore.patientInfoDefault,
+        // Reset new fields
+        philsys_id: '',
+        philhealth_id: '',
+        place_of_birth: '',
+        civil_status: '',
+        religion: '',
+        education_attainment: '',
+        occupation: '',
+        monthly_income: '',
+        // Reset permanent address fields
+        perm_barangay: '',
+        perm_purok: '',
+        perm_street: '',
+        perm_city: 'Tagum City',
+        perm_province: 'Davao del Norte',
+      }
       patientData.value.transaction_date = getCurrentDate()
       patientData.value.city = 'Tagum City'
       patientData.value.province = 'Davao del Norte'
-      // Ensure these are explicitly set after resetting the form
       patientData.value.rep_city = 'Tagum City'
       patientData.value.rep_province = 'Davao del Norte'
 
       hasRepresentative.value = false
       sameAsPatientAddress.value = true
+      sameAsPermanentAddress.value = true
       isChild.value = false
       isAdult.value = false
       isSenior.value = false
@@ -740,7 +989,11 @@ export default defineComponent({
       // Calculate BMI again to ensure latest value
       calculateBMI()
 
-      // Update representative address if needed
+      // Update addresses if needed
+      if (sameAsPermanentAddress.value) {
+        updatePresentAddressFromPermanent()
+      }
+
       if (hasRepresentative.value && sameAsPatientAddress.value) {
         updateRepAddressFromPatient()
       }
@@ -768,10 +1021,21 @@ export default defineComponent({
     const formatDataForSubmission = () => {
       const formattedData = { ...patientData.value }
 
-      // If representative is enabled but using same address, ensure city and province are copied
+      // Ensure address data is properly set
+      if (sameAsPermanentAddress.value) {
+        formattedData.barangay = formattedData.perm_barangay
+        formattedData.purok = formattedData.perm_purok
+        formattedData.street = formattedData.perm_street
+        formattedData.city = formattedData.perm_city
+        formattedData.province = formattedData.perm_province
+      }
+
       if (hasRepresentative.value && sameAsPatientAddress.value) {
-        formattedData.rep_city = patientData.value.city
-        formattedData.rep_province = patientData.value.province
+        formattedData.rep_barangay = formattedData.barangay
+        formattedData.rep_purok = formattedData.purok
+        formattedData.rep_street = formattedData.street
+        formattedData.rep_city = formattedData.city
+        formattedData.rep_province = formattedData.province
       }
 
       // Convert numeric values to strings
@@ -793,16 +1057,26 @@ export default defineComponent({
         }
       })
 
-      // Debug log the data before submission
-      console.log('Submitting patient data with rep city/province:', {
-        rep_city: formattedData.rep_city,
-        rep_province: formattedData.rep_province,
-      })
-
       return formattedData
     }
 
-    // Watch patient address fields to update rep address
+    // Watch permanent address fields to update present address if same
+    watch(
+      [
+        () => patientData.value.perm_barangay,
+        () => patientData.value.perm_purok,
+        () => patientData.value.perm_street,
+        () => patientData.value.perm_city,
+        () => patientData.value.perm_province,
+      ],
+      () => {
+        if (sameAsPermanentAddress.value) {
+          updatePresentAddressFromPermanent()
+        }
+      },
+    )
+
+    // Watch present address fields to update rep address if same
     watch(
       [
         () => patientData.value.barangay,
@@ -831,13 +1105,20 @@ export default defineComponent({
       isFemale,
       hasRepresentative,
       sameAsPatientAddress,
+      sameAsPermanentAddress,
+      civilStatusOptions,
+      religionOptions,
+      educationOptions,
+      incomeOptions,
 
       handleBirthdateChange,
       calculateBMI,
       clearInputs,
       submitPatientForm,
       handleSameAddressChange,
+      handleSamePermAddressChange,
       updateRepAddressFromPatient,
+      updatePresentAddressFromPermanent,
     }
   },
 })

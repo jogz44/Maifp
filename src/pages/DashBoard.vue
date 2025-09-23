@@ -1,35 +1,28 @@
 <template>
   <q-page padding>
-    <!-- Header Fund Cards -->
+    <!-- Patient Monitoring Section -->
+    <div class="text-h6 text-green-9 font-bold q-mt-none q-mb-md">Patient Monitoring</div>
+
+    <!-- Header Fund Cards by Source -->
     <div class="row q-col-gutter-md q-mb-lg">
-      <div class="col-xs-12 col-sm-4">
+      <div
+        v-for="(fundSource, index) in fundStore.releasedFundsBySource"
+        :key="index"
+        class="col-xs-12 col-sm-4 col-md-2"
+      >
         <q-card>
           <q-card-section>
-            <div class="text-h6 text-green-9">Total Funds</div>
-            <div class="text-subtitle1">₱ {{ fundStore.totalFunds.toLocaleString() }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-xs-12 col-sm-4">
-        <q-card>
-          <q-card-section>
-            <div class="text-h6 text-green-9">Released Funds</div>
-            <div class="text-subtitle1">₱ {{ fundStore.releasedFunds.toLocaleString() }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-xs-12 col-sm-4">
-        <q-card>
-          <q-card-section>
-            <div class="text-h6 text-green-9">Remaining Funds</div>
-            <div class="text-subtitle1">₱ {{ fundStore.remainingFunds.toLocaleString() }}</div>
+            <div class="text-h7 text-green-9 font-bold">{{ fundSource.fund_source }}</div>
+            <div class="text-h6 text-green-7 q-mt-xs">
+              ₱ {{ Number(fundSource.total_amount).toLocaleString() }}
+            </div>
+            <div class="text-caption text-grey-7">
+              {{ fundSource.patient_count }} patient{{ fundSource.patient_count !== 1 ? 's' : '' }}
+            </div>
           </q-card-section>
         </q-card>
       </div>
     </div>
-
-    <!-- Patient Monitoring Section -->
-    <div class="text-h6 text-green-9 font-bold q-mt-none q-mb-md">Patient Monitoring</div>
 
     <!-- Steps -->
     <div class="row q-col-gutter-md">
@@ -85,7 +78,6 @@ export default {
         { name: 'Returned', patients: [], route: '/customers/returnconsultation' },
         { name: 'Medicine', patients: [], route: '#' },
         { name: 'Billing', patients: [], route: '/billing' },
-        { name: 'GL', patients: [], route: '/gl' },
       ],
       intervalId: null,
       fundStore: null,
@@ -97,7 +89,7 @@ export default {
     this.fundStore = useFundsStore()
     this.patientStore = usePatientStore()
     this.loadAllData()
-    this.intervalId = setInterval(this.loadAllData, 30000)
+    this.intervalId = setInterval(this.loadAllData, 300000)
   },
 
   beforeUnmount() {
@@ -113,7 +105,6 @@ export default {
         this.patientStore.fetchPatientsReturned(),
         this.patientStore.fetchPatientsMedicine(),
         this.patientStore.fetchPatientsBilling(),
-        this.patientStore.fetchPatientsGL(),
       ])
 
       results.forEach((result, index) => {

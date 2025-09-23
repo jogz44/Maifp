@@ -22,11 +22,33 @@ export const usePatientStore = defineStore('patient', {
       contact_number: '',
       age: 0,
       gender: '',
+
+      // New ID fields
+      philsys_id: '',
+      philhealth_id: '',
+
+      // Additional personal information
+      place_of_birth: '',
+      civil_status: '',
+      religion: '',
+      education_attainment: '',
+      occupation: '',
+      monthly_income: '',
+
+      // Permanent address
+      perm_street: '',
+      perm_purok: '',
+      perm_barangay: '',
+      perm_city: 'Tagum City',
+      perm_province: 'Davao del Norte',
+
+      // Present address
       street: '',
       purok: '',
       barangay: '',
       city: 'Tagum City',
       province: 'Davao del Norte',
+
       category: '',
       is_pwd: false,
       is_solo: false,
@@ -401,14 +423,29 @@ export const usePatientStore = defineStore('patient', {
         }
       })
 
+      // Ensure all address fields are set with defaults if missing
+      if (!patientData.perm_city) patientData.perm_city = 'Tagum City'
+      if (!patientData.perm_province) patientData.perm_province = 'Davao del Norte'
+      if (!patientData.city) patientData.city = 'Tagum City'
+      if (!patientData.province) patientData.province = 'Davao del Norte'
+
       // Ensure rep_city and rep_province are set if representative is enabled
       if (patientData.rep_name) {
         if (!patientData.rep_city) patientData.rep_city = 'Tagum City'
         if (!patientData.rep_province) patientData.rep_province = 'Davao del Norte'
       }
 
-      console.log('Submitting patient with rep data:', {
-        rep_name: patientData.rep_name,
+      console.log('Submitting patient with new fields:', {
+        philsys_id: patientData.philsys_id,
+        philhealth_id: patientData.philhealth_id,
+        place_of_birth: patientData.place_of_birth,
+        civil_status: patientData.civil_status,
+        religion: patientData.religion,
+        // education_attainment: patientData.education_attainment,
+        occupation: patientData.occupation,
+        monthly_income: patientData.monthly_income,
+        perm_city: patientData.perm_city,
+        perm_province: patientData.perm_province,
         rep_city: patientData.rep_city,
         rep_province: patientData.rep_province,
       })
@@ -453,6 +490,12 @@ export const usePatientStore = defineStore('patient', {
           patientData[field] = patientData[field].toString()
         }
       })
+
+      // Ensure all address fields are set with defaults if missing
+      if (!patientData.perm_city) patientData.perm_city = 'Tagum City'
+      if (!patientData.perm_province) patientData.perm_province = 'Davao del Norte'
+      if (!patientData.city) patientData.city = 'Tagum City'
+      if (!patientData.province) patientData.province = 'Davao del Norte'
 
       // Ensure rep_city and rep_province are set if representative is enabled
       if (patientData.rep_name) {

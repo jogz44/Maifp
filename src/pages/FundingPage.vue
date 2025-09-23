@@ -5,92 +5,75 @@
       <q-card-section class="row items-center">
         <div class="text-h6">Funds</div>
         <q-space />
-        <q-btn label="Add Funds" color="green-9" @click="showAddFundsDialog = true" />
+        <q-select
+          v-model="selectedFundSource"
+          :options="fundSourceOptions"
+          label="Filter by Fund Source"
+          outlined
+          dense
+          style="min-width: 200px"
+          clearable
+        />
       </q-card-section>
       <q-separator />
       <q-card-section>
-        <q-table :rows="rows" :columns="columns" row-key="id" flat>
-          <template #body-cell-date="props">
+        <q-table
+          :rows="filteredFunds"
+          :columns="columns"
+          row-key="transaction_id"
+          :loading="fundsStore.loading"
+          flat
+        >
+          <template v-slot:body-cell-fund_amount="props">
             <q-td :props="props">
-              {{ formatDate(props.row.created_at) }}
+              ₱{{
+                Number(props.value).toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }}
             </q-td>
           </template>
-          <template #body-cell-time="props">
+
+          <template v-slot:body-cell-transaction_date="props">
             <q-td :props="props">
-              {{ formatTime(props.row.created_at) }}
-            </q-td>
-          </template>
-          <template #body-cell-funds="props">
-            <q-td :props="props">
-              {{ money(props.row.funds) }}
+              {{ new Date(props.value).toLocaleDateString() }}
             </q-td>
           </template>
         </q-table>
       </q-card-section>
     </q-card>
-
-    <!-- Add Funds Dialog -->
-    <q-dialog v-model="showAddFundsDialog" persistent>
-      <q-card style="min-width: 350px">
-        <q-card-section>
-          <div class="text-h6 text-green-9">Add Funds</div>
-        </q-card-section>
-        <q-card-section>
-          <q-input
-            v-model.number="form.funds"
-            label="Funds"
-            type="number"
-            dense
-            outlined
-            class="q-mb-sm"
-          >
-            <template #prepend>₱</template>
-          </q-input>
-          <q-input v-model="form.remarks" label="Remarks" dense outlined autogrow />
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" v-close-popup />
-          <q-btn label="Save" color="primary" @click="saveNewFund" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
   </q-page>
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useFundsStore } from '../stores/fundingStore'
 
 const fundsStore = useFundsStore()
-const showAddFundsDialog = ref(false)
-const form = reactive({ remarks: '', funds: 0 })
+const selectedFundSource = ref('MAIFIP')
 
 const columns = [
-  { name: 'funds', label: 'Funds', field: 'funds', align: 'left' },
-  { name: 'remarks', label: 'Remarks', field: 'remarks', align: 'left' },
-  { name: 'date', label: 'Date', field: 'created_at', align: 'left' },
-  // { name: 'time', label: 'Time', field: 'created_at', align: 'left' },
+  { name: 'patient_name', label: 'Patient Name', field: 'patient_name', align: 'left' },
+  { name: 'transaction_id', label: 'Transaction ID', field: 'transaction_id', align: 'left' },
+  { name: 'transaction_date', label: 'Date', field: 'transaction_date', align: 'left' },
+  { name: 'fund_source', label: 'Fund Source', field: 'fund_source', align: 'left' },
+  { name: 'fund_amount', label: 'Fund Amount', field: 'fund_amount', align: 'right' },
 ]
 
-const money = (v) =>
-  new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(v || 0)
-const formatDate = (dt) => (dt ? dt.split('T')[0] : '')
-const formatTime = (dt) => (dt ? dt.split('T')[1]?.slice(0, 8) : '')
+const fundSourceOptions = computed(() => {
+  const sources = [...new Set(fundsStore.funds.map((fund) => fund.fund_source))]
+  return sources.sort()
+})
 
-const rows = computed(() => fundsStore.funds)
-
-const refreshFunds = () => fundsStore.fetchFunds()
-refreshFunds()
-
-const saveNewFund = async () => {
-  try {
-    await fundsStore.addFund({ remarks: form.remarks, funds: form.funds })
-    showAddFundsDialog.value = false
-    form.remarks = ''
-    form.funds = 0
-    refreshFunds() // refresh table after adding
-  } catch {
-    // Optionally handle error here
+const filteredFunds = computed(() => {
+  if (!selectedFundSource.value) {
+    return fundsStore.funds
   }
-}
+  return fundsStore.funds.filter((fund) => fund.fund_source === selectedFundSource.value)
+})
+
+onMounted(() => {
+  fundsStore.assistanceList()
+})
 </script>

@@ -175,7 +175,7 @@ async function getPatients() {
 
 function showClient(row) {
   store.patient_id = row.id
-  store.transaction_id = row.transaction[0]?.id
+  store.transaction_id = row.transaction_id
   router.push('/gl/report')
 }
 

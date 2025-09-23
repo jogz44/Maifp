@@ -96,7 +96,7 @@ const routes = [
       },
       {
         path: '/gl/report',
-        component: () => import('pages/GuaranteedLetter.vue'),
+        component: () => import('pages/AssistancePage.vue'),
         meta: { requiresAuth: true },
       },
 

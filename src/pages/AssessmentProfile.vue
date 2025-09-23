@@ -231,22 +231,33 @@
                       {{ props.row.purpose || 'N/A' }}
                     </q-td>
                     <q-td key="status" style="font-size: 11px" align="center">
+                      <div
+                        v-if="props.row.status === 'Complete'"
+                        class="text-caption q-mt-xs text-blue text-bold"
+                      >
+                        {{ props.row.status }}
+                      </div>
+
                       <q-toggle
+                        v-else
                         :model-value="props.row.status === 'qualified'"
                         color="green"
                         @update:model-value="
-                          (isChecked) =>
+                          (isChecked) => {
                             confirmStatusChange(props.row, isChecked ? 'qualified' : 'unqualified')
+                          }
                         "
                         :loading="props.row.statusUpdating"
                       />
                       <div
+                        v-if="props.row.status !== 'Complete'"
                         class="text-caption q-mt-xs"
                         :class="props.row.status === 'qualified' ? 'text-green' : 'text-orange'"
                       >
                         {{ props.row.status || 'unqualified' }}
                       </div>
                     </q-td>
+
                     <q-td key="actions" style="font-size: 11px" align="center">
                       <q-btn
                         icon="visibility"

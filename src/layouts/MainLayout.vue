@@ -90,24 +90,6 @@
             </q-item-section>
           </q-item>
 
-          <q-item clickable v-ripple to="/gl">
-            <q-item-section class="q-ml-sm">
-              <q-item-label class="text-caption">
-                <q-icon name="category" class="q-ml-md q-mr-lg" size="24px" />
-                Guaranteed Letter
-              </q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-badge
-                v-if="badgeStore.gl > 0"
-                :label="badgeStore.gl"
-                color="red-9"
-                rounded
-                class="q-ml-sm"
-              />
-            </q-item-section>
-          </q-item>
-
           <q-item clickable v-ripple to="/fundings">
             <q-item-section class="q-ml-sm">
               <q-item-label class="text-caption">
@@ -373,7 +355,7 @@ export default {
 
       this.badgeInterval = setInterval(async () => {
         await this.badgeStore.fetchBadges()
-      }, 10000)
+      }, 100000)
     }
   },
 
