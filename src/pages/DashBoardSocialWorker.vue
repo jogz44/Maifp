@@ -2,20 +2,27 @@
   <q-page padding>
     <!-- Patient Monitoring Section -->
     <div class="text-h6 text-green-9 font-bold q-mt-none q-mb-md">Patient Monitoring</div>
-    <!-- Header Fund Cards -->
+
+    <!-- Header Fund Cards by Source -->
     <div class="row q-col-gutter-md q-mb-lg">
-      <div class="col-xs-12 col-sm-12">
+      <div
+        v-for="(fundSource, index) in fundStore.releasedFundsBySource"
+        :key="index"
+        class="col-xs-12 col-sm-4 col-md-2"
+      >
         <q-card>
           <q-card-section>
-            <div class="text-h6 text-green-9">Released Funds</div>
-            <div class="text-subtitle1">₱ {{ fundStore.releasedFunds.toLocaleString() }}</div>
+            <div class="text-h7 text-green-9 font-bold">{{ fundSource.fund_source }}</div>
+            <div class="text-h6 text-green-7 q-mt-xs">
+              ₱ {{ Number(fundSource.total_amount).toLocaleString() }}
+            </div>
+            <div class="text-caption text-grey-7">
+              {{ fundSource.patient_count }} patient{{ fundSource.patient_count !== 1 ? 's' : '' }}
+            </div>
           </q-card-section>
         </q-card>
       </div>
     </div>
-
-    <!-- Patient Monitoring Section -->
-    <div class="text-h6 text-green-9 font-bold q-mt-none q-mb-md">Patient Monitoring</div>
 
     <!-- Steps -->
     <div class="row q-col-gutter-md">
@@ -40,7 +47,8 @@
                   :key="pIndex"
                   class="col-12 q-mb-xs"
                 >
-                  {{ patient.firstname }} {{ patient.lastname }}
+                  {{ patient?.firstname || patient?.patient?.firstname || 'Unknown' }}
+                  {{ patient.lastname || patient?.patient?.lastname || 'Unknown' }}
                 </div>
 
                 <div v-if="step.patients.length === 0" class="col-12 text-grey text-center">
@@ -78,7 +86,7 @@ export default {
     this.fundStore = useFundsStore()
     this.patientStore = usePatientStore()
     this.loadAllData()
-    this.intervalId = setInterval(this.loadAllData, 30000)
+    this.intervalId = setInterval(this.loadAllData, 300000)
   },
 
   beforeUnmount() {

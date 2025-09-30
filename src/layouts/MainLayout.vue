@@ -90,14 +90,32 @@
             </q-item-section>
           </q-item>
 
-          <q-item clickable v-ripple to="/fundings">
+          <q-item clickable v-ripple to="/gl">
+            <q-item-section class="q-ml-sm">
+              <q-item-label class="text-caption">
+                <q-icon name="insert_drive_file" class="q-ml-md q-mr-lg" size="24px" />
+                GL
+              </q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-badge
+                v-if="badgeStore.gl > 0"
+                :label="badgeStore.gl"
+                color="red-9"
+                rounded
+                class="q-ml-sm"
+              />
+            </q-item-section>
+          </q-item>
+
+          <!-- <q-item clickable v-ripple to="/fundings">
             <q-item-section class="q-ml-sm">
               <q-item-label class="text-caption">
                 <q-icon name="wallet" class="q-ml-md q-mr-lg" size="24px" />
                 Fundings
               </q-item-label>
             </q-item-section>
-          </q-item>
+          </q-item> -->
         </q-expansion-item>
 
         <!-- CONSULTATION MENU - Available to admin and doctor -->
@@ -179,6 +197,13 @@
           <div class="row items-center">
             <q-icon name="list" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Master List</span>
+          </div>
+        </q-item>
+
+        <q-item v-if="canAccessMasterList" clickable v-ripple to="/reports">
+          <div class="row items-center">
+            <q-icon name="bar_chart" size="24px" class="q-mr-md" />
+            <span class="text-sm" style="padding-left: 16px">Reports</span>
           </div>
         </q-item>
 

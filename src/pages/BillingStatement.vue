@@ -118,30 +118,6 @@
                 </p>
               </div>
             </div>
-
-            <!-- Only show representative section if data exists -->
-            <template v-if="hasRepresentativeData">
-              <div class="info-section-title">Representative Information</div>
-              <q-separator />
-              <div class="row">
-                <div class="col-6">
-                  <p>
-                    <strong>Representative Name:</strong>
-                    {{ patient.representative?.rep_name || 'N/A' }}
-                  </p>
-                  <p>
-                    <strong>Relationship:</strong>
-                    {{ patient.representative?.relationship || 'N/A' }}
-                  </p>
-                </div>
-                <div class="col-6">
-                  <p>
-                    <strong>Address:</strong>
-                    {{ patient.representative?.address || 'N/A' }}
-                  </p>
-                </div>
-              </div>
-            </template>
           </div>
 
           <div class="table-container">
@@ -170,7 +146,7 @@
                   <td class="text-left"></td>
                   <td class="text-left"></td>
                   <td class="text-left"></td>
-                  <td class="text-right">{{ formatAmount(lab.amount) }}</td>
+                  <td class="text-right">{{ lab.total_amount }}</td>
                 </tr>
                 <!-- Medicine -->
                 <tr v-for="med in patient.medication" :key="'med-' + med.id" class="med-row">
@@ -270,16 +246,6 @@ const preparerName = computed(() => {
   if (lastName) fullName += ' ' + lastName
 
   return fullName.trim() || 'Staff Member'
-})
-
-// Check if representative data exists
-const hasRepresentativeData = computed(() => {
-  return (
-    patient.value.representative &&
-    (patient.value.representative.rep_name ||
-      patient.value.representative.relationship ||
-      patient.value.representative.address)
-  )
 })
 
 onMounted(async () => {

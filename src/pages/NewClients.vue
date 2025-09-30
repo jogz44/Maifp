@@ -182,7 +182,7 @@
               <q-select
                 outlined
                 dense
-                v-model="patientData.monthly_income"
+                v-model="patientData.income"
                 :options="incomeOptions"
                 label="Monthly Income"
                 class="text-caption"
@@ -728,7 +728,7 @@ export default defineComponent({
       religion: '',
       education_attainment: '',
       occupation: '',
-      monthly_income: '',
+      income: '',
       // Permanent address fields
       perm_barangay: '',
       perm_purok: '',
@@ -952,7 +952,7 @@ export default defineComponent({
         religion: '',
         education_attainment: '',
         occupation: '',
-        monthly_income: '',
+        income: '',
         // Reset permanent address fields
         perm_barangay: '',
         perm_purok: '',

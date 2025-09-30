@@ -60,23 +60,8 @@
                     color="primary"
                     icon="description"
                     @click="showPatientDetail(props.row.id)"
-                    :to="'/customers/profile'"
+                    :to="'/masterlist/detail'"
                     class="q-mr-sm"
-                  />
-                  <q-btn
-                    v-if="getPatientStepStatus(props.row) === 'Billing'"
-                    flat
-                    color="positive"
-                    icon="receipt_long"
-                    @click="showClient(props.row, '/billing/report')"
-                    class="q-mr-sm"
-                  />
-                  <q-btn
-                    v-if="getPatientStepStatus(props.row) === 'GL'"
-                    flat
-                    color="secondary"
-                    icon="list_alt"
-                    @click="showClient(props.row, '/gl/report')"
                   />
                 </q-td>
               </q-tr>
@@ -90,10 +75,8 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
 import { usePatientStore } from '../stores/patientStore'
 
-const router = useRouter()
 const Patients = usePatientStore()
 const search = ref('')
 // const selectedDate = ref(new Date().toISOString().substring(0, 10))
@@ -189,12 +172,6 @@ const filteredRows = computed(() => {
     return matchesSearch && matchesDate
   })
 })
-
-function showClient(row, route) {
-  Patients.patient_id = row.id
-  Patients.transaction_id = row.latest_transaction?.id || (row.transaction?.[0]?.id ?? null)
-  router.push(route)
-}
 
 function showPatientDetail(id) {
   Patients.isEdit = true

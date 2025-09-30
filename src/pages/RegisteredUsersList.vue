@@ -66,7 +66,6 @@
                     @click="
                       () => {
                         dialogInactive = true
-                        getUser(props.row.id)
                       }
                     "
                   >
@@ -83,7 +82,6 @@
                     @click="
                       () => {
                         dialogActive = true
-                        getUser(props.row.id)
                       }
                     "
                   >

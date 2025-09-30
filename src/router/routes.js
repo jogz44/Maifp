@@ -82,11 +82,11 @@ const routes = [
       },
 
       //fundings
-      {
-        path: '/fundings',
-        component: () => import('pages/FundingPage.vue'),
-        meta: { requiresAuth: true },
-      },
+      // {
+      //   path: '/fundings',
+      //   component: () => import('pages/FundingPage.vue'),
+      //   meta: { requiresAuth: true },
+      // },
 
       //guaranteed letter
       {
@@ -96,7 +96,12 @@ const routes = [
       },
       {
         path: '/gl/report',
-        component: () => import('pages/AssistancePage.vue'),
+        component: () => import('pages/MAIFIPBill.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/gl/detail',
+        component: () => import('pages/SWViewing.vue'),
         meta: { requiresAuth: true },
       },
 
@@ -111,11 +116,28 @@ const routes = [
         component: () => import('pages/BillingStatement.vue'),
         meta: { requiresAuth: true },
       },
+      {
+        path: '/bill/report',
+        component: () => import('pages/AssistancePage.vue'),
+        meta: { requiresAuth: true },
+      },
 
       //masterlist
       {
         path: '/masterlist',
         component: () => import('pages/MasterList.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/masterlist/detail',
+        component: () => import('pages/ClientProfileMasterlist.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      //reports
+      {
+        path: '/reports',
+        component: () => import('pages/ReportPage.vue'),
         meta: { requiresAuth: true },
       },
 

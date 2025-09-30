@@ -18,9 +18,9 @@
         </div>
         <div class="header-actions">
           <q-btn
-            v-if="!hasExistingAssistance"
+            v-if="!hasMAIFIP && billingData.transaction.status !== 'Funded'"
             color="orange-9"
-            label="Apply Assistance"
+            label="MAIFIP"
             icon="volunteer_activism"
             class="q-mr-sm"
             :loading="processing"
@@ -28,46 +28,65 @@
             @click="showAssistanceDialog = true"
           />
           <q-btn
-            color="green-9"
-            label="Complete"
+            v-if="hasMAIFIP && billingData.transaction.status !== 'Funded'"
+            color="primary"
+            label="Submit"
             icon="save"
             class="q-mr-sm"
-            :loading="completing"
-            :disable="completing"
             @click="showConfirmDialog = true"
+            :loading="submitting"
           />
           <q-btn color="secondary" label="Print PDF" icon="picture_as_pdf" @click="handlePrint" />
         </div>
       </div>
 
+      <!-- Confirm Dialog -->
       <q-dialog v-model="showConfirmDialog" persistent>
         <q-card style="min-width: 400px">
           <q-card-section class="row items-center">
             <q-avatar icon="help" color="green-9" text-color="white" />
             <span class="q-ml-sm text-h6">Complete Transaction</span>
           </q-card-section>
-          <q-card-section>
-            <p>Are you sure you want to mark this transaction as completed?</p>
-            <p class="text-caption text-grey-7">
-              <strong>Note:</strong> This action cannot be undone.
-            </p>
+          <q-card-section class="q-pt-none">
+            <div class="text-body1">Are you sure you want to fund this statement of account?</div>
+            <div class="q-mt-md text-body2 text-grey-7">
+              <strong>Patient:</strong> {{ patientFullName }}<br />
+              <strong>Amount:</strong> {{ formatAmount(finalAmountDue) }}
+            </div>
           </q-card-section>
-          <q-card-actions align="right">
+          <q-card-actions align="right" class="text-primary">
             <q-btn
               flat
               label="Cancel"
-              color="grey"
               @click="showConfirmDialog = false"
-              :disable="completing"
+              :disable="submitting"
+              color="dark"
             />
             <q-btn
               flat
-              label="Complete"
+              label="Confirm"
+              @click="handleSubmit"
+              :loading="submitting"
               color="green-9"
-              @click="completeTransaction"
-              :loading="completing"
-              :disable="completing"
             />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+
+      <!-- Error Dialog -->
+      <q-dialog v-model="showErrorDialog" persistent>
+        <q-card style="min-width: 400px">
+          <q-card-section class="row items-center">
+            <q-avatar icon="error" color="negative" text-color="white" />
+            <span class="q-ml-sm text-h6">Error</span>
+          </q-card-section>
+          <q-card-section class="q-pt-none">
+            <div class="text-body1" v-for="(msg, index) in errorMessage" :key="index">
+              {{ msg }}
+            </div>
+          </q-card-section>
+          <q-card-actions align="right">
+            <q-btn flat label="OK" color="primary" @click="showErrorDialog = false" />
           </q-card-actions>
         </q-card>
       </q-dialog>
@@ -80,89 +99,44 @@
             <span class="q-ml-sm text-h6">Apply Financial Assistance</span>
           </q-card-section>
           <q-card-section>
-            <div class="assistance-table-container">
-              <q-table
-                :rows="assistanceForm.assistanceItems"
-                :columns="assistanceColumns"
-                row-key="id"
-                flat
-                bordered
-                hide-pagination
-                :rows-per-page-options="[0]"
-                class="assistance-table"
-              >
-                <template v-slot:body="props">
-                  <q-tr :props="props">
-                    <q-td key="fundSource" :props="props">
-                      <q-select
-                        v-model="props.row.fundSource"
-                        :options="fundSourceOptions"
-                        dense
-                        outlined
-                        :rules="[(val) => !!val || 'Fund source is required']"
-                      />
-                    </q-td>
-                    <q-td key="amount" :props="props">
-                      <q-input
-                        v-model.number="props.row.amount"
-                        type="number"
-                        dense
-                        outlined
-                        prefix="₱"
-                        :rules="assistanceAmountRules"
-                        min="0"
-                      />
-                    </q-td>
-                    <q-td key="actions" :props="props" class="text-center">
-                      <q-btn
-                        v-if="props.rowIndex > 0"
-                        flat
-                        round
-                        color="negative"
-                        icon="delete"
-                        size="sm"
-                        @click="removeAssistanceRow(props.rowIndex)"
-                      />
-                      <span v-else class="text-grey-5">Fixed</span>
-                    </q-td>
-                  </q-tr>
-                </template>
-              </q-table>
-
-              <div class="row justify-between q-mt-md">
-                <q-btn
-                  flat
-                  color="primary"
-                  icon="add"
-                  label="Add Fund Source"
-                  @click="addAssistanceRow"
-                />
-                <div class="text-h6 text-weight-bold">
-                  Total: {{ formatAmount(totalAssistanceAmount) }}
+            <div class="assistance-form-container">
+              <div class="row q-gutter-md">
+                <div class="col-4">
+                  <q-input
+                    v-model="assistanceForm.controlNumber"
+                    label="Control Number"
+                    outlined
+                    dense
+                    :rules="[(val) => !!val || 'Control number is required']"
+                  />
+                </div>
+                <div class="col-4">
+                  <q-input label="MAIFIP" outlined dense readonly />
+                </div>
+                <div class="col">
+                  <q-input
+                    v-model.number="assistanceForm.amount"
+                    label="MAIFIP Amount"
+                    type="number"
+                    outlined
+                    dense
+                    prefix="₱"
+                    :rules="assistanceAmountRules"
+                    min="0"
+                  />
                 </div>
               </div>
-            </div>
-
-            <div class="q-mt-md">
-              <q-input
-                v-model="assistanceForm.remarks"
-                label="Remarks (Optional)"
-                outlined
-                dense
-                type="textarea"
-                rows="3"
-              />
             </div>
 
             <div class="billing-summary q-pa-md bg-grey-1 rounded-borders q-mt-md">
               <div class="row justify-between">
                 <span>Original Total:</span>
-                <span class="text-weight-bold">{{ formatAmount(patient.final_billing) }}</span>
+                <span class="text-weight-bold">{{ formatAmount(finalAmountDue) }}</span>
               </div>
               <div class="row justify-between">
-                <span>Total Assistance:</span>
+                <span>MAIFIP Assistance:</span>
                 <span class="text-weight-bold text-orange-9"
-                  >-{{ formatAmount(totalAssistanceAmount) }}</span
+                  >-{{ formatAmount(assistanceForm.amount || 0) }}</span
                 >
               </div>
               <q-separator class="q-my-sm" />
@@ -170,16 +144,9 @@
                 <span class="text-weight-bold">Final Amount Due:</span>
                 <span class="text-weight-bold text-primary">{{
                   formatAmount(
-                    Math.max(0, parseAmount(patient.final_billing) - totalAssistanceAmount),
+                    Math.max(0, parseAmount(finalAmountDue) - (assistanceForm.amount || 0)),
                   )
                 }}</span>
-              </div>
-              <div
-                v-if="totalAssistanceAmount > parseAmount(patient.final_billing)"
-                class="text-negative q-mt-sm"
-              >
-                <q-icon name="warning" />
-                Warning: Total assistance exceeds the bill amount!
               </div>
             </div>
           </q-card-section>
@@ -195,7 +162,7 @@
               flat
               label="Apply Assistance"
               color="orange-9"
-              @click="applyAssistance"
+              @click="applyMAIFIP"
               :loading="processing"
               :disable="processing || !isAssistanceFormValid"
             />
@@ -242,20 +209,20 @@
             <div class="row">
               <div class="col-6">
                 <p>
-                  <strong>Date of Transaction:</strong> {{ formatDate(patient.transaction_date) }}
+                  <strong>Date of Transaction:</strong>
+                  {{ formatDate(billingData.transaction?.transaction_date) }}
                 </p>
-                <p><strong>Surname:</strong> {{ patient.lastname }}</p>
-                <p><strong>First Name:</strong> {{ patient.firstname }}</p>
-                <p><strong>Middle Name:</strong> {{ patient.middlename || 'N/A' }}</p>
+                <p><strong>Surname:</strong> {{ billingData.patient?.lastname || 'N/A' }}</p>
+                <p><strong>First Name:</strong> {{ billingData.patient?.firstname || 'N/A' }}</p>
+                <p><strong>Middle Name:</strong> {{ billingData.patient?.middlename || 'N/A' }}</p>
               </div>
               <div class="col-6">
-                <p><strong>Gender:</strong> {{ patient.gender }}</p>
-                <p><strong>Age:</strong> {{ patient.age }}</p>
-                <p><strong>Birthdate:</strong> {{ patient.birthdate }}</p>
+                <p><strong>Gender:</strong> {{ billingData.patient?.gender || 'N/A' }}</p>
+                <p><strong>Age:</strong> {{ billingData.patient?.age || 'N/A' }}</p>
+                <p><strong>Birthdate:</strong> {{ formatDate(billingData.patient?.birthdate) }}</p>
                 <p>
                   <strong>Address:</strong>
-                  {{ patient.address?.street }}, {{ patient.address?.purok }},
-                  {{ patient.address?.barangay }}
+                  {{ billingData.patient?.address || 'N/A' }}
                 </p>
               </div>
             </div>
@@ -268,17 +235,17 @@
                 <div class="col-6">
                   <p>
                     <strong>Representative Name:</strong>
-                    {{ patient.representative?.rep_name || 'N/A' }}
+                    {{ billingData.transaction?.representative?.rep_name || 'N/A' }}
                   </p>
                   <p>
                     <strong>Relationship:</strong>
-                    {{ patient.representative?.relationship || 'N/A' }}
+                    {{ billingData.transaction?.representative?.relationship || 'N/A' }}
                   </p>
                 </div>
                 <div class="col-6">
                   <p>
                     <strong>Address:</strong>
-                    {{ patient.representative?.address || 'N/A' }}
+                    {{ billingData.transaction?.representative?.address || 'N/A' }}
                   </p>
                 </div>
               </div>
@@ -298,12 +265,12 @@
               </thead>
               <tbody>
                 <!-- Consultation -->
-                <tr v-if="parseAmount(patient.consultation_amount) > 0">
+                <tr v-if="parseAmount(billingData.consultation_amount) > 0">
                   <td>Consultation</td>
                   <td class="text-left"></td>
                   <td class="text-left"></td>
                   <td class="text-left"></td>
-                  <td class="text-right">{{ formatAmount(patient.consultation_amount) }}</td>
+                  <td class="text-right">{{ formatAmount(billingData.consultation_amount) }}</td>
                 </tr>
                 <!-- Laboratories
                 <tr v-for="lab in patient.laboratories_details" :key="'lab-' + lab.id">
@@ -314,7 +281,7 @@
                   <td class="text-right">{{ formatAmount(lab.total_amount) }}</td>
                 </tr> -->
                 <!-- Radiology -->
-                <tr v-for="rad in patient.radiologies_details" :key="'rad-' + rad.id">
+                <tr v-for="rad in billingData.radiology_details" :key="'rad-' + rad.id">
                   <td>{{ rad.item_description }}</td>
                   <td class="text-left"></td>
                   <td class="text-left"></td>
@@ -322,7 +289,7 @@
                   <td class="text-right">{{ formatAmount(rad.total_amount) }}</td>
                 </tr>
                 <!-- Exam -->
-                <tr v-for="exam in patient.examination_details" :key="'exam-' + exam.id">
+                <tr v-for="exam in billingData.examination_details" :key="'exam-' + exam.id">
                   <td>{{ exam.item_description }}</td>
                   <td class="text-left"></td>
                   <td class="text-left"></td>
@@ -330,7 +297,7 @@
                   <td class="text-right">{{ formatAmount(exam.total_amount) }}</td>
                 </tr>
                 <!-- Mammo -->
-                <tr v-for="mammo in patient.mammogram_details" :key="'mammo-' + mammo.id">
+                <tr v-for="mammo in billingData.mammogram_details" :key="'mammo-' + mammo.id">
                   <td>{{ mammo.procedure }}</td>
                   <td class="text-left"></td>
                   <td class="text-left"></td>
@@ -338,7 +305,7 @@
                   <td class="text-right">{{ formatAmount(mammo.total_amount) }}</td>
                 </tr>
                 <!-- Ultra -->
-                <tr v-for="ultra in patient.ultrasound_details" :key="'ultra-' + ultra.id">
+                <tr v-for="ultra in billingData.ultrasound_details" :key="'ultra-' + ultra.id">
                   <td>{{ ultra.body_parts }}</td>
                   <td class="text-left"></td>
                   <td class="text-left"></td>
@@ -346,37 +313,41 @@
                   <td class="text-right">{{ formatAmount(ultra.total_amount) }}</td>
                 </tr>
                 <!-- Medicine -->
-                <tr v-for="med in patient.medication" :key="'med-' + med.id" class="med-row">
-                  <td>{{ med.item_description }}</td>
-                  <td class="text-left">{{ med.quantity }}</td>
-                  <td class="text-left">{{ med.unit }}</td>
-                  <td class="text-right">{{ formatAmount(med.amount) }}</td>
-                  <td class="text-right">{{ formatAmount(med.total) }}</td>
+                <tr
+                  v-for="med in billingData.medication || []"
+                  :key="'med-' + (med.id || med.item_description)"
+                  class="med-row"
+                >
+                  <td>{{ med.item_description || 'N/A' }}</td>
+                  <td class="text-left">{{ med.quantity || '' }}</td>
+                  <td class="text-left">{{ med.unit || '' }}</td>
+                  <td class="text-right">{{ formatAmount(med.amount || 0) }}</td>
+                  <td class="text-right">{{ formatAmount(med.total || 0) }}</td>
                 </tr>
                 <!-- Total -->
                 <tr class="total-row">
                   <td colspan="4" class="text-right"><strong>Total</strong></td>
                   <td class="text-right">
-                    <strong>{{ formatAmount(patient.total_billing) }}</strong>
+                    <strong>{{ formatAmount(billingData.total_billing) }}</strong>
                   </td>
                 </tr>
-                <tr class="total-row">
+                <tr class="total-row" v-if="billingData.discount > 0">
                   <td colspan="4" class="text-right"><strong>PWD/Senior Discount (20%)</strong></td>
                   <td class="text-right">
-                    <strong>-{{ formatAmount(patient.discount) }}</strong>
+                    <strong>-{{ formatAmount(billingData.discount) }}</strong>
                   </td>
                 </tr>
                 <tr class="total-row">
                   <td colspan="4" class="text-right"><strong>Subtotal</strong></td>
                   <td class="text-right">
-                    <strong>{{ formatAmount(patient.final_billing) }}</strong>
+                    <strong>{{ formatAmount(billingData.final_billing) }}</strong>
                   </td>
                 </tr>
                 <!-- Financial Assistance Rows - Show existing assistance -->
                 <template v-if="hasExistingAssistance">
                   <tr
-                    v-for="(fund, index) in patient.assistance.funds"
-                    :key="'assistance-' + index"
+                    v-for="(fund, index) in billingData.funds"
+                    :key="'assistance-' + fund.id || index"
                     class="assistance-row"
                   >
                     <td colspan="4" class="text-right">
@@ -410,164 +381,160 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onMounted, computed, watch } from 'vue'
 import { usePatientStore } from 'src/stores/patientStore'
 import { useAssistanceStore } from 'src/stores/assistanceStore'
 import { useQuasar, LocalStorage } from 'quasar'
+import { useRouter } from 'vue-router'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
-const router = useRouter()
+// Initialize stores and utilities
 const store = usePatientStore()
 const assistanceStore = useAssistanceStore()
 const $q = useQuasar()
-const currentUser = ref(null)
+const router = useRouter()
 
+// Reactive variables
 const loading = ref(true)
 const error = ref(null)
-const completing = ref(false)
 const processing = ref(false)
-const showAssistanceDialog = ref(false)
+const submitting = ref(false)
 const showConfirmDialog = ref(false)
+const showAssistanceDialog = ref(false)
+const showErrorDialog = ref(false)
+const errorMessage = ref([])
+const currentUser = ref(null)
 
-const patient = ref({
+// Billing data structure
+const billingData = ref({
   id: null,
-  firstname: '',
-  middlename: '',
-  lastname: '',
-  age: '',
-  gender: '',
-  birthdate: '',
-  address: {},
-  contact_number: '',
-  transaction_date: '',
-  representative: {},
-  consultation_amount: 0,
-  radiologies_details: [],
+  gl_number: '',
+  patient_id: null,
+  transaction_id: null,
+  radiology_details: [],
   examination_details: [],
   mammogram_details: [],
   ultrasound_details: [],
   // laboratories_details: [],
   medication: [],
-  total_billing: 0,
-  discount: 0,
-  final_billing: 0,
-  assistance: null,
+  consultation_amount: '0.00',
+  // laboratory_total: '0.00',
+  medication_total: '0.00',
+  total_billing: '0.00',
+  discount: '0.00',
+  final_billing: '0.00',
+  status: null,
+  funds: [],
+  transaction: {
+    id: null,
+    transaction_number: '',
+    patient_id: null,
+    transaction_type: '',
+    status: '',
+    transaction_date: '',
+    transaction_mode: '',
+    purpose: '',
+    representative_id: null,
+  },
+  patient: {
+    id: null,
+    lastname: '',
+    firstname: '',
+    middlename: '',
+    gender: '',
+    age: null,
+    birthdate: '',
+    address: '',
+  },
 })
 
+const hasExistingAssistance = computed(() => {
+  return billingData.value.funds && billingData.value.funds.length > 0
+})
+
+const totalExistingAssistance = computed(() => {
+  if (!hasExistingAssistance.value) return 0
+  return billingData.value.funds.reduce((total, fund) => {
+    return total + parseAmount(fund.fund_amount)
+  }, 0)
+})
+
+const finalAmountDue = computed(() => {
+  const originalAmount = parseAmount(billingData.value.final_billing)
+  const assistanceAmount = hasExistingAssistance.value ? totalExistingAssistance.value : 0
+  return Math.max(0, originalAmount - assistanceAmount)
+})
+
+// Assistance form
 const assistanceForm = ref({
-  assistanceItems: [{ fundSource: 'Select Source', amount: 0, id: 1 }],
-  remarks: '',
+  controlNumber: '',
+  fund_source: 'MAIFIP',
+  amount: finalAmountDue.value,
 })
 
-const fundSourceOptions = [
-  'PHIC - Case Rate',
-  'PCSO - MAP',
-  'DSWD - AICS',
-  'QFS',
-  'Other Fund Source',
-]
+watch(finalAmountDue, (newFinalAmountDue) => {
+  assistanceForm.value.amount = newFinalAmountDue
+})
 
-const assistanceColumns = [
-  {
-    name: 'fundSource',
-    label: 'Fund Source',
-    field: 'fundSource',
-    align: 'left',
-    style: 'width: 50%',
-  },
-  {
-    name: 'amount',
-    label: 'Assistance Amount (₱)',
-    field: 'amount',
-    align: 'left',
-    style: 'width: 35%',
-  },
-  {
-    name: 'actions',
-    label: 'Actions',
-    field: 'actions',
-    align: 'center',
-    style: 'width: 15%',
-  },
-]
-
-let nextAssistanceId = 2
-
+// Initialize current user
 try {
   currentUser.value = LocalStorage.getItem('user')
 } catch (err) {
   console.error('Error retrieving user data:', err)
 }
 
+// Computed properties
 const preparerName = computed(() => {
   if (!currentUser.value) return 'Staff Member'
-
   const firstName = currentUser.value.first_name || ''
   const middleName = currentUser.value.middle_name || ''
   const lastName = currentUser.value.last_name || ''
-
   let fullName = firstName
   if (middleName) fullName += ' ' + middleName
   if (lastName) fullName += ' ' + lastName
-
   return fullName.trim() || 'Staff Member'
 })
 
+const patientFullName = computed(() => {
+  const first = billingData.value.patient?.firstname || ''
+  const last = billingData.value.patient?.lastname || ''
+  return `${first} ${last}`.trim()
+})
+
 const hasRepresentativeData = computed(() => {
+  const rep = billingData.value.transaction?.representative
+  return rep && (rep.rep_name || rep.relationship || rep.address)
+})
+
+const hasMAIFIP = computed(() => {
   return (
-    patient.value.representative &&
-    (patient.value.representative.rep_name ||
-      patient.value.representative.relationship ||
-      patient.value.representative.address)
+    billingData.value.funds && billingData.value.funds.some((fund) => fund.fund_source === 'MAIFIP')
   )
-})
-
-const hasExistingAssistance = computed(() => {
-  return (
-    patient.value.assistance &&
-    patient.value.assistance.funds &&
-    patient.value.assistance.funds.length > 0
-  )
-})
-
-const totalExistingAssistance = computed(() => {
-  if (!hasExistingAssistance.value) return 0
-  return patient.value.assistance.funds.reduce((total, fund) => {
-    return total + parseAmount(fund.fund_amount)
-  }, 0)
-})
-
-const finalAmountDue = computed(() => {
-  const originalAmount = parseAmount(patient.value.final_billing)
-  const assistanceAmount = hasExistingAssistance.value ? totalExistingAssistance.value : 0
-  return Math.max(0, originalAmount - assistanceAmount)
-})
-
-const totalAssistanceAmount = computed(() => {
-  return assistanceForm.value.assistanceItems.reduce((total, item) => {
-    return total + parseAmount(item.amount)
-  }, 0)
 })
 
 const assistanceAmountRules = [
   (val) => val >= 0 || 'Assistance amount cannot be negative',
-  () =>
-    totalAssistanceAmount.value <= parseAmount(patient.value.final_billing) ||
-    'Total assistance amount cannot exceed the total bill',
+  (val) => val > 0 || 'Assistance amount must be greater than 0',
+  (val) =>
+    Math.round(val * 100) <= Math.round(finalAmountDue.value * 100) || 'Exceeds remaining amount',
 ]
 
 const isAssistanceFormValid = computed(() => {
-  const hasValidItems = assistanceForm.value.assistanceItems.some(
-    (item) => item.fundSource && parseAmount(item.amount) > 0,
-  )
-  const totalNotExceeded = totalAssistanceAmount.value <= parseAmount(patient.value.final_billing)
-  const totalGreaterThanZero = totalAssistanceAmount.value > 0
-
-  return hasValidItems && totalNotExceeded && totalGreaterThanZero
+  const hasControlNumber = !!assistanceForm.value.controlNumber?.trim()
+  const amount = Number(assistanceForm.value.amount)
+  const finalAmount = Number(finalAmountDue.value)
+  const hasValidAmount = amount > 0
+  const amountNotExceeded = Math.round(amount * 100) <= Math.round(finalAmount * 100)
+  return hasControlNumber && hasValidAmount && amountNotExceeded
 })
 
+const transactionId = computed(
+  () =>
+    store.transaction_id || billingData.value.transaction_id || billingData.value.transaction?.id,
+)
+
+// Lifecycle
 onMounted(async () => {
   if (!store.transaction_id) {
     error.value = 'No transaction selected. Please select a patient from the billing list.'
@@ -575,20 +542,28 @@ onMounted(async () => {
     $q.notify({ type: 'negative', message: error.value, position: 'top' })
     return
   }
+
   try {
-    const data = await store.getBillingDetails(store.transaction_id)
+    const data = await store.getGLDetails(store.transaction_id)
     if (data) {
-      patient.value = data
+      billingData.value = {
+        ...data,
+        laboratories_details: data.laboratories_details || [],
+        medication: data.medication || [],
+        funds: data.funds || [],
+      }
     } else {
       error.value = 'No billing data found'
     }
-  } catch {
+  } catch (err) {
+    console.error('Error loading billing data:', err)
     error.value = 'Failed to load billing data'
   } finally {
     loading.value = false
   }
 })
 
+// Utility functions
 function parseAmount(amount) {
   if (typeof amount === 'number') return amount
   if (!amount) return 0
@@ -606,29 +581,16 @@ function formatDate(dateString) {
   return date.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
+// Assistance functions
 function cancelAssistance() {
   assistanceForm.value = {
-    assistanceItems: [{ fundSource: 'Select Funds Source', amount: 0, id: 1 }],
-    remarks: '',
+    controlNumber: '',
+    amount: 0,
   }
   showAssistanceDialog.value = false
 }
 
-function addAssistanceRow() {
-  assistanceForm.value.assistanceItems.push({
-    fundSource: 'Select Funds Source',
-    amount: 0,
-    id: nextAssistanceId++,
-  })
-}
-
-function removeAssistanceRow(index) {
-  if (index > 0) {
-    assistanceForm.value.assistanceItems.splice(index, 1)
-  }
-}
-
-async function applyAssistance() {
+async function applyMAIFIP() {
   if (!isAssistanceFormValid.value) {
     $q.notify({
       type: 'negative',
@@ -638,82 +600,48 @@ async function applyAssistance() {
     return
   }
 
+  if (!transactionId.value) {
+    $q.notify({
+      type: 'negative',
+      message: 'Transaction ID not found. Please try again.',
+      position: 'top',
+    })
+    return
+  }
+
   processing.value = true
   try {
-    const validAssistanceItems = assistanceForm.value.assistanceItems
-      .filter((item) => item.fundSource && parseAmount(item.amount) > 0)
-      .map((item) => ({
-        fund_source: item.fundSource,
-        fund_amount: parseAmount(item.amount),
-        id: item.id,
-      }))
-
     const payload = {
-      patient_id: patient.value.patient_id,
-      transaction_id: patient.value.transaction_id,
-      laboratories_details: patient.value.laboratories_details,
-      radiology_details: patient.value.radiologies_details,
-      examination_details: patient.value.examination_details,
-      mammogram_details: patient.value.mammogram_details,
-      ultrasound_details: patient.value.ultrasound_details,
-      medication: patient.value.medication,
-      consultation_amount: parseAmount(patient.value.consultation_amount),
-      // laboratory_total: patient.value.laboratories_details.reduce(
-      //   (total, lab) => total + parseAmount(lab.amount),
-      //   0,
-      // ),
-      radiology_total: patient.value.radiologies_details.reduce(
-        (total, rad) => total + parseAmount(rad.total_amount),
-        0,
-      ),
-      examination_total: patient.value.examination_details.reduce(
-        (total, exam) => total + parseAmount(exam.total_amount),
-        0,
-      ),
-      mammogram_total: patient.value.mammogram_details.reduce(
-        (total, mammo) => total + parseAmount(mammo.total_amount),
-        0,
-      ),
-      ultrasound_total: patient.value.ultrasound_details.reduce(
-        (total, ultra) => total + parseAmount(ultra.total_amount),
-        0,
-      ),
-      medication_total: patient.value.medication.reduce(
-        (total, med) => total + parseAmount(med.total),
-        0,
-      ),
-      total_billing: parseAmount(patient.value.total_billing),
-      discount: parseAmount(patient.value.discount),
-      final_billing: parseAmount(patient.value.final_billing),
-      assistances: validAssistanceItems,
-      total_assistance: totalAssistanceAmount.value,
-      status: 'Complete',
+      fund_source: 'MAIFIP',
+      fund_amount: parseFloat(assistanceForm.value.amount),
+      gl_number: assistanceForm.value.controlNumber.trim(),
     }
 
-    const result = await assistanceStore.applyAssistance(payload)
+    const result = await assistanceStore.applyMAIFIP(transactionId.value, payload)
 
     const isSuccess =
-      result?.message?.includes('Successfully') || result?.assistance || (result && !result.error)
+      result?.message?.includes('Successfully') ||
+      result?.message?.includes('success') ||
+      result?.assistance ||
+      (result && !result.error)
 
     if (isSuccess) {
-      patient.value.assistance = {
+      billingData.value.funds.push({
         id: result.assistance?.id || Date.now(),
-        funds: validAssistanceItems.map((item) => ({
-          fund_source: item.fund_source,
-          fund_amount: item.fund_amount.toString(),
-        })),
-      }
+        fund_source: 'MAIFIP',
+        fund_amount: assistanceForm.value.amount.toString(),
+        control_number: assistanceForm.value.controlNumber,
+      })
 
-      // Close dialog and reset form
       showAssistanceDialog.value = false
       assistanceForm.value = {
-        assistanceItems: [{ fundSource: 'Select Funds Source', amount: null, id: 1 }],
-        remarks: '',
+        controlNumber: '',
+        amount: 0,
       }
 
       $q.notify({
         type: 'positive',
-        message: `Financial assistance has been applied successfully!`,
+        message: 'MAIFIP assistance has been applied successfully!',
         position: 'top',
       })
     } else {
@@ -721,9 +649,19 @@ async function applyAssistance() {
     }
   } catch (error) {
     console.error('Error applying assistance:', error)
+    let errorMessage = 'Failed to apply financial assistance. Please try again.'
+
+    if (error.message.includes('No Assistance record found')) {
+      errorMessage = 'Transaction not found. Please refresh the page and try again.'
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message
+    } else if (error.message) {
+      errorMessage = error.message
+    }
+
     $q.notify({
       type: 'negative',
-      message: error.message || 'Failed to apply financial assistance. Please try again.',
+      message: errorMessage,
       position: 'top',
     })
   } finally {
@@ -731,36 +669,62 @@ async function applyAssistance() {
   }
 }
 
-async function completeTransaction() {
-  if (!store.transaction_id) {
-    $q.notify({ type: 'negative', message: 'Transaction ID not found', position: 'top' })
-    return
-  }
-  completing.value = true
-  try {
-    const result = await store.updateTransactionStatus(store.transaction_id, 'Complete')
-    if (result) {
-      $q.notify({
-        type: 'positive',
-        message: 'Transaction completed successfully!',
-        position: 'top',
-      })
-      setTimeout(() => router.push('/billing'), 1500)
-    } else {
-      throw new Error('Failed to update transaction status')
-    }
-  } catch {
+async function handleSubmit() {
+  if (!transactionId.value) {
     $q.notify({
       type: 'negative',
-      message: 'Failed to complete transaction. Please try again.',
+      message: 'Transaction ID not found. Please try again.',
       position: 'top',
     })
+    return
+  }
+
+  submitting.value = true
+  try {
+    const payload = {
+      status: 'Funded',
+    }
+
+    const response = await store.addGL(transactionId.value, payload)
+    const result = response?.data ?? response
+
+    if (result && !result.error) {
+      $q.notify({
+        type: 'positive',
+        message: 'Transaction funded successfully!',
+        position: 'top',
+      })
+
+      showConfirmDialog.value = false
+      setTimeout(() => {
+        router.push('/gl')
+      }, 1500)
+    } else {
+      const errorMsg = result?.message || result?.error || 'Failed to fund transaction.'
+      errorMessage.value = [errorMsg]
+      showErrorDialog.value = true
+    }
+  } catch (error) {
+    console.error('Submit Error:', error)
+
+    let msg = 'An error occurred while funding the transaction.'
+    if (error.response?.data?.message) {
+      msg = error.response.data.message
+    } else if (error.response?.data?.error) {
+      msg = error.response.data.error
+    } else if (error.message) {
+      msg = error.message
+    }
+
+    errorMessage.value = [msg]
+    showErrorDialog.value = true
   } finally {
-    completing.value = false
+    submitting.value = false
     showConfirmDialog.value = false
   }
 }
 
+// Print function
 async function handlePrint() {
   const element = document.querySelector('.certification-report-container')
   if (!element) {
@@ -863,22 +827,12 @@ async function handlePrint() {
   margin-bottom: 20px;
 }
 
-.assistance-table-container {
+.assistance-form-container {
   margin-bottom: 15px;
 }
 
-.assistance-table {
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-}
-
-.assistance-table .q-table__top,
-.assistance-table .q-table__bottom {
-  padding: 12px 16px;
-}
-
-.assistance-table td {
-  padding: 8px;
+.fund-source-display {
+  border-left: 4px solid #ff9800;
 }
 
 .billing-summary {
@@ -972,7 +926,6 @@ async function handlePrint() {
   margin: 0;
 }
 
-/* Patient info styles */
 .patient-info {
   margin-bottom: 25px;
   border: 1px solid #000;
@@ -1004,7 +957,6 @@ async function handlePrint() {
   letter-spacing: 0.5px;
 }
 
-/* Table styles */
 .table-container {
   margin-bottom: 30px;
   overflow-x: auto;
@@ -1065,7 +1017,6 @@ async function handlePrint() {
   font-size: 10pt;
 }
 
-/* Footer styles */
 .footer {
   margin-top: auto;
   text-align: left;
@@ -1089,7 +1040,6 @@ async function handlePrint() {
   letter-spacing: 0.5px;
 }
 
-/* Global text spacing for better PDF rendering */
 .certification-report-container * {
   letter-spacing: 0.5px !important;
   text-rendering: optimizeLegibility;
@@ -1097,7 +1047,6 @@ async function handlePrint() {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Print-specific styles */
 @media print {
   .certification-report-container {
     box-shadow: none;

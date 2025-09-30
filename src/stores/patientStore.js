@@ -33,14 +33,14 @@ export const usePatientStore = defineStore('patient', {
       religion: '',
       education_attainment: '',
       occupation: '',
-      monthly_income: '',
+      income: '',
 
       // Permanent address
-      perm_street: '',
-      perm_purok: '',
-      perm_barangay: '',
-      perm_city: 'Tagum City',
-      perm_province: 'Davao del Norte',
+      permanent_street: '',
+      permanent_purok: '',
+      permanent_barangay: '',
+      permanent_city: 'Tagum City',
+      permanent_province: 'Davao del Norte',
 
       // Present address
       street: '',
@@ -86,9 +86,42 @@ export const usePatientStore = defineStore('patient', {
 
     // UI state
     closeNewPatient: false,
-    genderOptions: ['Male', 'Female', 'LGBTQ'],
+    genderOptions: ['Male', 'Female'],
     transactionModes: ['Walk-in', 'Referral'],
     transaction_type: ['Consultation', 'Medication', 'Laboratory'],
+    civilStatusOptions: ['Single', 'Married', 'Widow/er', 'Separated'],
+
+    religionOptions: [
+      'Islam',
+      'Roman Catholic',
+      'Iglesia ni Cristo',
+      'Born Again Christian',
+      'Protestant Christian',
+      'Baptist',
+      'Evangelical',
+      "Jehovah's Witnesses",
+      'Other Christian',
+      'No Religion',
+      'Indigenous Beliefs',
+      'Other',
+    ],
+
+    educationOptions: [
+      'Elementary Education',
+      'Highschool Education',
+      'College',
+      'Postgraduate Program',
+      'No Formal Education',
+    ],
+
+    incomeOptions: [
+      'At least ₱190,400',
+      'Between ₱114,240 - ₱190,400',
+      'Between ₱66,640 - ₱114,240',
+      'Between ₱38,080 - ₱66,640',
+      'Between ₱9,520 - ₱38,080',
+      'Less than ₱9,520',
+    ],
   }),
 
   getters: {
@@ -347,12 +380,27 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
-    async addGL(payload) {
+    async getGLDetails(id) {
       this.loading = true
       this.error = null
 
       try {
-        const response = await api.post('/guarantee/store', payload)
+        const response = await api.get(`/guarantee/${id}`)
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        return null
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async addGL(transactionId, payload) {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.post(`/guarantee/update/status/${transactionId}`, payload)
         return response.data
       } catch (error) {
         this.handleApiError(error)
@@ -424,8 +472,8 @@ export const usePatientStore = defineStore('patient', {
       })
 
       // Ensure all address fields are set with defaults if missing
-      if (!patientData.perm_city) patientData.perm_city = 'Tagum City'
-      if (!patientData.perm_province) patientData.perm_province = 'Davao del Norte'
+      if (!patientData.perm_city) patientData.permanent_city = 'Tagum City'
+      if (!patientData.perm_province) patientData.permanent_province = 'Davao del Norte'
       if (!patientData.city) patientData.city = 'Tagum City'
       if (!patientData.province) patientData.province = 'Davao del Norte'
 
@@ -444,8 +492,8 @@ export const usePatientStore = defineStore('patient', {
         // education_attainment: patientData.education_attainment,
         occupation: patientData.occupation,
         monthly_income: patientData.monthly_income,
-        perm_city: patientData.perm_city,
-        perm_province: patientData.perm_province,
+        perm_city: patientData.permanent_city,
+        perm_province: patientData.permanent_province,
         rep_city: patientData.rep_city,
         rep_province: patientData.rep_province,
       })
@@ -492,8 +540,8 @@ export const usePatientStore = defineStore('patient', {
       })
 
       // Ensure all address fields are set with defaults if missing
-      if (!patientData.perm_city) patientData.perm_city = 'Tagum City'
-      if (!patientData.perm_province) patientData.perm_province = 'Davao del Norte'
+      if (!patientData.perm_city) patientData.permanent_city = 'Tagum City'
+      if (!patientData.perm_province) patientData.permanent_province = 'Davao del Norte'
       if (!patientData.city) patientData.city = 'Tagum City'
       if (!patientData.province) patientData.province = 'Davao del Norte'
 

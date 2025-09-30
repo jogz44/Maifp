@@ -47,7 +47,8 @@
                   :key="pIndex"
                   class="col-12 q-mb-xs"
                 >
-                  {{ patient.firstname }} {{ patient.lastname }}
+                  {{ patient?.firstname || patient?.patient?.firstname || 'Unknown' }}
+                  {{ patient.lastname || patient?.patient?.lastname || 'Unknown' }}
                 </div>
 
                 <div v-if="step.patients.length === 0" class="col-12 text-grey text-center">
@@ -78,6 +79,7 @@ export default {
         { name: 'Returned', patients: [], route: '/customers/returnconsultation' },
         { name: 'Medicine', patients: [], route: '#' },
         { name: 'Billing', patients: [], route: '/billing' },
+        { name: 'GL', patients: [], route: '/gl' },
       ],
       intervalId: null,
       fundStore: null,
@@ -105,6 +107,7 @@ export default {
         this.patientStore.fetchPatientsReturned(),
         this.patientStore.fetchPatientsMedicine(),
         this.patientStore.fetchPatientsBilling(),
+        this.patientStore.fetchPatientsGL(),
       ])
 
       results.forEach((result, index) => {
