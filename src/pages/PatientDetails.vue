@@ -24,7 +24,7 @@
         <q-card-section v-if="!loading">
           <div class="row items-center justify-between">
             <div class="text-subtitle2 q-mb-sm">Transaction Information</div>
-            <div class="row q-gutter-sm">
+            <div class="row q-gutter-sm" v-if="transaction.status !== 'Complete'">
               <q-btn
                 v-if="!isTransactionEditMode"
                 color="orange"
@@ -32,6 +32,7 @@
                 @click="toggleTransactionEditMode"
                 :loading="patientStore.loading"
               />
+
               <template v-else>
                 <q-btn
                   color="green"
@@ -53,7 +54,7 @@
                 type="date"
                 label="Date"
                 class="text-caption"
-                :readonly="!isTransactionEditMode"
+                readonly
               />
             </div>
             <div class="col-12 col-md-4">
@@ -117,7 +118,7 @@
         <q-card-section v-if="!loading && hasRepresentative">
           <div class="row items-center justify-between">
             <div class="text-subtitle2 q-mb-sm">Representative Information</div>
-            <div class="row q-gutter-sm">
+            <div class="row q-gutter-sm" v-if="transaction.status !== 'Complete'">
               <q-btn
                 v-if="!isRepresentativeEditMode"
                 color="orange"
@@ -229,7 +230,7 @@
         <q-card-section v-if="!loading && vitalSigns">
           <div class="row items-center justify-between">
             <div class="text-subtitle2 q-mb-sm">Vital Signs</div>
-            <div class="row q-gutter-sm">
+            <div class="row q-gutter-sm" v-if="transaction.status !== 'Complete'">
               <q-btn
                 v-if="!isVitalSignsEditMode"
                 color="orange"
@@ -791,10 +792,6 @@ export default {
       if (numBmi < 25) return 'Normal'
       if (numBmi < 30) return 'Overweight'
       return 'Obese'
-    },
-
-    printRecord() {
-      window.print()
     },
 
     goBack() {

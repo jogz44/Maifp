@@ -53,9 +53,9 @@
                   {{ props.row.barangay }}
                 </q-td>
 
-                <q-td key="status" style="font-size: 11px" align="left">
+                <!-- <q-td key="status" style="font-size: 11px" align="left">
                   {{ props.row.transaction[0]?.transaction_type || 'N/A' }}
-                </q-td>
+                </q-td> -->
 
                 <q-td key="actions" style="font-size: 11px" align="center">
                   <q-btn
@@ -169,15 +169,15 @@ export default {
           headerStyle: 'font-size: 1.2 em',
         },
 
-        {
-          name: 'transaction_type',
-          label: 'Transaction Type',
-          field: (row) => row.transaction[0]?.transaction_type || 'N/A',
-          sortable: true,
-          align: 'left',
-          headerClasses: 'bg-grey-7 text-white',
-          headerStyle: 'font-size: .9em',
-        },
+        // {
+        //   name: 'transaction_type',
+        //   label: 'Transaction Type',
+        //   field: (row) => row.transaction[0]?.transaction_type || 'N/A',
+        //   sortable: true,
+        //   align: 'left',
+        //   headerClasses: 'bg-grey-7 text-white',
+        //   headerStyle: 'font-size: .9em',
+        // },
 
         {
           name: 'Actions',

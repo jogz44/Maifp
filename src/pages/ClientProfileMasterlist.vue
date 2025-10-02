@@ -31,7 +31,7 @@
               <q-separator />
 
               <!-- Personal Details Section -->
-              <div class="text-subtitle2 text-grey-8 q-mt-md q-mb-xs">Personal Details</div>
+              <div class="text-subtitle2 text-grey-8 q-mt-md q-mb-sm">Personal Details</div>
               <div class="row q-col-gutter-md q-mb-md">
                 <div class="col-12">
                   <q-input
@@ -129,203 +129,69 @@
                     :readonly="!isEditMode"
                   />
                 </div>
-
-                <!-- Additional Info -->
-                <div class="row q-col-gutter-md q-mb-xs">
-                  <div class="col-12">
-                    <q-input
-                      outlined
-                      dense
-                      v-model="patient.place_of_birth"
-                      label="Place of Birth"
-                      :readonly="!isEditMode"
-                    />
-                  </div>
-                  <div class="col-6">
-                    <q-select
-                      outlined
-                      dense
-                      v-model="patient.civil_status"
-                      :options="isEditMode ? patientStore.civilStatusOptions : undefined"
-                      label="Civil Status"
-                      :readonly="!isEditMode"
-                    />
-                  </div>
-                  <div class="col-6">
-                    <q-select
-                      outlined
-                      dense
-                      v-model="patient.religion"
-                      :options="isEditMode ? patientStore.religionOptions : undefined"
-                      label="Religion"
-                      :readonly="!isEditMode"
-                    />
-                  </div>
-                  <div class="col-12">
-                    <q-select
-                      outlined
-                      dense
-                      v-model="patient.education"
-                      :options="isEditMode ? patientStore.educationOptions : undefined"
-                      label="Highest Educational Attainment"
-                      :readonly="!isEditMode"
-                    />
-                  </div>
-                  <div class="col-6">
-                    <q-input
-                      outlined
-                      dense
-                      v-model="patient.occupation"
-                      label="Occupation"
-                      :readonly="!isEditMode"
-                    />
-                  </div>
-                  <div class="col-6">
-                    <q-select
-                      outlined
-                      dense
-                      v-model="patient.income"
-                      :options="isEditMode ? patientStore.incomeOptions : undefined"
-                      label="Monthly Income"
-                      :readonly="!isEditMode"
-                    />
-                  </div>
-                </div>
               </div>
 
-              <!-- View More Toggle Button -->
-              <div class="text-center q-mb-xs">
-                <q-btn
-                  flat
-                  :icon="showMoreDetails ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
-                  :label="showMoreDetails ? 'View Less' : 'View More Details'"
-                  color="primary"
-                  @click="showMoreDetails = !showMoreDetails"
-                  class="text-caption"
-                />
-              </div>
-
-              <!-- Collapsible Additional Details -->
-              <q-slide-transition>
-                <div v-show="showMoreDetails">
-                  <q-separator class="q-my-md" />
-
-                  <!-- Address Section -->
-                  <div class="text-subtitle2 text-grey-8 q-mb-sm">Present Address</div>
-                  <div class="row q-col-gutter-md q-mb-md">
-                    <div class="col-4">
-                      <q-input
-                        outlined
-                        dense
-                        v-model="patient.purok"
-                        label="Purok"
-                        :readonly="!isEditMode"
-                      />
-                    </div>
-                    <div class="col-8">
-                      <q-input
-                        outlined
-                        dense
-                        v-model="patient.street"
-                        label="Street"
-                        :readonly="!isEditMode"
-                      />
-                    </div>
-                    <div class="col-6">
-                      <q-select
-                        outlined
-                        dense
-                        v-model="patient.barangay"
-                        :options="isEditMode ? TagumBarangay.barangay : undefined"
-                        label="Barangay"
-                        :readonly="!isEditMode"
-                      />
-                    </div>
-                    <div class="col-6">
-                      <q-input
-                        outlined
-                        dense
-                        v-model="patient.city"
-                        label="City"
-                        :readonly="!isEditMode"
-                      />
-                    </div>
-                  </div>
-
-                  <div class="text-subtitle2 text-grey-8 q-mb-sm">Permanent Address</div>
-                  <div class="row q-col-gutter-md q-mb-md">
-                    <div class="col-4">
-                      <q-input
-                        outlined
-                        dense
-                        v-model="patient.permanent_purok"
-                        label="Purok"
-                        :readonly="!isEditMode"
-                      />
-                    </div>
-                    <div class="col-8">
-                      <q-input
-                        outlined
-                        dense
-                        v-model="patient.permanent_street"
-                        label="Street"
-                        :readonly="!isEditMode"
-                      />
-                    </div>
-                    <div class="col-6">
-                      <q-select
-                        outlined
-                        dense
-                        v-model="patient.permanent_barangay"
-                        :options="isEditMode ? TagumBarangay.barangay : undefined"
-                        label="Barangay"
-                        :readonly="!isEditMode"
-                      />
-                    </div>
-                    <div class="col-6">
-                      <q-input
-                        outlined
-                        dense
-                        v-model="patient.permanent_city"
-                        label="City"
-                        :readonly="!isEditMode"
-                      />
-                    </div>
-                  </div>
-
-                  <q-separator class="q-my-md" />
-
-                  <!-- Other Details -->
-                  <div class="text-subtitle2 text-grey-8 q-mb-sm">Other Details</div>
-                  <div class="row q-col-gutter-md">
-                    <div class="col-12">
-                      <q-input
-                        outlined
-                        dense
-                        v-model="patient.category"
-                        label="Category"
-                        :readonly="!isEditMode"
-                      />
-                    </div>
-                    <div class="col-6">
-                      <q-checkbox
-                        v-model="patient.is_pwd"
-                        label="PWD"
-                        :readonly="!isEditMode"
-                        :disable="!isEditMode"
-                      />
-                    </div>
-                    <div class="col-6">
-                      <q-checkbox
-                        v-model="patient.is_solo"
-                        label="Solo Parent"
-                        :readonly="!isEditMode"
-                        :disable="!isEditMode"
-                      />
-                    </div>
-                  </div>
+              <!-- Additional Info -->
+              <div class="row q-col-gutter-md q-mb-md">
+                <div class="col-12">
+                  <q-input
+                    outlined
+                    dense
+                    v-model="patient.place_of_birth"
+                    label="Place of Birth"
+                    :readonly="!isEditMode"
+                  />
                 </div>
-              </q-slide-transition>
+                <div class="col-6">
+                  <q-select
+                    outlined
+                    dense
+                    v-model="patient.civil_status"
+                    :options="isEditMode ? patientStore.civilStatusOptions : undefined"
+                    label="Civil Status"
+                    :readonly="!isEditMode"
+                  />
+                </div>
+                <div class="col-6">
+                  <q-select
+                    outlined
+                    dense
+                    v-model="patient.religion"
+                    :options="isEditMode ? patientStore.religionOptions : undefined"
+                    label="Religion"
+                    :readonly="!isEditMode"
+                  />
+                </div>
+                <div class="col-12">
+                  <q-select
+                    outlined
+                    dense
+                    v-model="patient.education"
+                    :options="isEditMode ? patientStore.educationOptions : undefined"
+                    label="Highest Educational Attainment"
+                    :readonly="!isEditMode"
+                  />
+                </div>
+                <div class="col-6">
+                  <q-input
+                    outlined
+                    dense
+                    v-model="patient.occupation"
+                    label="Occupation"
+                    :readonly="!isEditMode"
+                  />
+                </div>
+                <div class="col-6">
+                  <q-select
+                    outlined
+                    dense
+                    v-model="patient.income"
+                    :options="isEditMode ? patientStore.incomeOptions : undefined"
+                    label="Monthly Income"
+                    :readonly="!isEditMode"
+                  />
+                </div>
+              </div>
             </q-card-section>
           </q-card>
         </div>
@@ -351,8 +217,6 @@
               <div class="q-mt-md" style="height: calc(100vh - 200px)">
                 <q-table
                   :loading="patientStore.loading"
-                  bordered
-                  dense
                   :rows="transactions"
                   :columns="transactionColumns"
                   row-key="id"
@@ -374,7 +238,7 @@
                       <q-td key="transaction_type" style="font-size: 11px" align="left">
                         {{ props.row.transaction_type || 'N/A' }}
                       </q-td>
-                      <q-td key="transaction_type" style="font-size: 14px" align="center">
+                      <q-td key="status" style="font-size: 14px" align="center">
                         <q-badge
                           :label="props.row.status ? props.row.status.toUpperCase() : 'N/A'"
                           :color="
@@ -394,13 +258,19 @@
                           style="text-transform: uppercase"
                         />
                       </q-td>
-
                       <q-td key="actions" style="font-size: 11px" align="center">
                         <q-btn
                           icon="visibility"
                           flat
                           class="text-blue"
                           @click="viewTransactionDetails(props.row)"
+                        />
+                        <q-btn
+                          v-if="props.row.status === 'Funded'"
+                          icon="article"
+                          flat
+                          class="text-blue"
+                          @click="viewBill(props.row)"
                         />
                       </q-td>
                     </q-tr>
@@ -764,7 +634,6 @@ export default {
       patientId: null,
       isEditMode: false,
       originalPatientData: null,
-      showMoreDetails: false, // Add this new reactive property
       patient: {
         id: null,
         philhealth_id: null,
@@ -846,7 +715,6 @@ export default {
           align: 'left',
           headerClasses: 'bg-grey-7 text-white',
         },
-
         {
           name: 'status',
           label: 'Status',
@@ -855,7 +723,6 @@ export default {
           align: 'center',
           headerClasses: 'bg-grey-7 text-white',
         },
-
         {
           name: 'actions',
           label: 'Actions',
@@ -1034,9 +901,15 @@ export default {
     viewTransactionDetails(transaction) {
       console.log('Viewing transaction:', transaction)
       this.$router.push({
-        path: '/customers/profile/transaction',
+        path: '/gl/detail',
         query: { patientId: this.patient.id, transactionId: transaction.id },
       })
+    },
+
+    viewBill(row) {
+      this.patientStore.patient_id = row.patient_id
+      this.patientStore.transaction_id = row.id
+      this.$router.push('/gl/report')
     },
 
     resetNewTransaction() {

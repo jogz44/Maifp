@@ -37,12 +37,7 @@
                 <q-td key="middle_name" style="font-size: 11px" align="left">
                   {{ props.row.middlename }}
                 </q-td>
-                <q-td key="ext" style="font-size: 11px" align="left">
-                  {{ props.row.ext }}
-                </q-td>
-                <q-td key="birthdate" style="font-size: 11px" align="left">
-                  {{ props.row.birthdate }}
-                </q-td>
+
                 <q-td key="age" style="font-size: 11px" align="left">
                   {{ props.row.age }}
                 </q-td>
@@ -53,9 +48,9 @@
                   {{ props.row.barangay }}
                 </q-td>
 
-                <q-td key="status" style="font-size: 11px" align="left">
+                <!-- <q-td key="status" style="font-size: 11px" align="left">
                   {{ props.row.transaction[0]?.transaction_type || 'N/A' }}
-                </q-td>
+                </q-td> -->
 
                 <q-td key="actions" style="font-size: 11px" align="center">
                   <q-btn flat color="primary" @click="showClient(props.row)" icon="request_quote" />
@@ -108,24 +103,6 @@ const columns = [
     headerStyle: 'font-size: .9em',
   },
   {
-    name: 'ext',
-    label: 'Ext',
-    field: 'ext',
-    sortable: true,
-    align: 'left',
-    headerClasses: 'bg-grey-7 text-white',
-    headerStyle: 'font-size: .9em',
-  },
-  {
-    name: 'birthdate',
-    label: 'Birthdate',
-    field: 'birthdate',
-    sortable: true,
-    align: 'left',
-    headerClasses: 'bg-grey-7 text-white',
-    headerStyle: 'font-size: .9em',
-  },
-  {
     name: 'age',
     label: 'Age',
     field: 'age',
@@ -152,20 +129,20 @@ const columns = [
     headerClasses: 'bg-grey-7 text-white',
     headerStyle: 'font-size: .9em',
   },
-  {
-    name: 'status',
-    label: 'Transaction Type',
-    field: (row) => row.transaction[0]?.transaction_type || 'N/A',
-    sortable: true,
-    align: 'left',
-    headerClasses: 'bg-grey-7 text-white',
-    headerStyle: 'font-size: .9em',
-  },
+  // {
+  //   name: 'status',
+  //   label: 'Transaction Type',
+  //   field: (row) => row.transaction[0]?.transaction_type || 'N/A',
+  //   sortable: true,
+  //   align: 'left',
+  //   headerClasses: 'bg-grey-7 text-white',
+  //   headerStyle: 'font-size: .9em',
+  // },
   {
     name: 'actions',
     label: 'Actions',
     field: 'actions',
-    align: 'left',
+    align: 'center',
     headerClasses: 'bg-grey-7 text-white',
     headerStyle: 'font-size: .9em',
   },
@@ -178,8 +155,8 @@ async function getPatients() {
 
 function showClient(row) {
   store.patient_id = row.id
-  store.transaction_id = row.transaction[0]?.id
-  router.push('/billing/report')
+  store.transaction_id = row.transaction_id
+  router.push('/bill/report')
 }
 
 onMounted(getPatients)

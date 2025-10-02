@@ -1,16 +1,10 @@
 <template>
   <q-page padding>
+    <!-- Patient Monitoring Section -->
+    <div class="text-h6 text-green-9 font-bold q-mt-none q-mb-md">Patient Monitoring</div>
     <!-- Header Fund Cards -->
     <div class="row q-col-gutter-md q-mb-lg">
-      <div class="col-xs-12 col-sm-4">
-        <q-card>
-          <q-card-section>
-            <div class="text-h6 text-green-9">Total Funds</div>
-            <div class="text-subtitle1">₱ {{ fundStore.totalFunds.toLocaleString() }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-xs-12 col-sm-4">
+      <div class="col-xs-12 col-sm-12">
         <q-card>
           <q-card-section>
             <div class="text-h6 text-green-9">Released Funds</div>
@@ -18,19 +12,7 @@
           </q-card-section>
         </q-card>
       </div>
-      <div class="col-xs-12 col-sm-4">
-        <q-card>
-          <q-card-section>
-            <div class="text-h6 text-green-9">Remaining Funds</div>
-            <div class="text-subtitle1">₱ {{ fundStore.remainingFunds.toLocaleString() }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
     </div>
-
-    <!-- Patient Monitoring Section -->
-    <div class="text-h6 text-green-9 font-bold q-mt-none q-mb-md">Patient Monitoring</div>
-
     <!-- Steps -->
     <div class="row q-col-gutter-md">
       <div v-for="(step, index) in steps" :key="index" class="col-xs-12 col-sm-6 col-md">

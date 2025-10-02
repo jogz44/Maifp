@@ -28,34 +28,27 @@
             <template #body="props">
               <q-tr :v-bind="props">
                 <q-td key="lastname" style="font-size: 11px" align="left">
-                  {{ props.row.lastname }}
+                  {{ props.row.patient.lastname }}
                 </q-td>
                 <q-td key="firstname" style="font-size: 11px" align="left">
-                  {{ props.row.firstname }}
+                  {{ props.row.patient.firstname }}
                 </q-td>
                 <q-td key="middlename" style="font-size: 11px" align="left">
-                  {{ props.row.middlename }}
+                  {{ props.row.patient.middlename }}
                 </q-td>
-                <q-td key="ext" style="font-size: 11px" align="left">
-                  {{ props.row.ext }}
-                </q-td>
-                <q-td key="birthdate" style="font-size: 11px" align="left">
-                  {{ props.row.birthdate }}
-                </q-td>
-                <q-td key="age" style="font-size: 11px" align="left">
-                  {{ props.row.age }}
-                </q-td>
+
                 <q-td key="contact_number" style="font-size: 11px" align="left">
-                  {{ props.row.contact_number }}
+                  {{ props.row.patient.contact_number }}
                 </q-td>
                 <q-td key="barangay" style="font-size: 11px" align="left">
-                  {{ props.row.barangay }}
+                  {{ props.row.patient.barangay }}
                 </q-td>
                 <q-td key="status" style="font-size: 11px" align="left">
-                  {{ props.row.transaction[0]?.transaction_type || 'N/A' }}
+                  {{ props.row.transaction_type || 'N/A' }}
                 </q-td>
                 <q-td key="actions" style="font-size: 11px" align="center">
-                  <q-btn flat color="green-9" @click="showClient(props.row)" icon="article" />
+                  <q-btn flat color="blue-9" @click="showClient(props.row)" icon="article" />
+                  <q-btn flat color="green-9" @click="showBill(props.row)" icon="payment" />
                 </q-td>
               </q-tr>
             </template>
@@ -104,33 +97,7 @@ const columns = [
     headerClasses: 'bg-grey-7 text-white',
     headerStyle: 'font-size: .9em',
   },
-  {
-    name: 'ext',
-    label: 'Ext',
-    field: 'ext',
-    sortable: true,
-    align: 'left',
-    headerClasses: 'bg-grey-7 text-white',
-    headerStyle: 'font-size: .9em',
-  },
-  {
-    name: 'birthdate',
-    label: 'Birthdate',
-    field: 'birthdate',
-    sortable: true,
-    align: 'left',
-    headerClasses: 'bg-grey-7 text-white',
-    headerStyle: 'font-size: .9em',
-  },
-  {
-    name: 'age',
-    label: 'Age',
-    field: 'age',
-    sortable: true,
-    align: 'left',
-    headerClasses: 'bg-grey-7 text-white',
-    headerStyle: 'font-size: .9em',
-  },
+
   {
     name: 'contact_number',
     label: 'Contact Number',
@@ -152,7 +119,7 @@ const columns = [
   {
     name: 'status',
     label: 'Transaction Type',
-    field: (row) => row.transaction[0]?.transaction_type || 'N/A',
+    field: (row) => row.transaction_type || 'N/A',
     sortable: true,
     align: 'left',
     headerClasses: 'bg-grey-7 text-white',
@@ -162,7 +129,7 @@ const columns = [
     name: 'actions',
     label: 'Actions',
     field: 'actions',
-    align: 'left',
+    align: 'center',
     headerClasses: 'bg-grey-7 text-white',
     headerStyle: 'font-size: .9em',
   },
@@ -174,9 +141,39 @@ async function getPatients() {
 }
 
 function showClient(row) {
-  store.patient_id = row.id
-  store.transaction_id = row.transaction[0]?.id
-  router.push('/gl/report')
+  console.log('Navigating with IDs:', {
+    patientId: row.id || row.patient_id,
+    transactionId: row.transaction_id,
+  })
+
+  store.patient_id = row.id || row.patient_id
+  store.transaction_id = row.transaction_id
+
+  router.push({
+    path: '/gl/detail',
+    query: {
+      patientId: row.id || row.patient_id,
+      transactionId: row.transaction_id,
+    },
+  })
+}
+
+function showBill(row) {
+  console.log('Navigating with IDs:', {
+    patientId: row.id || row.patient_id,
+    transactionId: row.transaction_id,
+  })
+
+  store.patient_id = row.id || row.patient_id
+  store.transaction_id = row.transaction_id
+
+  router.push({
+    path: '/gl/report',
+    query: {
+      patientId: row.id || row.patient_id,
+      transactionId: row.transaction_id,
+    },
+  })
 }
 
 onMounted(getPatients)

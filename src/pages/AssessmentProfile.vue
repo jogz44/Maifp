@@ -1,15 +1,14 @@
 <template>
   <q-page>
-    <div class="q-pa-md flex justify-center">
-      <q-card class="q-pa-sm" style="max-width: 1820px; width: 100%">
-        <!-- Patient Information Section -->
-        <q-card-section>
-          <div class="q-pa-sm flex justify-center">
-            <q-card class="q-pa-md" style="max-width: 1000px; width: 100%">
-              <!-- Header -->
+    <div class="q-pa-md">
+      <div class="row q-col-gutter-md" style="min-height: calc(100vh - 100px)">
+        <!-- Left Card - Patient Information -->
+        <div class="col-12 col-lg-6">
+          <q-card class="full-height">
+            <q-card-section>
               <div class="row items-center justify-between q-mb-md">
                 <div class="text-h6 text-green text-weight-bolder">Patient Information</div>
-                <div class="row q-gutter-sm">
+                <!-- <div class="row q-gutter-sm">
                   <q-btn
                     v-if="!isEditMode"
                     color="orange"
@@ -26,15 +25,37 @@
                     />
                     <q-btn color="grey" label="Cancel" @click="cancelEdit" />
                   </template>
-                </div>
+                </div> -->
               </div>
 
               <q-separator />
 
-              <!-- Personal Details -->
-              <div class="text-subtitle2 text-grey-8 q-mt-md q-mb-sm">Personal Details</div>
-              <div class="row q-col-gutter-md">
-                <div class="col-12 col-md-3">
+              <!-- Personal Details Section -->
+              <div class="text-subtitle2 text-grey-8 q-mt-md q-mb-xs">Personal Details</div>
+              <div class="row q-col-gutter-md q-mb-md">
+                <div class="col-12">
+                  <q-input
+                    outlined
+                    dense
+                    v-model="patient.philsys_id"
+                    label="Philsys ID"
+                    :readonly="!isEditMode"
+                  />
+                </div>
+                <div class="col-12">
+                  <q-input
+                    outlined
+                    dense
+                    v-model="patient.philhealth_id"
+                    label="PhilHealth ID"
+                    :readonly="!isEditMode"
+                  />
+                </div>
+              </div>
+
+              <!-- Name Fields -->
+              <div class="row q-col-gutter-md q-mb-md">
+                <div class="col-6">
                   <q-input
                     outlined
                     dense
@@ -43,7 +64,7 @@
                     :readonly="!isEditMode"
                   />
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-6">
                   <q-input
                     outlined
                     dense
@@ -52,7 +73,7 @@
                     :readonly="!isEditMode"
                   />
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-6">
                   <q-input
                     outlined
                     dense
@@ -61,7 +82,7 @@
                     :readonly="!isEditMode"
                   />
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-6">
                   <q-input
                     outlined
                     dense
@@ -72,22 +93,22 @@
                 </div>
               </div>
 
-              <div class="row q-col-gutter-md q-mt-sm">
-                <div class="col-12 col-md-3">
-                  <component
-                    :is="isEditMode ? 'q-select' : 'q-input'"
+              <!-- Basic Info -->
+              <div class="row q-col-gutter-md q-mb-md">
+                <div class="col-6">
+                  <q-select
                     outlined
                     dense
                     v-model="patient.gender"
-                    :options="isEditMode ? patientStore.genderOptions : undefined"
                     label="Gender"
+                    :options="isEditMode ? patientStore.genderOptions : undefined"
                     :readonly="!isEditMode"
                   />
                 </div>
-                <div class="col-12 col-md-2">
+                <div class="col-6">
                   <q-input outlined dense v-model="patient.age" label="Age" readonly />
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-6">
                   <q-input
                     outlined
                     dense
@@ -98,7 +119,7 @@
                     @update:model-value="updateAge"
                   />
                 </div>
-                <div class="col-12 col-md-4">
+                <div class="col-6">
                   <q-input
                     outlined
                     dense
@@ -108,164 +129,255 @@
                     :readonly="!isEditMode"
                   />
                 </div>
-              </div>
 
-              <!-- Address Section -->
-              <div class="text-subtitle2 text-grey-8 q-mt-lg q-mb-sm">Address</div>
-              <div class="row q-col-gutter-md">
-                <div class="col-12 col-md-2">
+                <!-- Additional Basic Info -->
+                <div class="col-12">
                   <q-input
                     outlined
                     dense
-                    v-model="patient.purok"
-                    label="Purok"
+                    v-model="patient.place_of_birth"
+                    label="Place of Birth"
                     :readonly="!isEditMode"
                   />
                 </div>
-                <div class="col-12 col-md-3">
+                <div class="col-6">
+                  <q-select
+                    outlined
+                    dense
+                    v-model="patient.civil_status"
+                    :options="isEditMode ? patientStore.civilStatusOptions : undefined"
+                    label="Civil Status"
+                    :readonly="!isEditMode"
+                  />
+                </div>
+                <div class="col-6">
+                  <q-select
+                    outlined
+                    dense
+                    v-model="patient.religion"
+                    :options="isEditMode ? patientStore.religionOptions : undefined"
+                    label="Religion"
+                    :readonly="!isEditMode"
+                  />
+                </div>
+                <div class="col-12">
+                  <q-select
+                    outlined
+                    dense
+                    v-model="patient.education"
+                    :options="isEditMode ? patientStore.educationOptions : undefined"
+                    label="Highest Educational Attainment"
+                    :readonly="!isEditMode"
+                  />
+                </div>
+                <div class="col-6">
                   <q-input
                     outlined
                     dense
-                    v-model="patient.street"
-                    label="Street"
+                    v-model="patient.occupation"
+                    label="Occupation"
                     :readonly="!isEditMode"
                   />
                 </div>
-                <div class="col-12 col-md-3">
-                  <q-input
+                <div class="col-6">
+                  <q-select
                     outlined
                     dense
-                    v-model="patient.barangay"
-                    label="Barangay"
+                    v-model="patient.income"
+                    :options="isEditMode ? patientStore.incomeOptions : undefined"
+                    label="Monthly Income"
                     :readonly="!isEditMode"
-                  />
-                </div>
-                <div class="col-12 col-md-4">
-                  <q-input
-                    outlined
-                    dense
-                    v-model="patient.city"
-                    label="City"
-                    :readonly="!isEditMode"
-                  />
-                </div>
-              </div>
-
-              <!-- Other Information -->
-              <div class="text-subtitle2 text-grey-8 q-mt-lg q-mb-sm">Other Details</div>
-              <div class="row q-col-gutter-md">
-                <div class="col-12 col-md-3">
-                  <q-input
-                    outlined
-                    dense
-                    v-model="patient.category"
-                    label="Category"
-                    :readonly="!isEditMode"
-                  />
-                </div>
-                <div class="col-12 col-md-2 flex items-center">
-                  <q-checkbox
-                    v-model="patient.is_pwd"
-                    label="PWD"
-                    :readonly="!isEditMode"
-                    :disable="!isEditMode"
-                  />
-                </div>
-                <div class="col-12 col-md-3 flex items-center">
-                  <q-checkbox
-                    v-model="patient.is_solo"
-                    label="Solo Parent"
-                    :readonly="!isEditMode"
-                    :disable="!isEditMode"
                   />
                 </div>
               </div>
-            </q-card>
-          </div>
-        </q-card-section>
 
-        <!-- Patient Transactions Section -->
-        <q-card-section>
-          <div class="q-pa-sm flex justify-center">
-            <q-card class="q-pa-sm" style="max-width: 1000px; width: 100%">
-              <!-- Header with title and filter side by side -->
-              <div class="row items-center justify-between q-mb-md">
-                <div class="text-h6 text-green text-weight-bolder">Patient Transaction History</div>
-                <q-input
-                  v-model="filterDate"
-                  label="Filter by Date"
-                  type="date"
-                  outlined
-                  dense
-                  style="width: 200px"
-                  :max="today"
+              <!-- View More Toggle Button -->
+              <div class="text-center q-mb-xs">
+                <q-btn
+                  flat
+                  :icon="showMoreDetails ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
+                  :label="showMoreDetails ? 'View Less' : 'View More Details'"
+                  color="primary"
+                  @click="showMoreDetails = !showMoreDetails"
+                  class="text-caption"
                 />
               </div>
+
+              <!-- Collapsible Additional Details -->
+              <q-slide-transition>
+                <div v-show="showMoreDetails">
+                  <q-separator class="q-my-md" />
+
+                  <!-- Address Section -->
+                  <div class="text-subtitle2 text-grey-8 q-mb-sm">Present Address</div>
+                  <div class="row q-col-gutter-md q-mb-md">
+                    <div class="col-4">
+                      <q-input
+                        outlined
+                        dense
+                        v-model="patient.purok"
+                        label="Purok"
+                        :readonly="!isEditMode"
+                      />
+                    </div>
+                    <div class="col-8">
+                      <q-input
+                        outlined
+                        dense
+                        v-model="patient.street"
+                        label="Street"
+                        :readonly="!isEditMode"
+                      />
+                    </div>
+                    <div class="col-6">
+                      <q-select
+                        outlined
+                        dense
+                        v-model="patient.barangay"
+                        :options="isEditMode ? TagumBarangay.barangay : undefined"
+                        label="Barangay"
+                        :readonly="!isEditMode"
+                      />
+                    </div>
+                    <div class="col-6">
+                      <q-input
+                        outlined
+                        dense
+                        v-model="patient.city"
+                        label="City"
+                        :readonly="!isEditMode"
+                      />
+                    </div>
+                  </div>
+
+                  <q-separator class="q-my-md" />
+
+                  <!-- Other Details -->
+                  <div class="text-subtitle2 text-grey-8 q-mb-sm">Other Details</div>
+                  <div class="row q-col-gutter-md">
+                    <div class="col-12">
+                      <q-input
+                        outlined
+                        dense
+                        v-model="patient.category"
+                        label="Category"
+                        :readonly="!isEditMode"
+                      />
+                    </div>
+                    <div class="col-6">
+                      <q-checkbox
+                        v-model="patient.is_pwd"
+                        label="PWD"
+                        :readonly="!isEditMode"
+                        :disable="!isEditMode"
+                      />
+                    </div>
+                    <div class="col-6">
+                      <q-checkbox
+                        v-model="patient.is_solo"
+                        label="Solo Parent"
+                        :readonly="!isEditMode"
+                        :disable="!isEditMode"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </q-slide-transition>
+            </q-card-section>
+          </q-card>
+        </div>
+
+        <!-- Right Card - Transaction Table -->
+        <div class="col-12 col-lg-6">
+          <q-card class="full-height">
+            <q-card-section>
+              <div class="row items-center justify-between q-mb-md">
+                <div class="text-h6 text-green text-weight-bolder">Patient Transaction History</div>
+                <div class="row q-gutter-sm">
+                  <q-input
+                    v-model="filterDate"
+                    label="Filter by Date"
+                    type="date"
+                    outlined
+                    dense
+                    style="width: 200px"
+                    :max="today"
+                  />
+                  <q-btn color="red" label="Close" @click="goBack" />
+                </div>
+              </div>
+
               <q-separator />
 
-              <q-table
-                bordered
-                dense
-                :rows="filteredTransactions"
-                :columns="transactionColumns"
-                row-key="id"
-                no-data-label="No transaction history available"
-                hide-bottom
-              >
-                <!-- Body slot -->
-                <template #body="props">
-                  <q-tr :props="props">
-                    <q-td key="id" style="font-size: 11px" align="left">
-                      {{ props.row.id }}
-                    </q-td>
-                    <q-td key="transaction_number" style="font-size: 11px" align="left">
-                      {{ props.row.transaction_number }}
-                    </q-td>
-                    <q-td key="transaction_date" style="font-size: 11px" align="left">
-                      {{ formatDate(props.row.transaction_date || props.row.created_at) }}
-                    </q-td>
-                    <q-td key="transaction_type" style="font-size: 11px" align="left">
-                      {{ props.row.transaction_type || 'N/A' }}
-                    </q-td>
-                    <q-td key="purpose" style="font-size: 11px" align="left">
-                      {{ props.row.purpose || 'N/A' }}
-                    </q-td>
-                    <q-td key="status" style="font-size: 11px" align="center">
-                      <q-toggle
-                        :model-value="props.row.status === 'qualified'"
-                        color="green"
-                        @update:model-value="
-                          (isChecked) =>
-                            confirmStatusChange(props.row, isChecked ? 'qualified' : 'unqualified')
-                        "
-                        :loading="props.row.statusUpdating"
-                      />
-                      <div
-                        class="text-caption q-mt-xs"
-                        :class="props.row.status === 'qualified' ? 'text-green' : 'text-orange'"
-                      >
-                        {{ props.row.status || 'unqualified' }}
-                      </div>
-                    </q-td>
-                    <q-td key="actions" style="font-size: 11px" align="center">
-                      <q-btn
-                        icon="visibility"
-                        flat
-                        class="text-blue"
-                        @click="viewTransactionDetails(props.row)"
-                      />
-                    </q-td>
-                  </q-tr>
-                </template>
-              </q-table>
+              <div class="q-mt-md" style="height: calc(100vh - 200px)">
+                <q-table
+                  bordered
+                  dense
+                  :rows="filteredTransactions"
+                  :columns="transactionColumns"
+                  row-key="id"
+                  no-data-label="No transaction history available"
+                  :pagination="{ rowsPerPage: 0 }"
+                  virtual-scroll
+                  :virtual-scroll-sticky-size-start="48"
+                  style="height: 100%; box-shadow: none"
+                >
+                  <template #body="props">
+                    <q-tr :props="props">
+                      <q-td key="transaction_date" style="font-size: 11px" align="left">
+                        {{ formatDate(props.row.transaction_date || props.row.created_at) }}
+                      </q-td>
+                      <q-td key="transaction_type" style="font-size: 11px" align="left">
+                        {{ props.row.transaction_type || 'N/A' }}
+                      </q-td>
 
-              <div class="q-pa-sm flex justify-end">
-                <q-btn color="red" label="Close" @click="goBack" />
+                      <q-td key="status" style="font-size: 11px" align="center">
+                        <div
+                          v-if="props.row.status === 'Complete'"
+                          class="text-caption q-mt-xs text-blue text-bold"
+                        >
+                          {{ props.row.status }}
+                        </div>
+
+                        <q-toggle
+                          v-else
+                          :model-value="props.row.status === 'qualified'"
+                          color="green"
+                          @update:model-value="
+                            (isChecked) => {
+                              confirmStatusChange(
+                                props.row,
+                                isChecked ? 'qualified' : 'unqualified',
+                              )
+                            }
+                          "
+                          :loading="props.row.statusUpdating"
+                        />
+                        <div
+                          v-if="props.row.status !== 'Complete'"
+                          class="text-caption q-mt-xs"
+                          :class="props.row.status === 'qualified' ? 'text-green' : 'text-orange'"
+                        >
+                          {{ props.row.status || 'unqualified' }}
+                        </div>
+                      </q-td>
+
+                      <q-td key="actions" style="font-size: 11px" align="center">
+                        <q-btn
+                          icon="visibility"
+                          flat
+                          class="text-blue"
+                          @click="viewTransactionDetails(props.row)"
+                        />
+                      </q-td>
+                    </q-tr>
+                  </template>
+                </q-table>
               </div>
-            </q-card>
-          </div>
-        </q-card-section>
-      </q-card>
+            </q-card-section>
+          </q-card>
+        </div>
+      </div>
     </div>
 
     <!-- Status Change Confirmation Modal -->
@@ -305,16 +417,25 @@
 
 <script>
 import { usePatientStore } from 'src/stores/patientStore'
+import { useTagumStore } from '../stores/TagumStore'
 import { date } from 'quasar'
 
 export default {
   name: 'PatientProfile',
 
+  setup() {
+    const TagumBarangay = useTagumStore()
+    return {
+      TagumBarangay,
+    }
+  },
+
   data() {
     return {
       patientId: null,
       isEditMode: false,
-      originalPatientData: null, // Store original data for cancellation
+      originalPatientData: null,
+      showMoreDetails: false, // Add collapsible section toggle
       patient: {
         id: null,
         firstname: '',
@@ -334,6 +455,14 @@ export default {
         category: '',
         is_pwd: false,
         is_solo: false,
+        philsys_id: '',
+        philhealth_id: '',
+        place_of_birth: '',
+        civil_status: '',
+        religion: '',
+        education: '',
+        occupation: '',
+        income: '',
       },
       transactions: [],
       selectedTransaction: null,
@@ -350,47 +479,7 @@ export default {
         oldStatus: '',
       },
 
-      // New Transaction Modal
-      showNewTransactionModal: false,
-      creatingTransaction: false,
-      newTransaction: {
-        transaction_date: '',
-        transaction_mode: '',
-        transaction_type: '',
-        purpose: '',
-        patient_id: null,
-        height: '',
-        weight: '',
-        bmi: '',
-        waist: '',
-        heart_rate: '',
-        blood_pressure: '',
-        respiratory_rate: '',
-        pulse_rate: '',
-        temperature: '',
-        sp02: '',
-        LMP: '',
-        medicine: '',
-        status: '',
-      },
-
       transactionColumns: [
-        {
-          name: 'id',
-          label: 'ID',
-          field: 'id',
-          sortable: true,
-          align: 'left',
-          headerClasses: 'bg-grey-7 text-white',
-        },
-        {
-          name: 'transaction_number',
-          label: 'Transaction Number',
-          field: 'transaction_number',
-          sortable: true,
-          align: 'left',
-          headerClasses: 'bg-grey-7 text-white',
-        },
         {
           name: 'transaction_date',
           label: 'Transaction Date',
@@ -407,14 +496,7 @@ export default {
           align: 'left',
           headerClasses: 'bg-grey-7 text-white',
         },
-        {
-          name: 'purpose',
-          label: 'Purpose',
-          field: 'purpose',
-          sortable: true,
-          align: 'left',
-          headerClasses: 'bg-grey-7 text-white',
-        },
+
         {
           name: 'status',
           label: 'Status',
@@ -447,21 +529,9 @@ export default {
     },
   },
 
-  watch: {
-    showNewTransactionModal(newVal) {
-      if (newVal) {
-        // Set default date to today
-        this.newTransaction.transaction_date = date.formatDate(new Date(), 'YYYY-MM-DD')
-        this.newTransaction.patient_id = this.patient.id
-      }
-    },
-  },
-
   mounted() {
-    // Initialize patient ID from route params or store
     this.patientId = this.$route.query.patientId || this.patientStore.patient_id
 
-    // Load patient data once component is mounted
     if (this.patientId) {
       this.loadPatientData()
     } else {
@@ -478,7 +548,6 @@ export default {
   methods: {
     async loadPatientData() {
       try {
-        // Get patient ID from store or route params
         if (!this.patientId) {
           this.$q.notify({
             type: 'negative',
@@ -492,13 +561,11 @@ export default {
 
         console.log(`Loading patient data for ID: ${this.patientId}`)
 
-        // Fetch patient data
         const patientData = await this.patientStore.getPatient(this.patientId)
         if (patientData) {
           console.log('Patient data loaded:', patientData)
           this.patient = { ...patientData }
 
-          // If transactions are included in the patient data
           if (patientData.transaction && Array.isArray(patientData.transaction)) {
             this.transactions = patientData.transaction.map((transaction) => ({
               ...transaction,
@@ -507,7 +574,6 @@ export default {
             }))
             console.log(`Loaded ${this.transactions.length} transactions from patient data`)
           } else {
-            // If transactions are not included, fetch them separately
             console.log('Transactions not included in patient data, fetching separately')
             const transactionsData =
               (await this.patientStore.getPatientTransactions(this.patientId)) || []
@@ -539,18 +605,15 @@ export default {
     },
 
     confirmStatusChange(transaction, newStatus) {
-      // Store the current status before showing confirmation
       const oldStatus = transaction.status || 'unqualified'
 
       console.log('Status change requested:', { oldStatus, newStatus, transaction: transaction.id })
 
-      // If status is the same, no need to confirm
       if (oldStatus === newStatus) {
         console.log('Status is the same, no change needed')
         return
       }
 
-      // Set up pending status change data
       this.pendingStatusChange = {
         transaction: transaction,
         newStatus: newStatus,
@@ -558,8 +621,6 @@ export default {
       }
 
       console.log('Showing confirmation modal for:', this.pendingStatusChange)
-
-      // Show confirmation modal
       this.showStatusConfirmModal = true
     },
 
@@ -569,17 +630,14 @@ export default {
         const transaction = this.pendingStatusChange.transaction
         const newStatus = this.pendingStatusChange.newStatus
 
-        // Set loading state for this specific transaction
         transaction.statusUpdating = true
 
-        // Update the status first
         const updatedTransaction = await this.patientStore.updateTransactionStatus(
           transaction.id,
           newStatus
         )
 
         if (updatedTransaction) {
-          // Update the local transaction data
           transaction.status = newStatus
 
           this.$q.notify({
@@ -595,7 +653,6 @@ export default {
           }
         }
 
-        // Close the confirmation modal
         this.showStatusConfirmModal = false
         this.resetPendingStatusChange()
       } catch (error) {
@@ -615,7 +672,6 @@ export default {
     },
 
     cancelStatusChange() {
-      // Just close the modal without making changes
       this.showStatusConfirmModal = false
       this.resetPendingStatusChange()
     },
@@ -630,13 +686,11 @@ export default {
 
     toggleEditMode() {
       this.isEditMode = true
-      // Store original data for potential cancellation
       this.originalPatientData = { ...this.patient }
     },
 
     async savePatientChanges() {
       try {
-        // Validate required fields
         if (!this.patient.firstname || !this.patient.lastname) {
           this.$q.notify({
             type: 'negative',
@@ -647,7 +701,6 @@ export default {
           return
         }
 
-        // Update the patient using the store action
         const updatedPatient = await this.patientStore.updatePatient(this.patient.id, this.patient)
 
         if (updatedPatient) {
@@ -658,7 +711,6 @@ export default {
             timeout: 2000,
           })
 
-          // Exit edit mode
           this.isEditMode = false
           this.originalPatientData = null
         }
@@ -674,7 +726,6 @@ export default {
     },
 
     cancelEdit() {
-      // Restore original data
       if (this.originalPatientData) {
         this.patient = { ...this.originalPatientData }
       }
@@ -696,139 +747,6 @@ export default {
       })
     },
 
-    addNewTransaction() {
-      console.log('Adding new transaction for patient ID:', this.patient.id)
-      // Navigate to transaction creation page or open a dialog
-      // Include patient ID so new transaction is linked to this patient
-      this.$router.push({
-        path: '/customers/profile',
-        query: { patientId: this.patient.id },
-      })
-    },
-
-    // New Transaction Modal Methods
-    resetNewTransaction() {
-      this.newTransaction = {
-        transaction_date: '',
-        transaction_mode: '',
-        transaction_type: '',
-        purpose: '',
-        patient_id: this.patient.id,
-        height: '',
-        weight: '',
-        bmi: '',
-        waist: '',
-        heart_rate: '',
-        blood_pressure: '',
-        respiratory_rate: '',
-        pulse_rate: '',
-        temperature: '',
-        sp02: '',
-        LMP: '',
-        medicine: '',
-        status: 'unqualified', // Default status
-      }
-    },
-
-    updateNewTransactionBMI() {
-      const height = parseFloat(this.newTransaction.height)
-      const weight = parseFloat(this.newTransaction.weight)
-
-      if (height > 0 && weight > 0) {
-        const heightInMeters = height / 100
-        const bmi = weight / (heightInMeters * heightInMeters)
-        this.newTransaction.bmi = bmi.toFixed(1)
-      } else {
-        this.newTransaction.bmi = ''
-      }
-    },
-
-    getBmiCategory(bmi) {
-      const bmiValue = parseFloat(bmi)
-      if (bmiValue < 18.5) return 'Underweight'
-      if (bmiValue < 25) return 'Normal'
-      if (bmiValue < 30) return 'Overweight'
-      return 'Obese'
-    },
-
-    async createNewTransaction() {
-      try {
-        // Validate required fields
-        if (!this.newTransaction.transaction_date) {
-          this.$q.notify({
-            type: 'negative',
-            message: 'Transaction date is required',
-            position: 'top',
-            timeout: 2000,
-          })
-          return
-        }
-
-        if (!this.newTransaction.transaction_mode) {
-          this.$q.notify({
-            type: 'negative',
-            message: 'Transaction mode is required',
-            position: 'top',
-            timeout: 2000,
-          })
-          return
-        }
-
-        if (!this.newTransaction.transaction_type) {
-          this.$q.notify({
-            type: 'negative',
-            message: 'Transaction type is required',
-            position: 'top',
-            timeout: 2000,
-          })
-          return
-        }
-
-        this.creatingTransaction = true
-
-        // Prepare transaction data with vital signs
-        const transactionData = {
-          ...this.newTransaction,
-          patient_id: this.patient.id,
-          vital_signs: this.newTransaction,
-        }
-
-        // Create the transaction using the store action
-        const createdTransaction = await this.patientStore.createNewTransaction(transactionData)
-
-        if (createdTransaction) {
-          this.$q.notify({
-            type: 'positive',
-            message: 'Transaction created successfully',
-            position: 'top',
-            timeout: 2000,
-          })
-
-          // Add the new transaction to the local list with default status
-          const newTransactionWithStatus = {
-            ...createdTransaction,
-            status: createdTransaction.status || 'unqualified',
-            statusUpdating: false,
-          }
-          this.transactions.unshift(newTransactionWithStatus)
-
-          // Close modal and reset form
-          this.showNewTransactionModal = false
-          this.resetNewTransaction()
-        }
-      } catch (error) {
-        console.error('Error creating transaction:', error)
-        this.$q.notify({
-          type: 'negative',
-          message: `Failed to create transaction: ${error.message}`,
-          position: 'top',
-          timeout: 2000,
-        })
-      } finally {
-        this.creatingTransaction = false
-      }
-    },
-
     goBack() {
       this.$router.go(-1)
     },
@@ -842,6 +760,10 @@ export default {
 </script>
 
 <style scoped>
+.full-height {
+  height: 100%;
+}
+
 .q-item {
   transition: background-color 0.3s ease;
 }
