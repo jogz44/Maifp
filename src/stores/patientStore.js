@@ -14,6 +14,10 @@ export const usePatientStore = defineStore('patient', {
     laboratoryPatients: [],
     laboratoryResults: [],
     laboratoryServices: [],
+    laboratoryExams: [],
+    radiologyExams: [],
+    mammogramExams: [],
+    ultrasoundExams: [],
     isSave: true,
     isEdit: false,
     patient_id: 0,
@@ -474,24 +478,49 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
-    async storeLaboratoryResult(payload) {
+    // FETCH LABORATORY EXAM OPTIONS
+    async fetchLaboratoryExams() {
       this.loading = true
       this.error = null
 
       try {
+        const response = await api.get('/laboratory/exam/index')
+        this.laboratoryExams = response.data || [] // master list
+        return this.laboratoryExams
+      } catch (error) {
+        this.handleApiError(error)
+        this.laboratoryExams = []
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    //STORE LABORATORY EXAM
+    async storeLaboratoryExam(payload) {
+      try {
         const response = await api.post('/laboratory/store', payload)
 
-        // Optionally push into patients list if API returns updated patient
-        if (response.data && response.data.patient) {
-          this.patients.push(response.data.patient)
+        if (response.data && response.data.examination) {
+          // store result in state so UI updates
+          this.radiologyExams = response.data.examination
         }
 
         return response.data
       } catch (error) {
         this.handleApiError(error)
         throw error
-      } finally {
-        this.loading = false
+      }
+    },
+
+    // FETCH LABORATORY EXAM TRANSACTIONS
+    async fetchLaboratoryExamsByTransaction(transactionId) {
+      try {
+        const response = await api.get(`/laboratory/exam/${transactionId}`)
+        return response.data
+      } catch (error) {
+        console.error('Error fetching laboratory exams by transaction:', error)
+        throw error
       }
     },
 
@@ -503,6 +532,178 @@ export const usePatientStore = defineStore('patient', {
         return this.laboratoryResults
       } catch (error) {
         console.error('API Error (getLaboratoryResults):', error)
+        throw error
+      }
+    },
+
+    // FETCH RADIOLOGY EXAM
+    async fetchRadiologyExams() {
+      this.loading = true
+      this.error = null
+      try {
+        const response = await api.get('/laboratory/radiology/index')
+        this.radiologyExams = response.data || []
+        return this.radiologyExams
+      } catch (error) {
+        console.error('Error fetching radiology exams:', error)
+        this.radiologyExams = []
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // FETCH RADIOLOGY EXAM BY TRANSACTION ID
+    async fetchRadiologiesByTransaction(transactionId) {
+      try {
+        const response = await api.get(`/laboratory/radiology/${transactionId}`)
+        return response.data
+      } catch (error) {
+        console.error('Error fetching radiology exams by transaction:', error)
+        throw error
+      }
+    },
+
+    // STORE RADIOLOGY EXAM
+    async storeRadiologyExam(payload) {
+      try {
+        const response = await api.post('/laboratory/store', payload)
+
+        if (response.data && response.data.radiologies) {
+          // store result in state so UI updates
+          this.radiologyExams = response.data.radiologies
+        }
+
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        throw error
+      }
+    },
+
+    // FETCH MAMMOGRAM EXAM
+    async fetchMammogramExams() {
+      this.loading = true
+      this.error = null
+      try {
+        const response = await api.get('/laboratory/mammogram/index')
+        this.mammogramExams = response.data || []
+        return this.mammogramExams
+      } catch (error) {
+        console.error('Error fetching mammogram exams:', error)
+        this.mammogramExams = []
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // FETCH MAMMOGRAM EXAM BY TRANSACTION ID
+    async fetchMammogramsByTransaction(transactionId) {
+      try {
+        const response = await api.get(`/laboratory/mammogram/${transactionId}`)
+        return response.data
+      } catch (error) {
+        console.error('Error fetching mammogram by transaction:', error)
+        throw error
+      }
+    },
+
+    // STORE MAMMOGRAM EXAM
+    async storeMammogramExam(payload) {
+      try {
+        const response = await api.post('/laboratory/store', payload)
+        if (response.data && response.data.mammogram) {
+          this.mammogramExams = response.data.mammogram
+        }
+        return response.data
+      } catch (error) {
+        console.error('Error saving mammogram exams:', error)
+        throw error
+      }
+    },
+
+    // FETCH ULTRASOUND EXAMS (for dropdown/options)
+    async fetchUltrasoundExams() {
+      try {
+        const response = await api.get('/laboratory/ultrasound/index')
+        this.ultrasoundExams = response?.data ?? []
+        console.log('Fetched Ultrasound Exams:', this.ultrasoundExams)
+        return this.ultrasoundExams
+      } catch (error) {
+        console.error('Error fetching ultrasound exams:', error)
+        this.ultrasoundExams = []
+        throw error
+      }
+    },
+
+    // FETCH ULTRASOUND BY TRANSACTION (for saved rows)
+    async fetchUltrasoundsByTransaction(transactionId) {
+      try {
+        if (!transactionId) {
+          console.warn('No transactionId provided for fetchUltrasoundsByTransaction')
+          return []
+        }
+
+        const response = await api.get(`/laboratory/ultrasound/${transactionId}`)
+
+        // Ensure we always return an array
+        const ultrasounds = response?.data?.ultrasound ?? []
+        console.log(`Fetched Ultrasounds for Transaction ${transactionId}:`, ultrasounds)
+
+        return ultrasounds
+      } catch (error) {
+        console.error('Error fetching ultrasound by transaction:', error)
+        return [] // fallback so .map() won’t break
+      }
+    },
+
+    // STORE ULTRASOUND EXAM (save to backend)
+    async storeUltrasoundExam(payload) {
+      try {
+        const response = await api.post('/laboratory/store', payload)
+
+        // Update store state only if backend returns updated list
+        if (response?.data?.ultrasound) {
+          this.ultrasoundExams = response.data.ultrasound
+          console.log('Updated Ultrasound Exams:', this.ultrasoundExams)
+        }
+
+        return response?.data
+      } catch (error) {
+        console.error('Error saving ultrasound exams:', error)
+        throw error
+      }
+    },
+
+    // DELETE LAB EXAM / RADIOLOGY / MAMMOGRAM / ULTRASOUND
+    async deleteLaboratoryExam(transactionId, id, type) {
+      try {
+        const payload = {
+          transaction_id: transactionId,
+          type: type,
+          id: id,
+        }
+
+        console.log('Delete Payload:', payload)
+
+        const response = await api.delete('/laboratory/delete', { data: payload })
+        console.log('Delete Response:', response.data)
+        return response.data
+      } catch (error) {
+        console.error(`Error deleting ${type}:`, error)
+        throw error
+      }
+    },
+
+    // FETCH OVERALL LABORATORY TRANSACTION DETAILS
+    async fetchLaboratoryDetails(transactionId) {
+      try {
+        const response = await api.get(`/laboratory/${transactionId}`)
+        console.log('Fetched Laboratory Details:', response.data)
+        return response.data
+      } catch (error) {
+        console.error('Error fetching laboratory details:', error)
         throw error
       }
     },
@@ -534,7 +735,7 @@ export const usePatientStore = defineStore('patient', {
 
       try {
         const response = await api.get('/doctor')
-        this.doctors = response.data.map((doc) => ({ ...doc, editMode: false })) // 👈 add editMode
+        this.doctors = response.data.map((doc) => ({ ...doc, editMode: false })) // add editMode
         return this.doctors
       } catch (error) {
         this.handleApiError(error)
@@ -564,24 +765,6 @@ export const usePatientStore = defineStore('patient', {
       } catch (error) {
         this.handleApiError(error)
         throw error
-      } finally {
-        this.loading = false
-      }
-    },
-
-    // Fetch available services
-    async fetchLaboratoryServices() {
-      this.loading = true
-      this.error = null
-
-      try {
-        const response = await api.get('/laboratory/index/lab_services')
-        this.laboratoryServices = response.data || [] // store services
-        return this.laboratoryServices
-      } catch (error) {
-        this.handleApiError(error)
-        this.laboratoryServices = []
-        return []
       } finally {
         this.loading = false
       }
@@ -661,6 +844,16 @@ export const usePatientStore = defineStore('patient', {
         return null
       } finally {
         this.loading = false
+      }
+    },
+
+    async getTransactionsByPatient(patientId) {
+      try {
+        const response = await api.get(`/transactions?patient_id=${patientId}`)
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        return []
       }
     },
 

@@ -30,7 +30,7 @@
                       backdrop-filter: blur(6px);
                       white-space: nowrap;"
                       >
-                      Doctor's fee loaded
+                      Consultation fee loaded
                 </div>
               </transition>
               <!-- Info button -->
@@ -50,7 +50,7 @@
         <q-dialog v-model="doctorDialog" persistent>
           <q-card style="min-width: 600px">
             <q-card-section>
-              <div class="text-h6">Doctor's Fee</div>
+              <div class="text-h6">Consultation Fee</div>
             </q-card-section>
 
             <q-card-section>
@@ -335,14 +335,20 @@
             </div>
           </div>
         </q-card-section>
-        <!-- Buttons BELOW the card -->
-        <div class="q-mt-md flex justify-end q-gutter-sm">
+        <!-- Buttons or Status Chip -->
+        <div
+          class="q-mt-md flex justify-end q-gutter-sm"
+          v-if="
+            !['Complete', 'Done', 'Returned'].includes(transaction?.status) &&
+            (!transaction?.consultation && (!transaction?.laboratories_details || transaction.laboratories_details.length === 0))
+          "
+        >
           <q-btn
-              color="primary"
-              label="Require Medication"
-              icon="medication"
-              @click="onRequireMedication"
-            />
+            color="primary"
+            label="Require Medication"
+            icon="medication"
+            @click="onRequireMedication"
+          />
           <q-btn
             color="blue"
             label="Process Lab"
@@ -356,6 +362,19 @@
             @click="markDone"
           />
         </div>
+
+        <!-- Chip when status is final OR labs/consultation exist -->
+        <!-- <div v-else class="q-mt-md flex justify-end">
+          <q-chip
+            color="green"
+            text-color="white"
+            :label="
+              ['Complete', 'Done', 'Returned'].includes(transaction?.status)
+                ? transaction.status
+                : 'Transaction Processed'
+            "
+          />
+        </div> -->
       </q-card>
     </div>
   </q-page>
@@ -378,7 +397,7 @@ export default {
       showDoctorToast: false,
       doctorDialog: false,
       doctorColumns: [
-        { name: 'doctor_amount', label: "Doctor's Fee", field: 'doctor_amount', align: 'center' },
+        { name: 'doctor_amount', label: "Consultation Fee", field: 'doctor_amount', align: 'center' },
         { name: 'actions', label: 'Actions', field: 'actions', align: 'center' }
       ],
 
@@ -441,7 +460,7 @@ export default {
       try {
         const payload = { id: row.id, doctor_amount: row.doctor_amount }
         await this.patientStore.updateDoctorFee(payload)
-        this.$q.notify({ type: 'positive', message: "Doctor's fee updated!" })
+        this.$q.notify({ type: 'positive', message: "Consultation fee updated!" })
       } catch {
         this.$q.notify({ type: 'negative', message: 'Failed to update fee' })
       }
@@ -451,7 +470,7 @@ export default {
         const payload = { doctor_amount: row.doctor_amount }
         await this.patientStore.updateDoctorFee(row.id, payload)
         row.editMode = false
-        this.$q.notify({ type: 'positive', message: "Doctor's fee updated!" })
+        this.$q.notify({ type: 'positive', message: "Consultation fee updated!" })
       } catch {
         this.$q.notify({ type: 'negative', message: 'Failed to update fee' })
       }
@@ -576,6 +595,12 @@ export default {
 
         if (transactionData) {
           console.log('Transaction data loaded:', transactionData)
+
+          // Merge consultation status if it exists
+          if (transactionData.consultation && transactionData.consultation.status) {
+            transactionData.status = transactionData.consultation.status
+          }
+
           this.transaction = transactionData
 
           // Extract vital signs data from the vital property

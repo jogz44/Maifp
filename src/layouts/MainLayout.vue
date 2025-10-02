@@ -221,6 +221,13 @@
             <span class="text-sm" style="padding-left: 16px">User Management</span>
           </div>
         </q-item>
+
+        <!-- <q-item clickable v-ripple to="/services">
+          <div class="row items-center">
+            <q-icon name="supervisor_account" size="24px" class="q-mr-md" />
+            <span class="text-sm" style="padding-left: 16px">Services</span>
+          </div>
+        </q-item> -->
       </q-list>
     </q-drawer>
 
@@ -234,6 +241,8 @@
 <script>
 import auth from 'src/services/auth'
 import { useUserStore } from 'src/stores/userStore'
+import { usePatientStore } from 'src/stores/patientStore'
+// import { useServicesLibraryStore } from 'src/stores/servicesLibraryStore'
 import { usePatientBadgeStore } from 'src/stores/badgeStore'
 import { LocalStorage } from 'quasar'
 
@@ -243,11 +252,20 @@ export default {
   setup() {
     const ausSrvc = auth
     const userStore = useUserStore()
+    const patientStore = usePatientStore()
+    // const servicesLibraryStore = useServicesLibraryStore()
+
+    // fetch patients when mounted
+    patientStore.fetchQualifiedPatients()
+    patientStore.fetchReturnedPatients()
+    patientStore.fetchLaboratoryPatients()
     const badgeStore = usePatientBadgeStore()
 
     return {
       ausSrvc,
       userStore,
+      patientStore,
+      // servicesLibraryStore,
       badgeStore,
     }
   },

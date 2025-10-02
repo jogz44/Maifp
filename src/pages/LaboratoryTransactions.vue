@@ -200,7 +200,7 @@
               <q-table
                 bordered
                 dense
-                :rows="transactions"
+                :rows="sortedTransactions"
                 :columns="transactionColumns"
                 row-key="id"
                 no-data-label="No transaction history available"
@@ -294,8 +294,8 @@ export default {
         transaction_type: '',
         purpose: '',
         patient_id: null,
-        consultation_date: '',   // ✅ added
-        status: 'pending',       // ✅ added
+        consultation_date: '',
+        status: 'pending',
         height: '',
         weight: '',
         bmi: '',
@@ -372,6 +372,13 @@ export default {
   computed: {
     patientStore() {
       return usePatientStore()
+    },
+    sortedTransactions() {
+      return [...this.transactions].sort((a, b) => {
+        const dateA = new Date(a.transaction_date || a.created_at)
+        const dateB = new Date(b.transaction_date || b.created_at)
+        return dateB - dateA // newest first
+      })
     },
   },
 
@@ -545,8 +552,8 @@ export default {
         transaction_type: '',
         purpose: '',
         patient_id: this.patient.id,
-        consultation_date: date.formatDate(new Date(), 'YYYY-MM-DD'), // ✅ reset default
-        status: 'pending', // ✅ reset default
+        consultation_date: date.formatDate(new Date(), 'YYYY-MM-DD'), // reset default
+        status: 'pending', // reset default
         height: '',
         weight: '',
         bmi: '',
@@ -585,7 +592,7 @@ export default {
 
     async createNewTransaction() {
       try {
-        // ✅ validate consultation_date + status too
+        // validate consultation_date + status too
         if (!this.newTransaction.consultation_date) {
           this.$q.notify({
             type: 'negative',

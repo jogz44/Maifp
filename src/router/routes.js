@@ -130,14 +130,6 @@ const routes = [
         meta: { requiresAuth: true },
       },
 
-      //fundings
-      // {
-      //   path: '/fundings',
-      //   component: () => import('pages/FundingPage.vue'),
-      //   meta: { requiresAuth: true },
-      // },
-
-      //guaranteed letter
       {
         path: '/gl',
         component: () => import('pages/GuaranteedPage.vue'),
