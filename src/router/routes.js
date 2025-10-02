@@ -103,6 +103,12 @@ const routes = [
         component: () => import('pages/FundingPage.vue'),
         meta: { requiresAuth: true },
       },
+      //lib services
+      // {
+      //   path: '/services',
+      //   component: () => import('pages/ServicesLibrary.vue'),
+      //   meta: { requiresAuth: true },
+      // },
 
       {
         path: '/ris/orders',

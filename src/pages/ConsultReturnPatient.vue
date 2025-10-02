@@ -200,7 +200,7 @@
               <q-table
                 bordered
                 dense
-                :rows="transactions"
+                :rows="sortedTransactions"
                 :columns="transactionColumns"
                 row-key="id"
                 no-data-label="No transaction history available"
@@ -370,6 +370,13 @@ export default {
   computed: {
     patientStore() {
       return usePatientStore()
+    },
+    sortedTransactions() {
+      return [...this.transactions].sort((a, b) => {
+        const dateA = new Date(a.transaction_date || a.created_at)
+        const dateB = new Date(b.transaction_date || b.created_at)
+        return dateB - dateA // newest first
+      })
     },
   },
 

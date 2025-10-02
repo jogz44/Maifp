@@ -253,247 +253,456 @@
 
         <q-separator spaced inset v-if="!loading" />
 
-        <!-- LABORATORY RESULTS -->
-        <q-card-section v-if="!loading">
-          <div class="row items-center justify-between">
-            <div class="text-subtitle2 q-mb-sm">Availed Laboratory Services</div>
-            <q-btn color="green" dense icon="add" label="Add Services" @click="openLabModal" />
-          </div>
-
-          <!-- Table to display saved results -->
-          <q-table
-            v-if="results.length"
-            :rows="results"
-            :columns="labColumns"
-            row-key="id"
-            flat
-            dense
-            class="q-mt-md"
-            :table-header-class="'bg-grey-3 text-black'"
+        <!-- MORE LABORATORY TABS -->
+        <div>
+          <q-splitter
+            v-model="splitterModel"
+            style="height: 290px"
+            class="text-green border rounded-borders"
           >
-            <template v-slot:body-cell-amount="props">
-              <q-td :props="props"> ₱{{ props.row.amount }} </q-td>
+            <template v-slot:before>
+              <q-tabs v-model="tab" vertical class="text-gray border-right q-pa-xxs">
+                <q-tab name="lab_exam" icon="troubleshoot" label="Lab Exam" />
+                <q-tab name="radiology" icon="emergency" label="Radiology" />
+                <q-tab name="mammogram" icon="biotech" label="Mammogram" />
+                <q-tab name="ultrasound" icon="blur_circular" label="Ultrasound" />
+              </q-tabs>
             </template>
-          </q-table>
-        </q-card-section>
 
-        <!-- Add/Edit Laboratory Modal -->
-        <q-dialog v-model="labModalOpen" persistent>
-          <q-card style="min-width: 900px">
-            <q-card-section>
-              <div class="row items-center justify-between">
-                <div class="text-h6">Add Laboratory Results</div>
-                <div class="relative-position">
-                  <!-- Info button -->
-                  <q-btn
-                    round
-                    dense
-                    flat
-                    icon="info"
-                    color="primary"
-                    @click="serviceModalOpen = true"
-                  />
-
-                  <!-- Floating toast -->
-                  <transition name="fade-slide">
-                    <div
-                      v-if="showServiceHint"
-                      class="q-pa-sm text-white text-caption shadow-4 absolute-top-right"
-                      style="
-                        margin-right: 35px; /* push it left of the info button */
-                        border-radius: 10px;
-                        background: rgba(33, 150, 243, 0.75);
-                        backdrop-filter: blur(6px);
-                        white-space: nowrap;"
-                      >
-                      Manage Laboratory Services
-                    </div>
-                  </transition>
-                </div>
-              </div>
-            </q-card-section>
-
-            <q-card-section>
-              <div
-                v-for="(result, index) in resultsForm"
-                :key="index"
-                class="row q-col-gutter-md q-mt-sm text-caption"
+            <template v-slot:after>
+              <q-tab-panels
+                v-model="tab"
+                animated
+                swipeable
+                vertical
+                transition-prev="jump-up"
+                transition-next="jump-up"
+                class="q-pa-md"
               >
-                <div class="col-12 col-md-2">
-                  <q-input dense v-model="result.time" label="Time" type="time" />
-                </div>
-                <div class="col-12 col-md-2">
-                  <q-input dense v-model="result.date" label="Date" type="date" />
-                </div>
-                <div class="col-12 col-md-3">
-                  <q-select
-                    dense
-                    v-model="result.laboratory_type"
-                    :options="laboratoryOptions"
-                    option-label="label"
-                    option-value="value"
-                    emit-value
-                    map-options
-                    label="Type of Laboratory"
-                    @update:model-value="onLabChange(result)"
-                  >
-                  </q-select>
-                </div>
-                <div class="col-12 col-md-3 row">
-                  <q-input dense v-model="result.amount" label="Amount" type="number" class="col" />
-                  <q-btn
-                    round
-                    dense
-                    flat
-                    color="red"
-                    icon="delete"
-                    @click="removeResultRow(index)"
-                  />
-                </div>
-              </div>
-
-              <!-- Add Row Button -->
-              <q-btn
-                flat
-                color="blue"
-                icon="add"
-                label="Add Another Service"
-                class="q-mt-md"
-                @click="addResultRow"
-              />
-            </q-card-section>
-
-            <!-- Manage Laboratory Services -->
-              <q-dialog v-model="serviceModalOpen" persistent>
-                <q-card style="min-width: 600px">
-                  <q-card-section>
-                    <div class="text-h6">Manage Laboratory Services</div>
-                  </q-card-section>
-
-                  <q-card-section>
-                    <!-- Table of Services -->
-                    <q-table
-                      :rows="laboratoryOptions"
-                      :columns="[
-                        { name: 'label', label: 'Service', field: 'label', align: 'left'},
-                        { name: 'fee', label: 'Fee', field: 'fee', align: 'right' },
-                        { name: 'actions', label: 'Actions', field: 'actions', align: 'center' },
-                      ]"
-                      row-key="value"
-                      flat
-                      dense
-                    >
-                      <template v-slot:body-cell-actions="props">
-                        <q-td :props="props">
-                          <q-btn
-                            flat
-                            dense
-                            round
-                            size="sm"
-                            icon="edit"
-                            color="blue"
-                            @click="editService(props.row)"
-                          />
-                          <q-btn
-                            flat
-                            dense
-                            round
-                            size="sm"
-                            icon="delete"
-                            color="red"
-                            @click="confirmDelete(props.row)"
-                          />
-                        </q-td>
-                      </template>
-                    </q-table>
-
-                    <!-- Add New Service -->
-                    <div class="row items-end q-col-gutter-md q-mt-md">
-                      <div class="col">
-                        <q-input
-                          v-model="newServiceName"
-                          label="Service Name"
-                          outlined
-                          dense
-                          clearable
-                        />
-                      </div>
-
-                      <!-- Service Fee -->
-                      <div class="col-3">
-                        <q-input
-                          v-model="newServiceFee"
-                          label="Fee"
-                          type="number"
-                          outlined
-                          dense
-                          clearable
-                          prefix="₱"
-                        />
-                      </div>
-
-                      <!-- Add Button -->
-                      <div class="col-auto">
-                        <q-btn
-                          color="green"
-                          icon="add"
-                          label="Add"
-                          unelevated
-                          @click="addService"
-                        />
-                      </div>
+                <!-- Lab Exam Tab -->
+                <q-tab-panel name="lab_exam" class="border-left q-pa-md">
+                  <div class="row items-center q-mb-md">
+                    <div class="col">
+                      <q-btn
+                        color="green"
+                        label="Add Laboratory Exam"
+                        icon="add"
+                        @click="labExamModalOpen = true"
+                      />
                     </div>
-                  </q-card-section>
+                  </div>
 
-                  <!-- Edit Service Dialog -->
-                  <q-dialog v-model="editDialogOpen" persistent>
-                    <q-card style="min-width: 500px">
+                  <q-table
+                    :rows="labExamRows"
+                    :columns="labExamColumns"
+                    row-key="item_id"
+                    flat
+                    bordered
+                    dense
+                    class="q-mt-md"
+                    :table-header-class="'bg-grey-3 text-black'"
+                  >
+                    <template v-slot:body-cell-actions="props">
+                      <q-td align="center">
+                        <q-btn
+                          dense
+                          flat
+                          icon="delete"
+                          color="negative"
+                          @click="confirmDelete(props.row.item_id, 'examination')"
+                        />
+                      </q-td>
+                    </template>
+                  </q-table>
+
+                  <!-- Modal Dialog -->
+                  <q-dialog v-model="labExamModalOpen" persistent>
+                    <q-card style="min-width: 900px; max-width: 95vw">
                       <q-card-section>
-                        <div class="text-h6">Update Service</div>
+                        <div class="text-h6 text-bold">Laboratory Exam</div>
                       </q-card-section>
 
+                      <!-- Select Exam with Search -->
                       <q-card-section>
-                        <q-input
-                          v-model="editServiceName"
-                          label="Service Name"
+                        <q-select
+                          v-model="selectedLabExam"
+                          :options="filteredLabExamOptions"
+                          option-label="item_description"
+                          option-value="id"
+                          emit-value
+                          map-options
+                          label="Choose a Laboratory Exam"
                           outlined
                           dense
-                          clearable
+                          use-input
+                          :fill-input="false"
+                          input-debounce="300"
+                          @filter="onFilterLabExam"
                         />
-                        <q-input
-                          v-model="editServiceFee"
-                          label="Fee"
-                          type="number"
-                          outlined
-                          dense
-                          clearable
-                          prefix="₱"
+                        <q-btn
                           class="q-mt-md"
+                          color="primary"
+                          icon="add"
+                          label="Select"
+                          @click="addSelectedLabExam"
+                          :disable="!selectedLabExam"
                         />
+                      </q-card-section>
+
+                      <!-- Review Section -->
+                      <q-card-section>
+                        <div class="text-xxs text-bold q-mb-sm">Review Selected Exams</div>
+                        <q-table
+                          :rows="reviewLabExams"
+                          :columns="labExamColumns"
+                          row-key="id"
+                          flat
+                          bordered
+                          dense
+                        >
+                          <template v-slot:body-cell-actions="props">
+                            <q-td align="center">
+                              <q-btn
+                                dense
+                                flat
+                                icon="delete"
+                                color="negative"
+                                @click="removeReviewExam(props.row.id)"
+                              />
+                            </q-td>
+                          </template>
+                        </q-table>
                       </q-card-section>
 
                       <q-card-actions align="right">
-                        <q-btn flat label="Cancel" color="grey" @click="editDialogOpen = false" />
-                        <q-btn color="primary" label="Save" @click="updateService" />
+                        <q-btn flat label="Cancel" color="negative" v-close-popup />
+                        <q-btn flat label="Save" color="positive" @click="saveLaboratoryExams" />
                       </q-card-actions>
                     </q-card>
                   </q-dialog>
+                </q-tab-panel>
 
-                  <q-card-actions align="right">
-                    <q-btn flat label="Close" color="grey" @click="serviceModalOpen = false" />
-                  </q-card-actions>
-                </q-card>
-              </q-dialog>
+                <!-- Radiology Tab -->
+                <q-tab-panel name="radiology" class="border-left q-pa-md">
+                  <div class="row items-center q-mb-md">
+                    <div class="col">
+                      <q-btn
+                        color="green"
+                        label="Add Radiology Exam"
+                        icon="add"
+                        @click="radiologyModalOpen = true"
+                      />
+                    </div>
+                  </div>
 
-            <q-card-actions align="right">
-              <q-btn flat label="Cancel" color="grey" @click="labModalOpen = false" />
-              <q-btn color="green" icon="save" label="Save" @click="saveLaboratoryResults" />
-            </q-card-actions>
-          </q-card>
-        </q-dialog>
+                  <q-table
+                    :rows="radiologyRows"
+                    :columns="radiologyColumns"
+                    row-key="id"
+                    flat
+                    bordered
+                    dense
+                    class="q-mt-md"
+                    :table-header-class="'bg-grey-3 text-black'"
+                  >
+                    <template v-slot:body-cell-actions="props">
+                      <q-td align="center">
+                        <q-btn
+                          dense
+                          flat
+                          icon="delete"
+                          color="negative"
+                          @click="confirmDelete(props.row.id, 'radiology')"
+                        />
+                      </q-td>
+                    </template>
+                  </q-table>
+
+                  <!-- Radiology Modal -->
+                  <q-dialog v-model="radiologyModalOpen" persistent>
+                    <q-card style="min-width: 900px; max-width: 95vw">
+                      <q-card-section>
+                        <div class="text-h6 text-bold">Radiology Exam</div>
+                      </q-card-section>
+
+                      <!-- Select Radiology -->
+                      <q-card-section>
+                        <q-select
+                          v-model="selectedRadiology"
+                          :options="filteredRadiologyOptions"
+                          option-label="item_description"
+                          option-value="id"
+                          emit-value
+                          map-options
+                          label="Choose a Radiology Exam"
+                          outlined
+                          dense
+                          use-input
+                          :fill-input="false"
+                          input-debounce="300"
+                          @filter="onFilterRadiology"
+                        />
+
+                        <q-btn
+                          class="q-mt-md"
+                          color="primary"
+                          icon="add"
+                          label="Select"
+                          @click="addSelectedRadiology"
+                          :disable="!selectedRadiology"
+                        />
+                      </q-card-section>
+
+                      <!-- Review Section -->
+                      <q-card-section>
+                        <div class="text-xxs text-bold q-mb-sm">Review Selected Radiologies</div>
+                        <q-table
+                          :rows="reviewRadiologies"
+                          :columns="radiologyColumns"
+                          row-key="id"
+                          flat
+                          bordered
+                          dense
+                        >
+                          <template v-slot:body-cell-actions="props">
+                            <q-td align="center">
+                              <q-btn
+                                dense
+                                flat
+                                icon="delete"
+                                color="negative"
+                                @click="removeReviewRadiology(props.row.id)"
+                              />
+                            </q-td>
+                          </template>
+                        </q-table>
+                      </q-card-section>
+
+                      <q-card-actions align="right">
+                        <q-btn flat label="Cancel" color="negative" v-close-popup />
+                        <q-btn flat label="Save" color="positive" @click="saveRadiologies" />
+                      </q-card-actions>
+                    </q-card>
+                  </q-dialog>
+                </q-tab-panel>
+
+                <!-- Mammogram Tab -->
+                <q-tab-panel name="mammogram" class="border-left q-pa-md">
+                  <div class="row items-center q-mb-md">
+                    <div class="col">
+                      <q-btn
+                        color="green"
+                        label="Add Mammogram Exam"
+                        icon="add"
+                        @click="mammogramModalOpen = true"
+                      />
+                    </div>
+                  </div>
+
+                  <q-table
+                    :rows="mammogramRows"
+                    :columns="mammogramColumns"
+                    row-key="id"
+                    flat
+                    bordered
+                    dense
+                    class="q-mt-md"
+                    :table-header-class="'bg-grey-3 text-black'"
+                  >
+                    <template v-slot:body-cell-actions="props">
+                      <q-td align="center">
+                        <q-btn
+                          dense
+                          flat
+                          icon="delete"
+                          color="negative"
+                          @click="confirmDelete(props.row.id, 'mammogram')"
+                        />
+                      </q-td>
+                    </template>
+                  </q-table>
+
+                  <!-- Mammogram Modal -->
+                  <q-dialog v-model="mammogramModalOpen" persistent>
+                    <q-card style="min-width: 900px; max-width: 95vw">
+                      <q-card-section>
+                        <div class="text-h6 text-bold">Mammogram Exam</div>
+                      </q-card-section>
+
+                      <!-- Select Mammogram -->
+                      <q-card-section>
+                        <q-select
+                          v-model="selectedMammogram"
+                          :options="filteredMammogramOptions"
+                          option-label="procedure"
+                          option-value="id"
+                          emit-value
+                          map-options
+                          label="Choose a Mammogram Exam"
+                          outlined
+                          dense
+                          use-input
+                          :fill-input="false"
+                          input-debounce="300"
+                          @filter="onFilterMammogram"
+                        />
+
+                        <q-btn
+                          class="q-mt-md"
+                          color="primary"
+                          icon="add"
+                          label="Select"
+                          @click="addSelectedMammogram"
+                          :disable="!selectedMammogram"
+                        />
+                      </q-card-section>
+
+                      <!-- Review Section -->
+                      <q-card-section>
+                        <div class="text-xxs text-bold q-mb-sm">Review Selected Mammograms</div>
+                        <q-table
+                          :rows="reviewMammograms"
+                          :columns="mammogramColumns"
+                          row-key="id"
+                          flat
+                          bordered
+                          dense
+                        >
+                          <template v-slot:body-cell-actions="props">
+                            <q-td align="center">
+                              <q-btn
+                                dense
+                                flat
+                                icon="delete"
+                                color="negative"
+                                @click="removeReviewMammogram(props.row.id)"
+                              />
+                            </q-td>
+                          </template>
+                        </q-table>
+                      </q-card-section>
+
+                      <q-card-actions align="right">
+                        <q-btn flat label="Cancel" color="negative" v-close-popup />
+                        <q-btn flat label="Save" color="positive" @click="saveMammograms" />
+                      </q-card-actions>
+                    </q-card>
+                  </q-dialog>
+                </q-tab-panel>
+
+                <!-- Ultrasound Tab -->
+                <q-tab-panel name="ultrasound" class="border-left q-pa-md">
+                  <div class="row items-center q-mb-md">
+                    <div class="col">
+                      <q-btn
+                        color="green"
+                        label="Add Ultrasound Exam"
+                        icon="add"
+                        @click="ultrasoundModalOpen = true"
+                      />
+                    </div>
+                  </div>
+
+                  <q-table
+                    :rows="ultrasoundRows"
+                    :columns="ultrasoundColumns"
+                    row-key="id"
+                    flat
+                    bordered
+                    dense
+                    class="q-mt-md"
+                    :table-header-class="'bg-grey-3 text-black'"
+                  >
+                    <template v-slot:body-cell-actions="props">
+                      <q-td align="center">
+                        <q-btn
+                          dense
+                          flat
+                          icon="delete"
+                          color="negative"
+                          @click="confirmDelete(props.row.id, 'ultrasound')"
+                        />
+                      </q-td>
+                    </template>
+                  </q-table>
+
+                  <!-- Ultrasound Modal -->
+                  <q-dialog v-model="ultrasoundModalOpen" persistent>
+                    <q-card style="min-width: 900px; max-width: 95vw">
+                      <q-card-section>
+                        <div class="text-h6 text-bold">Ultrasound Exam</div>
+                      </q-card-section>
+
+                      <!-- Select Ultrasound -->
+                      <q-card-section>
+                        <q-select
+                          v-model="selectedUltrasound"
+                          :options="filteredUltrasoundOptions"
+                          option-label="body_parts"
+                          option-value="id"
+                          emit-value
+                          map-options
+                          label="Choose an Ultrasound Exam"
+                          outlined
+                          dense
+                          use-input
+                          :fill-input="false"
+                          input-debounce="300"
+                          @filter="onFilterUltrasound"
+                        />
+
+                        <q-btn
+                          class="q-mt-md"
+                          color="primary"
+                          icon="add"
+                          label="Select"
+                          @click="addSelectedUltrasound"
+                          :disable="!selectedUltrasound"
+                        />
+                      </q-card-section>
+
+                      <!-- Review Section -->
+                      <q-card-section>
+                        <div class="text-xxs text-bold q-mb-sm">
+                          Review Selected Ultrasound Exams
+                        </div>
+                        <q-table
+                          :rows="reviewUltrasounds"
+                          :columns="ultrasoundColumns"
+                          row-key="id"
+                          flat
+                          bordered
+                          dense
+                        >
+                          <template v-slot:body-cell-actions="props">
+                            <q-td align="center">
+                              <q-btn
+                                dense
+                                flat
+                                icon="delete"
+                                color="negative"
+                                @click="removeReviewUltrasound(props.row.id)"
+                              />
+                            </q-td>
+                          </template>
+                        </q-table>
+                      </q-card-section>
+
+                      <q-card-actions align="right">
+                        <q-btn flat label="Cancel" color="negative" v-close-popup />
+                        <q-btn flat label="Save" color="positive" @click="saveUltrasounds" />
+                      </q-card-actions>
+                    </q-card>
+                  </q-dialog>
+                </q-tab-panel>
+              </q-tab-panels>
+            </template>
+          </q-splitter>
+        </div>
+        <q-separator spaced inset v-if="!loading" />
 
         <!-- ACTION BUTTONS -->
-        <div class="q-mt-md flex justify-end q-gutter-sm">
+        <div class="q-mt-md flex justify-end q-gutter-sm" v-if="isLatest">
           <q-btn
             v-if="transaction.transaction_type === 'Consultation'"
             color="blue"
@@ -529,11 +738,20 @@ export default {
       vitalSigns: {},
       loading: true,
 
+      isLatest: false,
+
       // UI states
       isTransactionEditMode: false,
       isVitalSignsEditMode: false,
       isResultsEditMode: false,
       labModalOpen: false, // ADD THIS
+
+      // Tabs
+      tab: 'lab_exam', //  default active tab
+
+      // Modal for lab exam selection
+      labExamModalOpen: false,
+      selectedLabExam: null,
 
       // Backup data
       originalTransactionData: null,
@@ -544,24 +762,93 @@ export default {
       serviceModalOpen: false,
       showServiceHint: false,
       newServiceName: '',
-      newServiceFee: '',
+      newServiceFee: null,
+      newServiceAdditionalFee: null,
 
       //Update Services
       editDialogOpen: false,
       editServiceId: null,
       editServiceName: '',
       editServiceFee: '',
+      editServiceAdditionalFee: '',
 
-      // Results
-      laboratoryOptions: [],
-      results: [],
-      resultsForm: [{ laboratory_type: '', time: '', date: '', amount: '' }],
-      labColumns: [
-        { name: 'laboratory_type', label: 'Laboratory', field: 'laboratory_type', align: 'left', headerClasses: 'bg-grey-3 text-black' },
-        { name: 'amount', label: 'Amount', field: 'amount', align: 'right', headerClasses: 'bg-grey-3 text-black'},
-        { name: 'date', label: 'Date', field: 'date', align: 'center', headerClasses: 'bg-grey-3 text-black' },
-        { name: 'time', label: 'Time', field: 'time', align: 'center', headerClasses: 'bg-grey-3 text-black' },
-        { name: 'actions', label: '', field: 'actions', align: 'center',headerClasses: 'bg-grey-3 text-black' },
+      //SEARCH DATA
+      searchLabExam: '',
+      searchRadiology: '',
+      searchMammogram: '',
+      searchUltrasound: '',
+
+      //EXAMINATION DATA
+      labExamOptions: [],
+      reviewLabExams: [], // for staging before finalizing
+      labExamRows: [],
+      labExamColumns: [
+        { name: 'item_id', label: 'Item ID', field: 'item_id', align: 'left' },
+        {
+          name: 'item_description',
+          label: 'Item Description',
+          field: 'item_description',
+          align: 'left',
+        },
+        { name: 'selling_price', label: 'Fee', field: 'selling_price', align: 'right' },
+        { name: 'service_fee', label: 'ESPF', field: 'service_fee', align: 'right' },
+        { name: 'total_amount', label: 'Total Amount', field: 'total_amount', align: 'right' },
+        { name: 'date', label: 'Date', field: 'date', align: 'center' },
+        { name: 'time', label: 'Time', field: 'time', align: 'center' },
+        { name: 'actions', label: 'Actions', field: 'actions', align: 'center' },
+      ],
+      //RADIOLOGY DATA
+      radiologyModalOpen: false,
+      selectedRadiology: null,
+      radiologyOptions: [],
+      reviewRadiologies: [],
+      radiologyRows: [],
+      radiologyColumns: [
+        { name: 'id', label: 'Item ID', field: 'id', align: 'left' },
+        {
+          name: 'item_description',
+          label: 'Item Description',
+          field: 'item_description',
+          align: 'left',
+        },
+        { name: 'selling_price', label: 'Selling Price', field: 'selling_price', align: 'right' },
+        { name: 'service_fee', label: 'ESPF', field: 'service_fee', align: 'right' },
+        { name: 'total_amount', label: 'Total Amount', field: 'total_amount', align: 'right' },
+        { name: 'date', label: 'Date', field: 'date', align: 'center' },
+        { name: 'time', label: 'Time', field: 'time', align: 'center' },
+        { name: 'actions', label: 'Actions', field: 'actions', align: 'center' },
+      ],
+      //MAMMOGRAM DATA
+      mammogramModalOpen: false,
+      selectedMammogram: null,
+      mammogramOptions: [],
+      reviewMammograms: [],
+      mammogramRows: [],
+      mammogramColumns: [
+        { name: 'id', label: 'Item ID', field: 'id', align: 'left' },
+        { name: 'procedure', label: 'Procedure', field: 'procedure', align: 'left' },
+        { name: 'rate', label: 'Rate (Php)', field: 'rate', align: 'right' },
+        { name: 'service_fee', label: 'ESPF', field: 'service_fee', align: 'right' },
+        { name: 'total_amount', label: 'Total Amount', field: 'total_amount', align: 'right' },
+        { name: 'date', label: 'Date', field: 'date', align: 'center' },
+        { name: 'time', label: 'Time', field: 'time', align: 'center' },
+        { name: 'actions', label: 'Actions', field: 'actions', align: 'center' }, // for delete button
+      ],
+      // ULTRASOUND DATA
+      ultrasoundModalOpen: false,
+      selectedUltrasound: null,
+      ultrasoundOptions: [],
+      reviewUltrasounds: [],
+      ultrasoundRows: [],
+      ultrasoundColumns: [
+        { name: 'id', label: 'Item ID', field: 'id', align: 'left' },
+        { name: 'body_parts', label: 'Body Parts', field: 'body_parts', align: 'left' },
+        { name: 'rate', label: 'Rate (Php)', field: 'rate', align: 'right' },
+        { name: 'service_fee', label: 'ESPF', field: 'service_fee', align: 'right' },
+        { name: 'total_amount', label: 'Total Amount', field: 'total_amount', align: 'right' },
+        { name: 'date', label: 'Date', field: 'date', align: 'center' },
+        { name: 'time', label: 'Time', field: 'time', align: 'center' },
+        { name: 'actions', label: 'Actions', field: 'actions', align: 'center' },
       ],
     }
   },
@@ -569,6 +856,55 @@ export default {
   computed: {
     patientStore() {
       return usePatientStore()
+    },
+    newServiceTotal() {
+      const amount = parseFloat(this.newServiceFee) || 0
+      const serviceFee = parseFloat(this.newServiceAdditionalFee) || 0
+      return amount + serviceFee
+    },
+
+    editServiceTotal() {
+      const amount = parseFloat(this.editServiceFee) || 0
+      const serviceFee = parseFloat(this.editServiceAdditionalFee) || 0
+      return amount + serviceFee
+    },
+
+    // Lab Exam filtered options
+    filteredLabExamOptions() {
+      if (!this.searchLabExam) {
+        return this.labExamOptions
+      }
+      const term = this.searchLabExam.toLowerCase()
+      return this.labExamOptions.filter((opt) => opt.item_description.toLowerCase().includes(term))
+    },
+
+    // Radiology filtered options
+    filteredRadiologyOptions() {
+      if (!this.searchRadiology) {
+        return this.radiologyOptions
+      }
+      const term = this.searchRadiology.toLowerCase()
+      return this.radiologyOptions.filter((opt) =>
+        opt.item_description.toLowerCase().includes(term),
+      )
+    },
+
+    // Mammogram filtered options
+    filteredMammogramOptions() {
+      if (!this.searchMammogram) {
+        return this.mammogramOptions
+      }
+      const term = this.searchMammogram.toLowerCase()
+      return this.mammogramOptions.filter((opt) => opt.procedure.toLowerCase().includes(term))
+    },
+
+    // Ultrasound filtered options
+    filteredUltrasoundOptions() {
+      if (!this.searchUltrasound) {
+        return this.ultrasoundOptions
+      }
+      const term = this.searchUltrasound.toLowerCase()
+      return this.ultrasoundOptions.filter((opt) => opt.body_parts.toLowerCase().includes(term))
     },
   },
 
@@ -580,11 +916,26 @@ export default {
       `Mounted TransactionDetails. Patient ID: ${this.patientId}, Transaction ID: ${this.transactionId}`,
     )
 
+    // Generic labs
     this.loadLaboratoryOptions()
+    this.loadLaboratoryExamsOptions()
+    this.fetchRadiologies()
+    this.loadRadiologyOptions()
+    this.fetchLaboratoryExams() // correct fetch for saved labs
+
+    // Mammogram options
+    this.loadMammogramOptions()
+
+    // Ultrasound options
+    this.loadUltrasoundOptions()
 
     if (this.transactionId) {
       this.loadTransactionData()
       this.loadLaboratoryResults(this.transactionId) // fetch saved labs
+
+      // Fetch mammogram + ultrasound data by transaction
+      this.fetchMammograms()
+      this.fetchUltrasounds()
     } else {
       this.$q.notify({
         type: 'negative',
@@ -599,14 +950,23 @@ export default {
   methods: {
     //SERVICE LIBRARY
     async addService() {
+      const payload = {
+        lab_name: this.newServiceName,
+        lab_amount: parseFloat(this.newServiceFee) || 0,
+        service_fee: parseFloat(this.newServiceAdditionalFee) || 0,
+        total_amount: this.newServiceTotal, // computed total
+      }
+
       try {
-        const payload = { lab_name: this.newServiceName, lab_amount: this.newServiceFee }
         await this.patientStore.addLaboratoryService(payload)
         this.$q.notify({ type: 'positive', message: 'Service added!' })
         this.loadLaboratoryOptions()
         this.newServiceName = ''
-        this.newServiceFee = ''
-      } catch {
+        this.newServiceFee = null
+        this.newServiceAdditionalFee = null
+        this.newServiceDialogOpen = false
+      } catch (error) {
+        console.error('Add Service Error:', error)
         this.$q.notify({ type: 'negative', message: 'Failed to add service' })
       }
     },
@@ -614,64 +974,591 @@ export default {
     editService(service) {
       this.editServiceId = service.value
       this.editServiceName = service.label
-      this.editServiceFee = service.fee
+      this.editServiceFee = service.amount
+      this.editServiceAdditionalFee = service.service_fee || 0
       this.editDialogOpen = true
     },
 
     async updateService() {
       try {
+        const amount = parseFloat(this.editServiceFee) || 0
+        const service_fee = parseFloat(this.editServiceAdditionalFee) || 0
+
         const payload = {
           id: this.editServiceId,
           lab_name: this.editServiceName,
-          lab_amount: this.editServiceFee
+          lab_amount: amount,
+          service_fee: service_fee,
+          total_amount: amount + service_fee,
         }
+
         await this.patientStore.updateLaboratoryService(payload)
         this.$q.notify({ type: 'positive', message: 'Service updated!' })
         this.loadLaboratoryOptions()
         this.editDialogOpen = false
-      } catch {
+      } catch (error) {
+        console.error('Update Service Error:', error)
         this.$q.notify({ type: 'negative', message: 'Failed to update service' })
       }
     },
 
-    // THIS PART DELETION WITHOUT WARNING MSSG
-    // async deleteService(service) {
-    //   try {
-    //     await this.patientStore.deleteLaboratoryService(service.value)
-    //     this.$q.notify({ type: 'positive', message: 'Service deleted!' })
-    //     this.loadLaboratoryOptions()
-    //   } catch {
-    //     this.$q.notify({ type: 'negative', message: 'Failed to delete service' })
-    //   }
-    // },
-    confirmDelete(service) {
-      this.$q.dialog({
-        title: 'Delete Service ',
-        message: `
-          <div class="text-black text-semibold">
-            Are you sure you want to delete
-            <span class="text-primary">"${service.label}"</span> ?
-          </div>
-        `,
-        html: true,
-        cancel: {
-          label: 'Cancel',
-          color: 'grey'
-        },
-        ok: {
-          label: 'Yes',
-          color: 'red'
-        },
-        persistent: true
-      }).onOk(async () => {
-        try {
-          await this.patientStore.deleteLaboratoryService(service.value)
-          this.$q.notify({ type: 'positive', message: 'Service deleted!' })
-          this.loadLaboratoryOptions()
-        } catch {
-          this.$q.notify({ type: 'negative', message: 'Failed to delete service' })
-        }
+    // Fetch lab exams from Pinia store
+    async loadLaboratoryExamsOptions() {
+      try {
+        await this.patientStore.fetchLaboratoryExams()
+        this.labExamOptions = this.patientStore.laboratoryExams
+        console.log('Laboratory Options (global):', this.labExamOptions)
+      } catch (err) {
+        console.error(err)
+      }
+    },
+
+    addSelectedLabExam() {
+      if (!this.selectedLabExam) return
+
+      const exam = this.labExamOptions.find((e) => e.id === this.selectedLabExam)
+      if (!exam) return
+
+      const now = new Date()
+      const formattedDate = now.toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
       })
+      const formattedTime = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      })
+
+      // prevent duplicate add
+      if (!this.reviewLabExams.some((e) => e.id === exam.id)) {
+        this.reviewLabExams.push({
+          id: exam.id,
+          item_id: exam.id,
+          item_description: exam.item_description,
+          selling_price: exam.selling_price || 0,
+          service_fee: exam.service_fee || 0,
+          total_amount: exam.total_amount || (exam.selling_price || 0) + (exam.service_fee || 0),
+          date: formattedDate,
+          time: formattedTime,
+        })
+      }
+
+      // Clear both search and selection
+      this.selectedLabExam = null
+      this.searchLabExam = ''
+    },
+
+    removeReviewExam(id) {
+      this.reviewLabExams = this.reviewLabExams.filter((e) => e.id !== id)
+    },
+
+    async saveLaboratoryExams() {
+      try {
+        const payload = {
+          transaction_id: this.transactionId,
+          examination: this.reviewLabExams.map((exam) => ({
+            item_id: exam.item_id,
+            item_description: exam.item_description,
+            selling_price: parseFloat(exam.selling_price),
+            service_fee: parseFloat(exam.service_fee),
+            total_amount: parseFloat(exam.total_amount),
+            date: this.formatDate(new Date()),
+            time: this.formatTime(new Date()),
+          })),
+        }
+
+        const response = await this.patientStore.storeLaboratoryExam(payload)
+
+        this.$q.notify({ type: 'positive', message: 'All lab exams saved successfully!' })
+
+        const savedExams = (response?.data?.examination || response?.examination || []).map(
+          (exam) => ({
+            ...exam,
+            date: exam.date || this.formatDate(new Date()),
+            time: exam.time || this.formatTime(new Date()),
+          }),
+        )
+
+        // Update table rows
+        this.labExamRows = [...this.labExamRows, ...savedExams]
+
+        // Persist per-transaction
+        localStorage.setItem(`labExamRows_${this.transactionId}`, JSON.stringify(this.labExamRows))
+
+        this.labExamModalOpen = false
+        this.reviewLabExams = []
+      } catch (error) {
+        console.error('Save Error:', error)
+        this.$q.notify({ type: 'negative', message: 'Failed to save lab exams' })
+      }
+    },
+
+    async fetchLaboratoryExams() {
+      try {
+        const saved = localStorage.getItem(`labExamRows_${this.transactionId}`)
+        if (saved) {
+          this.labExamRows = JSON.parse(saved)
+          return
+        }
+
+        const response = await this.patientStore.fetchLaboratoryExamsByTransaction(
+          this.transactionId,
+        )
+        this.labExamRows = (response?.examination ?? []).map((exam) => ({
+          ...exam,
+          date: exam.date || this.formatDate(new Date()),
+          time: exam.time || this.formatTime(new Date()),
+        }))
+
+        console.log('Loaded Lab Exams from API:', this.labExamRows)
+
+        // Save per-transaction
+        localStorage.setItem(`labExamRows_${this.transactionId}`, JSON.stringify(this.labExamRows))
+      } catch (error) {
+        console.error('API Fetch Error, falling back to localStorage:', error)
+      }
+    },
+
+    // Load available radiology options (from API via Pinia)
+    async loadRadiologyOptions() {
+      try {
+        await this.patientStore.fetchRadiologyExams() // global list
+        this.radiologyOptions = this.patientStore.radiologyExams
+        console.log('Radiology Options (global):', this.radiologyOptions)
+      } catch (err) {
+        console.error(err)
+      }
+    },
+
+    addSelectedRadiology() {
+      if (!this.selectedRadiology) return
+
+      const exam = this.radiologyOptions.find((e) => e.id === this.selectedRadiology)
+      if (!exam) return
+
+      const now = new Date()
+      const formattedDate = now.toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+      })
+      const formattedTime = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      })
+
+      // prevent duplicate add
+      if (!this.reviewRadiologies.some((e) => e.id === exam.id)) {
+        this.reviewRadiologies.push({
+          id: exam.id,
+          item_id: exam.id,
+          item_description: exam.item_description,
+          selling_price: parseFloat(exam.selling_price) || 0,
+          service_fee: parseFloat(exam.service_fee) || 0,
+          total_amount: (parseFloat(exam.selling_price) || 0) + (parseFloat(exam.service_fee) || 0),
+          date: formattedDate,
+          time: formattedTime,
+        })
+      }
+
+      this.selectedRadiology = null
+      this.searchRadiology = ''
+    },
+
+    removeReviewRadiology(id) {
+      this.reviewRadiologies = this.reviewRadiologies.filter((e) => e.id !== id)
+    },
+
+    async saveRadiologies() {
+      try {
+        const payload = {
+          transaction_id: this.transactionId,
+          radiologies: this.reviewRadiologies.map((exam) => ({
+            id: exam.item_id,
+            item_description: exam.item_description,
+            selling_price: parseFloat(exam.selling_price).toFixed(2),
+            service_fee: parseFloat(exam.service_fee).toFixed(2),
+            total_amount: parseFloat(exam.total_amount).toFixed(2),
+            created_at: null,
+            updated_at: null,
+          })),
+        }
+
+        const response = await this.patientStore.storeRadiologyExam(payload)
+
+        this.$q.notify({ type: 'positive', message: 'Radiology exams saved successfully!' })
+
+        const savedExams = (response?.data?.radiologies || response?.radiologies || []).map(
+          (exam) => ({
+            ...exam,
+            date: exam.date || this.formatDate(new Date()),
+            time: exam.time || this.formatTime(new Date()),
+          }),
+        )
+
+        this.radiologyRows = [...this.radiologyRows, ...savedExams]
+
+        // Persist per-transaction
+        localStorage.setItem(
+          `radiologyRows_${this.transactionId}`,
+          JSON.stringify(this.radiologyRows),
+        )
+
+        this.radiologyModalOpen = false
+        this.reviewRadiologies = []
+      } catch (error) {
+        console.error('Save Error:', error.response?.data || error)
+        this.$q.notify({
+          type: 'negative',
+          message: error.response?.data?.message || 'Failed to save radiology exams',
+        })
+      }
+    },
+
+    async fetchRadiologies() {
+      try {
+        const saved = localStorage.getItem(`radiologyRows_${this.transactionId}`)
+        if (saved) {
+          this.radiologyRows = JSON.parse(saved)
+          return
+        }
+
+        const response = await this.patientStore.fetchRadiologiesByTransaction(this.transactionId)
+        this.radiologyRows = (response?.radiologies ?? []).map((exam) => ({
+          ...exam,
+          date: exam.date || this.formatDate(new Date()),
+          time: exam.time || this.formatTime(new Date()),
+        }))
+
+        // Save to localStorage for persistence
+        localStorage.setItem(
+          `radiologyRows_${this.transactionId}`,
+          JSON.stringify(this.radiologyRows),
+        )
+      } catch (error) {
+        console.error('Fetch Radiology Error:', error)
+      }
+    },
+
+    // Load available mammogram options (from API via Pinia)
+    async loadMammogramOptions() {
+      try {
+        await this.patientStore.fetchMammogramExams() // new Pinia action
+        this.mammogramOptions = this.patientStore.mammogramExams
+        console.log('Mammogram Options Loaded:', this.mammogramOptions)
+      } catch (err) {
+        console.error(err)
+      }
+    },
+
+    addSelectedMammogram() {
+      if (!this.selectedMammogram) return
+
+      const exam = this.mammogramOptions.find((e) => e.id === this.selectedMammogram)
+      if (!exam) return
+
+      const now = new Date()
+      const formattedDate = now.toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+      })
+      const formattedTime = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      })
+
+      // prevent duplicate add
+      if (!this.reviewMammograms.some((e) => e.id === exam.id)) {
+        this.reviewMammograms.push({
+          id: exam.id,
+          procedure: exam.procedure,
+          rate: parseFloat(exam.rate) || 0,
+          service_fee: parseFloat(exam.service_fee) || 0,
+          total_amount: parseFloat(exam.total_amount) || 0,
+          date: formattedDate,
+          time: formattedTime,
+        })
+      }
+
+      this.selectedMammogram = null
+      this.searchMammogram = ''
+    },
+
+    removeReviewMammogram(id) {
+      this.reviewMammograms = this.reviewMammograms.filter((e) => e.id !== id)
+    },
+
+    async saveMammograms() {
+      try {
+        const payload = {
+          transaction_id: this.transactionId,
+          mammogram: this.reviewMammograms.map((exam) => ({
+            id: exam.id,
+            procedure: exam.procedure,
+            rate: parseFloat(exam.rate),
+            service_fee: parseFloat(exam.service_fee),
+            total_amount: parseFloat(exam.total_amount),
+            date: exam.date,
+            time: exam.time,
+          })),
+        }
+
+        const response = await this.patientStore.storeMammogramExam(payload)
+
+        this.$q.notify({ type: 'positive', message: 'Mammogram exams saved successfully!' })
+
+        const savedExams = (response?.data?.mammogram || response?.mammogram || []).map((exam) => ({
+          ...exam,
+          date: exam.date || this.formatDate(new Date()),
+          time: exam.time || this.formatTime(new Date()),
+        }))
+
+        this.mammogramRows = [...this.mammogramRows, ...savedExams]
+
+        localStorage.setItem(
+          `mammogramRows_${this.transactionId}`,
+          JSON.stringify(this.mammogramRows),
+        )
+
+        this.mammogramModalOpen = false
+        this.reviewMammograms = []
+      } catch (error) {
+        console.error('Save Error:', error)
+        this.$q.notify({ type: 'negative', message: 'Failed to save mammogram exams' })
+      }
+    },
+
+    async fetchMammograms() {
+      try {
+        const saved = localStorage.getItem(`mammogramRows_${this.transactionId}`)
+        if (saved) {
+          this.mammogramRows = JSON.parse(saved)
+          return
+        }
+
+        const response = await this.patientStore.fetchMammogramsByTransaction(this.transactionId)
+        this.mammogramRows = (response ?? []).map((exam) => ({
+          ...exam,
+          date: exam.date || this.formatDate(new Date()),
+          time: exam.time || this.formatTime(new Date()),
+        }))
+
+        localStorage.setItem(
+          `mammogramRows_${this.transactionId}`,
+          JSON.stringify(this.mammogramRows),
+        )
+      } catch (error) {
+        console.error('Fetch Mammogram Error:', error)
+      }
+    },
+
+    //ULTRASOUND
+    async loadUltrasoundOptions() {
+      try {
+        await this.patientStore.fetchUltrasoundExams() // new Pinia action
+        this.ultrasoundOptions = this.patientStore.ultrasoundExams
+        console.log('Ultrasound Options Loaded:', this.ultrasoundOptions)
+      } catch (err) {
+        console.error(err)
+      }
+    },
+
+    addSelectedUltrasound() {
+      if (!this.selectedUltrasound) return
+
+      const exam = this.ultrasoundOptions.find((e) => e.id === this.selectedUltrasound)
+      if (!exam) return
+
+      const now = new Date()
+      const formattedDate = now.toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+      })
+      const formattedTime = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      })
+
+      // prevent duplicate add
+      if (!this.reviewUltrasounds.some((e) => e.id === exam.id)) {
+        this.reviewUltrasounds.push({
+          id: exam.id,
+          body_parts: exam.body_parts,
+          rate: parseFloat(exam.rate) || 0,
+          service_fee: parseFloat(exam.service_fee) || 0,
+          total_amount: parseFloat(exam.total_amount) || 0,
+          date: formattedDate,
+          time: formattedTime,
+        })
+      }
+
+      this.selectedUltrasound = null
+      this.searchUltrasound = ''
+    },
+
+    removeReviewUltrasound(id) {
+      this.reviewUltrasounds = this.reviewUltrasounds.filter((e) => e.id !== id)
+    },
+
+    async saveUltrasounds() {
+      try {
+        const payload = {
+          transaction_id: this.transactionId,
+          ultrasound: this.reviewUltrasounds.map((exam) => ({
+            id: exam.id,
+            body_parts: exam.body_parts,
+            rate: parseFloat(exam.rate),
+            service_fee: parseFloat(exam.service_fee),
+            total_amount: parseFloat(exam.total_amount),
+            date: exam.date,
+            time: exam.time,
+          })),
+        }
+
+        const response = await this.patientStore.storeUltrasoundExam(payload)
+
+        this.$q.notify({ type: 'positive', message: 'Ultrasound exams saved successfully!' })
+
+        const savedExams = (response?.data?.ultrasound || response?.ultrasound || []).map(
+          (exam) => ({
+            ...exam,
+            date: exam.date || this.formatDate(new Date()),
+            time: exam.time || this.formatTime(new Date()),
+          }),
+        )
+
+        this.ultrasoundRows = [...this.ultrasoundRows, ...savedExams]
+
+        localStorage.setItem(
+          `ultrasoundRows_${this.transactionId}`,
+          JSON.stringify(this.ultrasoundRows),
+        )
+
+        this.ultrasoundModalOpen = false
+        this.reviewUltrasounds = []
+      } catch (error) {
+        console.error('Save Ultrasound Error:', error)
+        this.$q.notify({ type: 'negative', message: 'Failed to save ultrasound exams' })
+      }
+    },
+
+    async fetchUltrasounds() {
+      try {
+        const saved = localStorage.getItem(`ultrasoundRows_${this.transactionId}`)
+        if (saved) {
+          this.ultrasoundRows = JSON.parse(saved)
+          return
+        }
+
+        const response = await this.patientStore.fetchUltrasoundsByTransaction(this.transactionId)
+
+        this.ultrasoundRows = (response ?? []).map((exam) => ({
+          ...exam,
+          date: exam.date || this.formatDate(new Date()),
+          time: exam.time || this.formatTime(new Date()),
+        }))
+
+        localStorage.setItem(
+          `ultrasoundRows_${this.transactionId}`,
+          JSON.stringify(this.ultrasoundRows),
+        )
+      } catch (error) {
+        console.error('Fetch Ultrasound Error:', error)
+      }
+    },
+
+    confirmDelete(id, type) {
+      this.$q
+        .dialog({
+          title: 'Confirm Delete',
+          message: 'Are you sure you want to delete this record?',
+          cancel: true,
+          persistent: true,
+        })
+        .onOk(async () => {
+          try {
+            const res = await this.patientStore.deleteLaboratoryExam(this.transactionId, id, type)
+
+            if (res.deleted === 1) {
+              this.$q.notify({
+                type: 'positive',
+                message: `${type} record deleted successfully`,
+                position: 'top',
+                timeout: 2000,
+              })
+
+              // 🔥 Update local state and storage
+              if (type === 'examination') {
+                this.labExamRows = this.labExamRows.filter((e) => e.item_id !== id)
+                localStorage.setItem(
+                  `labExamRows_${this.transactionId}`,
+                  JSON.stringify(this.labExamRows),
+                )
+              } else if (type === 'radiology') {
+                this.radiologyRows = this.radiologyRows.filter((e) => e.id !== id)
+                localStorage.setItem(
+                  `radiologyRows_${this.transactionId}`,
+                  JSON.stringify(this.radiologyRows),
+                )
+              } else if (type === 'mammogram') {
+                this.mammogramRows = this.mammogramRows.filter((e) => e.id !== id)
+                localStorage.setItem(
+                  `mammogramRows_${this.transactionId}`,
+                  JSON.stringify(this.mammogramRows),
+                )
+              } else if (type === 'ultrasound') {
+                this.ultrasoundRows = this.ultrasoundRows.filter((e) => e.id !== id)
+                localStorage.setItem(
+                  `ultrasoundRows_${this.transactionId}`,
+                  JSON.stringify(this.ultrasoundRows),
+                )
+              }
+            } else {
+              this.$q.notify({
+                type: 'negative',
+                message: res.message || `No ${type} record found to delete`,
+                position: 'top',
+                timeout: 2000,
+              })
+            }
+          } catch (err) {
+            console.error(err)
+            this.$q.notify({
+              type: 'negative',
+              message: `Failed to delete ${type}`,
+              position: 'top',
+              timeout: 2000,
+            })
+          }
+        })
+    },
+
+    formatDate(date = new Date()) {
+      return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+      }).format(date)
+    },
+
+    formatTime(date = new Date()) {
+      return new Intl.DateTimeFormat('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: true,
+      }).format(date)
     },
 
     async markReturn() {
@@ -738,84 +1625,6 @@ export default {
       }
     },
 
-    openLabModal() {
-      const now = new Date()
-      const currentDate = now.toISOString().split('T')[0] // YYYY-MM-DD
-      const currentTime = now.toTimeString().slice(0, 5) // HH:MM
-
-      this.resultsForm = [
-        {
-          laboratory_type: '',
-          time: currentTime,
-          date: currentDate,
-          amount: '',
-        },
-      ]
-      this.labModalOpen = true
-      this.showServiceHint = true
-      setTimeout(() => {
-        this.showServiceHint = false
-      }, 2000)
-    },
-
-    addNewLabType(val) {
-      if (val && !this.laboratoryOptions.includes(val)) {
-        this.laboratoryOptions.push(val)
-      }
-    },
-
-    addResultRow() {
-      const now = new Date()
-      const currentDate = now.toISOString().split('T')[0]
-      const currentTime = now.toTimeString().slice(0, 5)
-
-      this.resultsForm.push({
-        laboratory_type: '',
-        time: currentTime,
-        date: currentDate,
-        amount: '',
-      })
-    },
-
-    removeResultRow(index) {
-      this.resultsForm.splice(index, 1)
-    },
-
-    async saveLaboratoryResults() {
-      try {
-        const payload = {
-          patient_id: this.patientId,
-          transaction_id: this.transactionId,
-          laboratories: this.resultsForm.map((result) => {
-            const service = this.laboratoryOptions.find((s) => s.value === result.laboratory_type)
-            return {
-              laboratory_type: service?.label || '',
-              amount: parseFloat(result.amount) || 0,
-              status: 'Pending',
-            }
-          }),
-        }
-
-        console.log("Saving lab services payload:", payload)
-
-        await this.patientStore.storeLaboratoryResult(payload)
-
-        this.$q.notify({
-          type: 'positive',
-          message: 'Laboratory Services saved successfully',
-        })
-
-        this.labModalOpen = false
-        this.results = [...this.results, ...this.resultsForm]
-      } catch (error) {
-        console.error('Save Error:', error)
-        this.$q.notify({
-          type: 'negative',
-          message: `Failed to save Services: ${error.message}`,
-        })
-      }
-    },
-
     async loadLaboratoryResults(transactionId) {
       try {
         const res = await this.patientStore.fetchLaboratoryResults(transactionId)
@@ -854,14 +1663,37 @@ export default {
       this.laboratoryOptions = this.patientStore.laboratoryServices.map((s) => ({
         label: s.lab_name,
         value: s.id,
-        fee: s.lab_amount,
+        amount: s.lab_amount,
+        service_fee: s.service_fee,
+        total_amount: s.total_amount,
       }))
     },
 
+    // Filter handlers for q-select
+    onFilterLabExam(val, update) {
+      this.searchLabExam = val
+      update(() => {})
+    },
+    onFilterRadiology(val, update) {
+      this.searchRadiology = val
+      update(() => {})
+    },
+    onFilterMammogram(val, update) {
+      this.searchMammogram = val
+      update(() => {})
+    },
+    onFilterUltrasound(val, update) {
+      this.searchUltrasound = val
+      update(() => {})
+    },
+
+    //NOT IN USE AS OF THE MOMENT SO IS BELOW ...
     onLabChange(result) {
       const service = this.laboratoryOptions.find((s) => s.value === result.laboratory_type)
       if (service) {
-        result.amount = service.fee
+        result.amount = service.amount || 0
+        result.service_fee = service.service_fee || 0
+        result.total_amount = result.amount + result.service_fee
       }
     },
 
@@ -870,35 +1702,38 @@ export default {
       console.log(`Loading transaction data for ID: ${this.transactionId}`)
 
       try {
-        // Use getTransactionDetails from patientStore
         const transactionData = await this.patientStore.getTransactionDetails(this.transactionId)
 
         if (transactionData) {
-          console.log('Transaction data loaded:', transactionData)
           this.transaction = transactionData
-
-          // Extract vital signs data from the vital property
           this.vitalSigns = transactionData.vital || {}
-          console.log('Vital signs data:', this.vitalSigns)
 
-          // Load patient data if not already loaded and if patientId is available
-          if (this.patientId && (!this.patient || !this.patient.id)) {
-            console.log(`Loading patient data for ID: ${this.patientId}`)
-            const patientData = await this.patientStore.getPatient(this.patientId)
-            if (patientData) {
-              console.log('Patient data loaded:', patientData)
-              this.patient = patientData
-            } else {
-              console.error('Failed to load patient data')
+          // fetch patient and all transactions
+          const patientData = await this.patientStore.getPatient(this.patientId)
+          if (patientData) {
+            this.patient = patientData
+
+            if (patientData.transaction && Array.isArray(patientData.transaction)) {
+              const sorted = [...patientData.transaction].sort(
+                (a, b) =>
+                  new Date(b.transaction_date || b.created_at) -
+                  new Date(a.transaction_date || a.created_at),
+              )
+
+              const latest = sorted[0]
+              this.isLatest = Number(latest.id) === Number(this.transactionId)
+
+              console.log('Latest check:', {
+                latestId: latest.id,
+                currentId: this.transactionId,
+                isLatest: this.isLatest,
+              })
             }
           }
         } else {
-          console.error('No transaction data returned from store')
           this.$q.notify({
             type: 'negative',
             message: 'Failed to load transaction data',
-            position: 'top',
-            timeout: 2000,
           })
         }
       } catch (error) {
@@ -906,8 +1741,6 @@ export default {
         this.$q.notify({
           type: 'negative',
           message: `Error loading transaction data: ${error.message}`,
-          position: 'top',
-          timeout: 2000,
         })
       } finally {
         this.loading = false

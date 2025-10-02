@@ -251,48 +251,34 @@
           </div>
         </q-card-section>
 
-        <!-- Laboratory Results Table -->
-        <q-card-section v-if="transaction.laboratories_details && transaction.laboratories_details.length">
-          <div class="text-subtitle2 q-mb-sm">Availed Laboratory Services</div>
+        <!-- LABORATORY SERVICES TABLE -->
+        <q-card-section v-if="mergedLabResults.length">
+          <div class="text-subtitle2 q-mb-sm">Laboratory Services</div>
           <q-table
-            :rows="transaction.laboratories_details"
-            :columns="labColumns"
-            row-key="id"
+            :rows="mergedLabResults"
+            :columns="mergedColumns"
+            row-key="unique_id"
             flat
+            bordered
             dense
             :table-header-class="'bg-grey-3 text-black'"
-          >
-            <!-- Amount -->
-            <template v-slot:body-cell-amount="props">
-              <q-td :props="props">
-                ₱{{ props.row.amount }}
-              </q-td>
-            </template>
-
-            <!-- Date -->
-            <template v-slot:body-cell-date="props">
-              <q-td :props="props">
-                {{ new Date(props.row.created_at).toLocaleDateString() }}
-              </q-td>
-            </template>
-
-            <!-- Time -->
-            <template v-slot:body-cell-time="props">
-              <q-td :props="props">
-                {{ new Date(props.row.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}
-              </q-td>
-            </template>
-          </q-table>
+          />
         </q-card-section>
 
         <!-- Buttons BELOW the card -->
-        <div class="q-mt-md flex justify-end q-gutter-sm">
+        <div class="q-mt-md flex justify-end q-gutter-sm" v-if="isLatest">
           <q-btn
-              color="primary"
-              label="Require Medication"
-              icon="medication"
-              @click="onRequireMedication"
-            />
+            color="primary"
+            label="Require Medication"
+            icon="medication"
+            @click="onRequireMedication"
+          />
+          <q-btn
+            color="blue"
+            label="Process Lab"
+            icon="biotech"
+            @click="processLab"
+          />
           <q-btn
             color="green"
             label="Done"
@@ -328,13 +314,16 @@ export default {
       originalTransactionData: null,
       originalVitalSigns: null,
 
-      labColumns: [
-        { name: 'laboratory_type', label: 'Laboratory', field: 'laboratory_type', align: 'left', headerClasses: 'bg-grey-3 text-black' },
-        { name: 'amount', label: 'Amount', field: 'amount', align: 'right', headerClasses: 'bg-grey-3 text-black' },
-        // { name: 'status', label: 'Status', field: 'status', align: 'center' },
-        { name: 'date', label: 'Date', field: 'date', align: 'center', headerClasses: 'bg-grey-3 text-black' },
-        { name: 'time', label: 'Time', field: 'time', align: 'center', headerClasses: 'bg-grey-3 text-black' }
-      ],
+      mergedLabResults: [],
+
+      mergedColumns: [
+        { name: 'id', label: 'ID', field: 'id', align: 'left' },
+        { name: 'category', label: 'Category', field: 'category', align: 'left' },
+        { name: 'description', label: 'Description', field: 'description', align: 'left' },
+        { name: 'selling_price', label: 'Selling Price / Rate', field: 'selling_price', align: 'right' },
+        { name: 'service_fee', label: 'Service Fee', field: 'service_fee', align: 'right' },
+        { name: 'total_amount', label: 'Total Amount', field: 'total_amount', align: 'right' }
+      ]
     }
   },
 
@@ -402,6 +391,42 @@ export default {
         })
       }
     },
+    async processLab() {
+      const patientStore = usePatientStore()
+
+      const now = new Date()
+      const consultationDate = now.toISOString().split('T')[0] // YYYY-MM-DD
+      const consultationTime = now.toTimeString().split(' ')[0] // HH:MM:SS
+
+      const payload = {
+        patient_id: this.patientId,
+        transaction_id: this.transactionId,
+        consultation_date: consultationDate,
+        consultation_time: consultationTime,
+        status: 'Processing',
+        transaction_type: 'consultation',
+      }
+
+      try {
+        await patientStore.storeLaboratoryPatient(payload)
+
+        this.$q.notify({
+          type: 'positive',
+          message: 'Patient sent to Laboratory successfully!',
+        })
+
+        // Refresh laboratory list
+        await patientStore.fetchLaboratoryPatients()
+
+        // (Optional) Navigate if you want to redirect
+        this.$router.push({ path: '/customers/newConsultation' })
+      } catch (error) {
+        this.$q.notify({
+          type: 'negative',
+          message: `Failed to process Laboratory: ${error.message}`,
+        })
+      }
+    },
 
     async markDone() {
       const patientStore = usePatientStore()
@@ -439,48 +464,80 @@ export default {
 
     async loadTransactionData() {
       this.loading = true
-      console.log(`Loading transaction data for ID: ${this.transactionId}`)
-
       try {
-        // Use getTransactionDetails from patientStore
-        const transactionData = await this.patientStore.getTransactionDetails(this.transactionId)
+        // fetch transaction
+        this.transaction = await this.patientStore.getTransactionDetails(this.transactionId)
+        this.vitalSigns = this.transaction.vital || {}
 
-        if (transactionData) {
-          console.log('Transaction data loaded:', transactionData)
-          this.transaction = transactionData
+        // fetch lab details
+        const labData = await this.patientStore.fetchLaboratoryDetails(this.transactionId)
 
-          // Extract vital signs data from the vital property
-          this.vitalSigns = transactionData.vital || {}
-          console.log('Vital signs data:', this.vitalSigns)
+        // normalize and merge into one array
+        let counter = 1
 
-          // Load patient data if not already loaded and if patientId is available
-          if (this.patientId && (!this.patient || !this.patient.id)) {
-            console.log(`Loading patient data for ID: ${this.patientId}`)
-            const patientData = await this.patientStore.getPatient(this.patientId)
-            if (patientData) {
-              console.log('Patient data loaded:', patientData)
-              this.patient = patientData
-            } else {
-              console.error('Failed to load patient data')
-            }
+        const examinations = (labData.examination || []).map(item => ({
+          id: counter++, // auto-increment
+          category: 'Examination',
+          description: item.item_description,
+          selling_price: item.selling_price,
+          service_fee: item.service_fee,
+          total_amount: item.total_amount,
+          unique_id: `exam-${counter}`
+        }))
+
+        const radiologies = (labData.radiologies || []).map(item => ({
+          id: counter++, // continue increment
+          category: 'Radiology',
+          description: item.item_description,
+          selling_price: item.selling_price,
+          service_fee: item.service_fee,
+          total_amount: item.total_amount,
+          unique_id: `rad-${counter}`
+        }))
+
+        const ultrasounds = (labData.ultrasound || []).map(item => ({
+          id: counter++, // continue increment
+          category: 'Ultrasound',
+          description: item.body_parts,
+          selling_price: item.rate,
+          service_fee: item.service_fee,
+          total_amount: item.total_amount,
+          unique_id: `ultra-${counter}`
+        }))
+
+        const mammograms = (labData.mammogram || []).map(item => ({
+          id: counter++, // continue increment
+          category: 'Mammogram',
+          description: item.procedure,
+          selling_price: item.rate,
+          service_fee: item.service_fee,
+          total_amount: item.total_amount,
+          unique_id: `mammo-${counter}`
+        }))
+
+        this.mergedLabResults = [
+          ...examinations,
+          ...radiologies,
+          ...ultrasounds,
+          ...mammograms
+        ]
+
+        console.log("Merged Lab Results:", this.mergedLabResults)
+
+        // fetch patient for latest check
+        const patientData = await this.patientStore.getPatient(this.patientId)
+        if (patientData) {
+          this.patient = patientData
+          if (patientData.transaction && Array.isArray(patientData.transaction)) {
+            const sorted = [...patientData.transaction].sort(
+              (a, b) => new Date(b.transaction_date || b.created_at) - new Date(a.transaction_date || a.created_at)
+            )
+            const latest = sorted[0]
+            this.isLatest = Number(latest.id) === Number(this.transactionId)
           }
-        } else {
-          console.error('No transaction data returned from store')
-          this.$q.notify({
-            type: 'negative',
-            message: 'Failed to load transaction data',
-            position: 'top',
-            timeout: 2000,
-          })
         }
       } catch (error) {
-        console.error('Error loading transaction data:', error)
-        this.$q.notify({
-          type: 'negative',
-          message: `Error loading transaction data: ${error.message}`,
-          position: 'top',
-          timeout: 2000,
-        })
+        console.error("Error loading transaction data:", error)
       } finally {
         this.loading = false
       }
