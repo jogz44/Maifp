@@ -360,7 +360,7 @@
                     <strong>{{ formatAmount(patient.total_billing) }}</strong>
                   </td>
                 </tr>
-                <tr class="total-row" v-if="billingData.discount > 0">
+                <tr class="total-row" v-if="patient.discount > 0">
                   <td colspan="4" class="text-right"><strong>PWD/Senior Discount (20%)</strong></td>
                   <td class="text-right">
                     <strong>-{{ formatAmount(patient.discount) }}</strong>

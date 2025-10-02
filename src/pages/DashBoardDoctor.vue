@@ -79,8 +79,8 @@ export default {
   data() {
     return {
       steps: [
-        { name: 'New', patients: [], route: '/customers/newconsultation' },
-        { name: 'Returned', patients: [], route: '/customers/returnconsultation' },
+        { name: 'New Consultation', patients: [], route: '/customers/newconsultation' },
+        { name: 'Returned Consultation', patients: [], route: '/customers/returnconsultation' },
       ],
       intervalId: null,
       fundStore: null,

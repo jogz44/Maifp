@@ -87,7 +87,7 @@ export default {
     const Patients = usePatientStore()
 
     const search = ref('')
-    const selectedDate = ref(new Date().toISOString().substring(0, 10)) // Default to today
+    const selectedDate = ref('')
     const rows = ref([])
 
     // Columns configuration

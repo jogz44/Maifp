@@ -35,6 +35,17 @@
           </div>
         </div>
 
+        <q-select
+          filled
+          label="Role"
+          v-model="form.role_id"
+          :options="roleStore.roles"
+          option-label="label"
+          option-value="value"
+          :rules="[(val) => !!val || 'Role is required']"
+          class="q-mb-md text-uppercase"
+        />
+
         <q-input
           filled
           v-model="form.position"
@@ -63,8 +74,8 @@
           type="password"
           :rules="[
             (val) => !userStore.selected_id || !!val || 'Password is required',
-            (val) => val.length >= 8 || 'Password must be at least 8 characters',
-            (val) => val.length <= 16 || 'Password must be not more than 16 characters',
+            (val) => !val || val.length >= 8 || 'Password must be at least 8 characters',
+            (val) => !val || val.length <= 16 || 'Password must be not more than 16 characters',
           ]"
           class="q-mb-md"
         />
@@ -83,7 +94,7 @@
           <q-btn
             flat
             label="Cancel"
-            type="submit"
+            type="button"
             color="grey"
             class="q-mr-md"
             @click="oncancel()"
@@ -97,13 +108,17 @@
 
 <script>
 import { useUserStore } from 'src/stores/userStore'
+import { useRoleStore } from 'src/stores/roleStore'
+
 export default {
   name: 'UserRegistrationForm',
 
   setup() {
     const userStore = useUserStore()
+    const roleStore = useRoleStore()
     return {
       userStore,
+      roleStore,
     }
   },
   data() {
@@ -112,6 +127,7 @@ export default {
         first_name: '',
         last_name: '',
         middle_name: '',
+        role_id: null,
         position: '',
         office: '',
         username: '',
@@ -128,22 +144,24 @@ export default {
     async onSubmit() {
       const success = await this.$refs.registrationForm.validate()
       if (success) {
-        // this.insertNewUser(this.form)
-        // Handle successful registration here
-        // console.log('Upda successful:', this.form)
+        const payload = { ...this.form }
+        if (typeof payload.role_id === 'object' && payload.role_id !== null) {
+          payload.role_id = payload.role_id.value
+        }
 
-        // this.$q.notify({
-        //   type: 'positive',
-        //   message: 'User registered successfully!',
-        // })
-        // Optionally clear form
-        console.log(this.form)
-        this.userStore.updateUser(this.userStore.selected_id, this.form)
+        console.log('Updating user with payload:', payload)
 
-        this.resetForm()
-        this.$router.go(-1)
+        try {
+          await this.userStore.updateUser(this.userStore.selected_id, payload)
+          this.resetForm()
+          this.$router.go(-1)
+        } catch (error) {
+          this.$q.notify({
+            type: 'negative',
+            message: error.message || 'Failed to update user.',
+          })
+        }
       } else {
-        // Validation errors are shown automatically
         this.$q.notify({
           type: 'negative',
           message: 'Please fill in all required fields.',
@@ -155,6 +173,7 @@ export default {
         first_name: '',
         last_name: '',
         middle_name: '',
+        role_id: null,
         position: '',
         office: '',
         username: '',
@@ -169,7 +188,13 @@ export default {
       try {
         await this.userStore.getUser(id)
         Object.assign(this.form, this.userStore.user)
-        // this.form = this.userStore.user
+
+        if (this.form.role_id) {
+          const selectedRole = this.roleStore.roles.find((r) => r.value === this.form.role_id)
+          if (selectedRole) {
+            this.form.role_id = selectedRole
+          }
+        }
       } catch (error) {
         console.error('Error fetching user:', error)
         this.$q.notify({
@@ -188,13 +213,15 @@ export default {
       return user.id
     },
   },
-  mounted() {
+  async mounted() {
+    await this.roleStore.fetchRoles()
+
     if (this.userStore.selected_id) {
       console.log('Loading selected user:', this.userStore.selected_id)
-      this.getUser(this.userStore.selected_id)
+      await this.getUser(this.userStore.selected_id)
     } else {
       console.log('No selected user, loading authenticated user profile')
-      this.getUser(this.GetUserID())
+      await this.getUser(this.GetUserID())
     }
   },
 }

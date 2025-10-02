@@ -74,9 +74,9 @@ export default {
     return {
       steps: [
         { name: 'Assessment', patients: [], route: '/assessment' },
-        { name: 'New', patients: [], route: '/customers/newconsultation' },
+        { name: 'New Consultation', patients: [], route: '/customers/newconsultation' },
         { name: 'Laboratory', patients: [], route: '/customers/laboratory' },
-        { name: 'Returned', patients: [], route: '/customers/returnconsultation' },
+        { name: 'Returned Consultation', patients: [], route: '/customers/returnconsultation' },
         { name: 'Medicine', patients: [], route: '#' },
         { name: 'Billing', patients: [], route: '/billing' },
         { name: 'GL', patients: [], route: '/gl' },
@@ -91,7 +91,7 @@ export default {
     this.fundStore = useFundsStore()
     this.patientStore = usePatientStore()
     this.loadAllData()
-    this.intervalId = setInterval(this.loadAllData, 300000)
+    this.intervalId = setInterval(this.loadAllData, 10000)
   },
 
   beforeUnmount() {

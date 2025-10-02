@@ -335,7 +335,7 @@ export default {
         sortBy: 'transaction_date',
         descending: true,
         page: 1,
-        rowsPerPage: 7,
+        rowsPerPage: 5,
       },
 
       columns: [

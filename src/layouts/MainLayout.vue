@@ -380,7 +380,7 @@ export default {
 
       this.badgeInterval = setInterval(async () => {
         await this.badgeStore.fetchBadges()
-      }, 100000)
+      }, 2000)
     }
   },
 
