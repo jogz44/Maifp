@@ -3,7 +3,14 @@
     <div class="q-pa-md flex justify-center">
       <q-card class="q-pa-sm" style="max-width: 1820px; width: 100%">
         <q-card-section>
-          <q-input filled v-model="search" label="Search Patients" class="text-h11">
+          <q-input
+            filled
+            v-model="search"
+            label="Search Patients"
+            class="text-h11"
+            clearable
+            debounce="300"
+          >
             <template v-slot:append>
               <q-icon name="search" />
             </template>
@@ -14,7 +21,8 @@
             flat
             bordered
             :filter="search"
-            :rows="rows"
+            :filter-method="filterMethod"
+            :rows="filteredRows"
             :columns="columns"
             row-key="id"
             binary-state-sort
@@ -36,7 +44,6 @@
                 <q-td key="middlename" style="font-size: 11px" align="left">
                   {{ props.row.patient.middlename }}
                 </q-td>
-
                 <q-td key="contact_number" style="font-size: 11px" align="left">
                   {{ props.row.patient.contact_number }}
                 </q-td>
@@ -60,7 +67,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { usePatientStore } from 'src/stores/patientStore'
 import { useRouter } from 'vue-router'
 
@@ -73,7 +80,7 @@ const columns = [
   {
     name: 'lastname',
     label: 'Last Name',
-    field: 'lastname',
+    field: (row) => row.patient?.lastname || '',
     sortable: true,
     align: 'left',
     headerClasses: 'bg-grey-7 text-white',
@@ -82,7 +89,7 @@ const columns = [
   {
     name: 'firstname',
     label: 'First Name',
-    field: 'firstname',
+    field: (row) => row.patient?.firstname || '',
     sortable: true,
     align: 'left',
     headerClasses: 'bg-grey-7 text-white',
@@ -91,17 +98,16 @@ const columns = [
   {
     name: 'middlename',
     label: 'Middle Name',
-    field: 'middlename',
+    field: (row) => row.patient?.middlename || '',
     sortable: true,
     align: 'left',
     headerClasses: 'bg-grey-7 text-white',
     headerStyle: 'font-size: .9em',
   },
-
   {
     name: 'contact_number',
     label: 'Contact Number',
-    field: 'contact_number',
+    field: (row) => row.patient?.contact_number || '',
     sortable: true,
     align: 'left',
     headerClasses: 'bg-grey-7 text-white',
@@ -110,7 +116,7 @@ const columns = [
   {
     name: 'barangay',
     label: 'Barangay',
-    field: 'barangay',
+    field: (row) => row.patient?.barangay || '',
     sortable: true,
     align: 'left',
     headerClasses: 'bg-grey-7 text-white',
@@ -134,6 +140,50 @@ const columns = [
     headerStyle: 'font-size: .9em',
   },
 ]
+
+const filterMethod = (rows, terms) => {
+  if (!terms) return rows
+
+  const searchTerm = terms.toLowerCase()
+
+  return rows.filter((row) => {
+    const patient = row.patient || {}
+    const searchableFields = [
+      patient.lastname,
+      patient.firstname,
+      patient.middlename,
+      patient.contact_number,
+      patient.barangay,
+      row.transaction_type,
+    ]
+
+    return searchableFields.some(
+      (field) => field && field.toString().toLowerCase().includes(searchTerm),
+    )
+  })
+}
+
+const filteredRows = computed(() => {
+  if (!search.value) return rows.value
+
+  const searchTerm = search.value.toLowerCase()
+
+  return rows.value.filter((row) => {
+    const patient = row.patient || {}
+    const searchableFields = [
+      patient.lastname,
+      patient.firstname,
+      patient.middlename,
+      patient.contact_number,
+      patient.barangay,
+      row.transaction_type,
+    ]
+
+    return searchableFields.some(
+      (field) => field && field.toString().toLowerCase().includes(searchTerm),
+    )
+  })
+})
 
 async function getPatients() {
   await store.fetchPatientsGL()

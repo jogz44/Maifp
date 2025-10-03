@@ -642,6 +642,7 @@
                 label="Date"
                 class="text-caption"
                 lazy-rules
+                readonly
                 :rules="[(val) => !!val || 'Date is required']"
               />
             </div>

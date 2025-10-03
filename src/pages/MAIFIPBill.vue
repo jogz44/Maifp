@@ -226,30 +226,6 @@
                 </p>
               </div>
             </div>
-
-            <!-- Only show representative section if data exists -->
-            <template v-if="hasRepresentativeData">
-              <div class="info-section-title">Representative Information</div>
-              <q-separator />
-              <div class="row">
-                <div class="col-6">
-                  <p>
-                    <strong>Representative Name:</strong>
-                    {{ billingData.transaction?.representative?.rep_name || 'N/A' }}
-                  </p>
-                  <p>
-                    <strong>Relationship:</strong>
-                    {{ billingData.transaction?.representative?.relationship || 'N/A' }}
-                  </p>
-                </div>
-                <div class="col-6">
-                  <p>
-                    <strong>Address:</strong>
-                    {{ billingData.transaction?.representative?.address || 'N/A' }}
-                  </p>
-                </div>
-              </div>
-            </template>
           </div>
 
           <div class="table-container">
@@ -500,11 +476,6 @@ const patientFullName = computed(() => {
   const first = billingData.value.patient?.firstname || ''
   const last = billingData.value.patient?.lastname || ''
   return `${first} ${last}`.trim()
-})
-
-const hasRepresentativeData = computed(() => {
-  const rep = billingData.value.transaction?.representative
-  return rep && (rep.rep_name || rep.relationship || rep.address)
 })
 
 const hasMAIFIP = computed(() => {

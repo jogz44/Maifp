@@ -374,9 +374,103 @@
                     class="q-mb-sm"
                   >
                     <q-card flat bordered class="q-pa-sm">
-                      <div class="text-body2">{{ lab.name || 'Laboratory Test' }}</div>
-                      <div class="text-caption text-grey-7">
-                        {{ lab.description || 'No description available' }}
+                      <div class="text-body2">{{ lab.laboratory_type || 'Laboratory Test' }}</div>
+                    </q-card>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Examination Details -->
+              <div
+                v-if="transaction.examination_details && transaction.examination_details.length > 0"
+              >
+                <q-separator inset class="q-my-md" />
+                <div class="q-mb-md">
+                  <div class="text-subtitle2 text-grey-8 q-mb-sm">Examination Details</div>
+                  <div
+                    v-for="(exam, index) in transaction.examination_details"
+                    :key="index"
+                    class="q-mb-sm"
+                  >
+                    <q-card flat bordered class="q-pa-sm">
+                      <div class="text-body2">{{ exam.item_description || 'Laboratory Test' }}</div>
+                    </q-card>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                v-if="transaction.radiologies_details && transaction.radiologies_details.length > 0"
+              >
+                <q-separator inset class="q-my-md" />
+                <div class="q-mb-md">
+                  <div class="text-subtitle2 text-grey-8 q-mb-sm">Radiology Details</div>
+                  <div
+                    v-for="(radio, index) in transaction.radiologies_details"
+                    :key="index"
+                    class="q-mb-sm"
+                  >
+                    <q-card flat bordered class="q-pa-sm">
+                      <div class="text-body2">
+                        {{ radio.item_description || 'Laboratory Test' }}
+                      </div>
+                    </q-card>
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="transaction.mammogram_details && transaction.mammogram_details.length > 0">
+                <q-separator inset class="q-my-md" />
+                <div class="q-mb-md">
+                  <div class="text-subtitle2 text-grey-8 q-mb-sm">Mammogram Details</div>
+                  <div
+                    v-for="(mamm, index) in transaction.mammogram_details"
+                    :key="index"
+                    class="q-mb-sm"
+                  >
+                    <q-card flat bordered class="q-pa-sm">
+                      <div class="text-body2">
+                        {{ mamm.procedure || 'Laboratory Test' }}
+                      </div>
+                    </q-card>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                v-if="transaction.ultrasound_details && transaction.ultrasound_details.length > 0"
+              >
+                <q-separator inset class="q-my-md" />
+                <div class="q-mb-md">
+                  <div class="text-subtitle2 text-grey-8 q-mb-sm">Radiology Details</div>
+                  <div
+                    v-for="(ultra, index) in transaction.ultrasound_details"
+                    :key="index"
+                    class="q-mb-sm"
+                  >
+                    <q-card flat bordered class="q-pa-sm">
+                      <div class="text-body2">
+                        {{ ultra.body_parts || 'Laboratory Test' }}
+                      </div>
+                    </q-card>
+                  </div>
+                </div>
+              </div>
+
+              <div
+                v-if="transaction.medication_details && transaction.medication_details.length > 0"
+              >
+                <q-separator inset class="q-my-md" />
+                <div class="q-mb-md">
+                  <div class="text-subtitle2 text-grey-8 q-mb-sm">Medication Details</div>
+                  <div
+                    v-for="(med, index) in transaction.medication_details"
+                    :key="index"
+                    class="q-mb-sm"
+                  >
+                    <q-card flat bordered class="q-pa-sm">
+                      <div class="text-body2">
+                        {{ med.item_description || 'Laboratory Test' }}
                       </div>
                     </q-card>
                   </div>

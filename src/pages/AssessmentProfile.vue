@@ -333,32 +333,42 @@
 
                       <q-td key="status" style="font-size: 11px" align="center">
                         <div
-                          v-if="props.row.status === 'Complete'"
-                          class="text-caption q-mt-xs text-blue text-bold"
-                        >
-                          {{ props.row.status }}
-                        </div>
-
-                        <q-toggle
-                          v-else
-                          :model-value="props.row.status === 'qualified'"
-                          color="green"
-                          @update:model-value="
-                            (isChecked) => {
-                              confirmStatusChange(
-                                props.row,
-                                isChecked ? 'qualified' : 'unqualified',
-                              )
-                            }
-                          "
-                          :loading="props.row.statusUpdating"
-                        />
-                        <div
-                          v-if="props.row.status !== 'Complete'"
+                          v-if="props.row.status !== 'assessment'"
                           class="text-caption q-mt-xs"
-                          :class="props.row.status === 'qualified' ? 'text-green' : 'text-orange'"
+                          :class="{
+                            'text-green': props.row.status === 'qualified',
+                            'text-orange': props.row.status === 'unqualified',
+                            'text-purple': props.row.status === 'Funded',
+                            'text-blue': props.row.status === 'Complete',
+                            'text-grey':
+                              props.row.status !== 'qualified' &&
+                              props.row.status !== 'unqualified' &&
+                              props.row.status !== 'Complete' &&
+                              props.row.status !== 'Funded',
+                          }"
                         >
                           {{ props.row.status || 'unqualified' }}
+                        </div>
+
+                        <!-- Display the toggle below the status text only if the status is 'assessment' -->
+                        <div v-if="props.row.status === 'assessment'" class="q-mt-xs">
+                          <q-toggle
+                            :model-value="props.row.status === 'qualified'"
+                            color="green"
+                            @update:model-value="
+                              (isChecked) => {
+                                confirmStatusChange(
+                                  props.row,
+                                  isChecked ? 'qualified' : 'unqualified',
+                                )
+                              }
+                            "
+                            :loading="props.row.statusUpdating"
+                          />
+                          <!-- Display the status word under the toggle -->
+                          <div class="text-caption text-orange q-mt-xs">
+                            {{ props.row.status === 'qualified' ? 'Qualified' : 'Assessment' }}
+                          </div>
                         </div>
                       </q-td>
 
