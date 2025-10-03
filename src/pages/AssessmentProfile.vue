@@ -350,7 +350,6 @@
                           {{ props.row.status || 'unqualified' }}
                         </div>
 
-                        <!-- Display the toggle below the status text only if the status is 'assessment' -->
                         <div v-if="props.row.status === 'assessment'" class="q-mt-xs">
                           <q-toggle
                             :model-value="props.row.status === 'qualified'"
@@ -365,7 +364,7 @@
                             "
                             :loading="props.row.statusUpdating"
                           />
-                          <!-- Display the status word under the toggle -->
+
                           <div class="text-caption text-orange q-mt-xs">
                             {{ props.row.status === 'qualified' ? 'Qualified' : 'Assessment' }}
                           </div>
