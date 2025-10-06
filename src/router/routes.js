@@ -129,6 +129,12 @@ const routes = [
         component: () => import('pages/PatientDetailsAssessment.vue'),
         meta: { requiresAuth: true },
       },
+      //lib services
+      {
+        path: '/services',
+        component: () => import('pages/ServicesLibrary.vue'),
+        meta: { requiresAuth: true },
+      },
 
       {
         path: '/gl',

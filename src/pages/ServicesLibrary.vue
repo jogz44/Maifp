@@ -1,320 +1,302 @@
 <template>
-  <div class="q-pa-lg bg-grey-1 flex flex-center">
-    <q-card flat bordered class="q-pa-md shadow-2 rounded-borders full-width" style="max-width: 1300px">
+  <q-page class="q-pa-md">
+    <q-card flat bordered class="q-pa-md">
+      <q-card-section>
+        <div class="row items-center justify-between">
+          <div class="text-h6">Service Management</div>
+          <q-btn color="primary" label="Add Service" icon="add" @click="openDialog()" dense />
+        </div>
+      </q-card-section>
 
-      <!-- Responsive Wrapper -->
-      <div class="responsive-table-wrapper">
-        <q-table
-          dense
-          flat
-          bordered
-          :title="selectedCategoryLabel"
-          :rows="rows"
-          :columns="columns"
-          row-key="id"
-          :loading="store.isLoading"
-          :filter="filter"
-          class="my-service-table"
-          :table-header-class="'bg-grey-3 text-black'"
-        >
-          <!-- Sticky Custom top bar -->
-          <template v-slot:top>
-            <div class="row items-center q-col-gutter-md bg-white q-px-md q-pt-xs q-pb-md sticky-top-bar full-width q-mt-sm" >
-              <!-- Left: Title -->
-              <div class="col-12 col-md-auto">
-                <span class="text-h6 text-primary">{{ selectedCategoryLabel }}</span>
-              </div>
+      <q-separator />
 
-              <!-- Category Select -->
-              <div class="col-12 col-md-auto">
-                <q-select
-                  v-model="selectedCategory"
-                  :options="categories"
-                  outlined
-                  dense
-                  color="primary"
-                  @update:model-value="fetchData"
-                />
-              </div>
+      <!-- Category dropdown -->
+      <q-card-section class="row q-col-gutter-md">
+        <div class="col-12 col-md-4">
+          <q-select
+            v-model="selectedCategory"
+            :options="categories"
+            label="Select Category"
+            outlined
+            dense
+            emit-value
+            map-options
+            @update:model-value="fetchData"
+          />
+        </div>
+      </q-card-section>
 
-              <!-- Search / Filter -->
-              <div class="col-12 col-md-auto">
-                <q-input
-                  outlined
-                  dense
-                  debounce="300"
-                  v-model="filter"
-                  placeholder="Search..."
-                  clearable
-                  class="full-width"
-                  style="min-width: 500px"
-                >
-                  <template v-slot:append>
-                    <q-icon name="search" />
-                  </template>
-                </q-input>
-              </div>
+      <q-separator />
 
-              <!-- Add Service Button -->
-              <div class="col-12 col-md-auto text-right">
+      <!-- Search + Table -->
+      <q-card-section>
+        <!-- Search bar -->
+        <div class="row items-center q-mb-md">
+          <q-input
+            v-model="filter"
+            outlined
+            dense
+            debounce="300"
+            placeholder="Search..."
+            clearable
+            class="col-12 col-md-4"
+          >
+            <template v-slot:prepend>
+              <q-icon name="search" class="q-mr-sm" />
+            </template>
+          </q-input>
+        </div>
+
+        <!-- Services Table -->
+        <div style="max-height: 500px; overflow-y: auto">
+          <q-card-section class="my-sticky-header q-pa-sm">
+            <div class="text-h6">{{ selectedCategoryLabel }}</div>
+          </q-card-section>
+          <q-table
+            dense
+            flat
+            bordered
+            :rows="rows"
+            :columns="columnsWithActions"
+            row-key="id"
+            :loading="patientStore.isLoading"
+            :filter="filter"
+            :pagination="pagination"
+            class="q-mt-md"
+            wrap-cells
+            :table-header-class="'bg-grey-3 text-black'"
+          >
+            <template v-slot:loading>
+              <q-inner-loading showing color="primary" />
+            </template>
+
+            <!-- Highlighted cells -->
+            <template
+              v-for="col in columns"
+              v-slot:[`body-cell-${col.name}`]="props"
+              :key="col.name"
+            >
+              <q-td :props="props">
+                <span v-html="highlightText(props.value, filter)" />
+              </q-td>
+            </template>
+
+            <!-- Actions column -->
+            <template v-slot:body-cell-actions="props">
+              <q-td align="center">
+                <q-btn flat icon="edit" color="primary" size="sm" @click="openDialog(props.row)" />
                 <q-btn
-                  color="primary"
-                  icon="add_circle"
-                  label="Add Service"
-                  unelevated
-                  @click="openAddDialog"
+                  flat
+                  icon="delete"
+                  color="negative"
+                  size="sm"
+                  @click="deleteRow(props.row)"
                 />
-              </div>
-            </div>
-          </template>
-
-          <!-- Loading -->
-          <template v-slot:loading>
-            <q-inner-loading showing color="primary" />
-          </template>
-
-          <!-- Action Buttons -->
-          <template v-slot:body-cell-actions="props">
-            <q-td align="center">
-              <q-btn
-                dense flat round
-                icon="edit"
-                color="primary"
-                size="sm"
-                @click="openEditDialog(props.row)"
-              >
-                <q-tooltip>Edit</q-tooltip>
-              </q-btn>
-              <q-btn
-                dense flat round
-                icon="delete"
-                color="negative"
-                size="sm"
-                @click="confirmDelete(props.row)"
-              >
-                <q-tooltip>Delete</q-tooltip>
-              </q-btn>
-            </q-td>
-          </template>
-        </q-table>
-      </div>
-
-      <!-- Add/Edit Dialog -->
-      <q-dialog v-model="dialog" persistent>
-        <q-card style="min-width: 500px" class="rounded-borders">
-          <q-card-section class="bg-primary text-white">
-            <div class="text-h6">{{ editMode ? 'Edit Service' : 'Add Service' }}</div>
-          </q-card-section>
-
-          <q-card-section>
-            <!-- Conditional inputs -->
-            <q-input v-model="form.item_description" label="Description" outlined dense class="q-mt-md"
-                     v-if="['examination','radiologies'].includes(selectedCategory)" />
-            <q-input v-model="form.body_parts" label="Body Parts" outlined dense class="q-mt-md"
-                     v-if="selectedCategory === 'ultrasound'" />
-            <q-input v-model="form.procedure" label="Procedure" outlined dense class="q-mt-md"
-                     v-if="selectedCategory === 'mammogram'" />
-
-            <q-input v-model="form.selling_price" type="number" label="Selling Price" outlined dense class="q-mt-md"
-                     v-if="['examination','radiologies'].includes(selectedCategory)" />
-            <q-input v-model="form.rate" type="number" label="Rate" outlined dense class="q-mt-md"
-                     v-if="['ultrasound','mammogram'].includes(selectedCategory)" />
-
-            <q-input v-model="form.service_fee" type="number" label="Service Fee" outlined dense class="q-mt-md" />
-            <q-input v-model="form.total_amount" type="number" label="Total Amount" outlined dense class="q-mt-md" />
-          </q-card-section>
-
-          <q-card-actions align="right" class="q-pa-md">
-            <q-btn flat label="Cancel" v-close-popup />
-            <q-btn color="primary" label="Save" @click="saveService" />
-          </q-card-actions>
-        </q-card>
-      </q-dialog>
+              </q-td>
+            </template>
+          </q-table>
+        </div>
+      </q-card-section>
     </q-card>
-  </div>
+
+    <!-- Add/Edit Dialog -->
+    <q-dialog v-model="dialogOpen">
+      <q-card style="min-width: 400px">
+        <q-card-section>
+          <div class="text-h6">
+            {{ editingRow ? 'Edit Service' : 'Add Service' }}
+          </div>
+        </q-card-section>
+        <q-separator />
+        <q-card-section>
+          <div v-for="col in editableColumns" :key="col.name" class="q-mb-md">
+            <q-input
+              v-model="form[col.field]"
+              :label="col.label"
+              outlined
+              dense
+              :readonly="col.name === 'total_amount'"
+            />
+          </div>
+        </q-card-section>
+        <q-separator />
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" v-close-popup />
+          <q-btn color="primary" label="Save" @click="saveRow" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+  </q-page>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { usePatientStore } from 'src/stores/patientStore'
 import { useQuasar } from 'quasar'
-import { useServicesLibraryStore } from 'stores/servicesLibraryStore'
 
 const $q = useQuasar()
-const store = useServicesLibraryStore()
+const patientStore = usePatientStore()
 
-const filter = ref('')   // search filter
+const pagination = ref({
+  page: 1,
+  rowsPerPage: 10, // default rows per page
+})
 
-// Categories dropdown
+// categories
 const categories = [
-  { label: 'Examination', value: 'examination' },
-  { label: 'Radiology', value: 'radiologies' },
+  { label: 'Laboratory', value: 'laboratory' },
+  { label: 'Radiology', value: 'radiology' },
+  { label: 'Mammogram', value: 'mammogram' },
   { label: 'Ultrasound', value: 'ultrasound' },
-  { label: 'Mammogram', value: 'mammogram' }
 ]
 
-const selectedCategory = ref('examination')
-const dialog = ref(false)
-const editMode = ref(false)
+const selectedCategory = ref('laboratory')
+const filter = ref('') // search filter
+
+// dialog state
+const dialogOpen = ref(false)
+const editingRow = ref(null)
 const form = ref({})
 
-// ---------------- COMPUTED ----------------
-
-const rows = computed(() => {
-  switch (selectedCategory.value) {
-    case 'examination':
-      return store.laboratoryExams || []
-
-    case 'radiologies':
-      return (store.radiologiesExams || []).map((row, idx) => ({
-        ...row,
-        id: idx + 1
-      }))
-
-    case 'ultrasound':
-      return store.ultrasoundExams || []
-
-    case 'mammogram':
-      return store.mammogramExams || []
-
-    default:
-      return []
-  }
-})
-
-
-// Dynamic table title
-const selectedCategoryLabel = computed(() => {
-  return categories.find(c => c.value === selectedCategory.value)?.label || 'Library'
-})
-
-// Dynamic columns
-const columns = computed(() => {
-  const baseCols = {
-    examination: [
+// config per category
+const categoryConfig = {
+  laboratory: {
+    fetch: () => patientStore.fetchLaboratoryExams(),
+    rows: () => patientStore.laboratoryExams,
+    columns: [
       { name: 'item_id', label: 'Item ID', field: 'item_id', align: 'center' },
       { name: 'item_description', label: 'Description', field: 'item_description', align: 'left' },
       { name: 'selling_price', label: 'Price', field: 'selling_price' },
       { name: 'service_fee', label: 'Service Fee', field: 'service_fee' },
-      { name: 'total_amount', label: 'Total', field: 'total_amount' }
+      { name: 'total_amount', label: 'Total', field: 'total_amount' },
     ],
-    radiologies: [
-      { name: 'id', label: 'ID', field: 'id', align: 'center' }, // generated
+    create: (payload) => patientStore.storeNewLaboratoryExam(payload),
+    update: (id, payload) => patientStore.updateLaboratoryExam(id, payload),
+    delete: (id) => patientStore.deleteExistingLaboratoryExam(id),
+  },
+  radiology: {
+    fetch: () => patientStore.fetchRadiologyExams(),
+    rows: () => patientStore.radiologyExams,
+    columns: [
       { name: 'item_description', label: 'Description', field: 'item_description', align: 'left' },
       { name: 'selling_price', label: 'Price', field: 'selling_price' },
       { name: 'service_fee', label: 'Service Fee', field: 'service_fee' },
-      { name: 'total_amount', label: 'Total', field: 'total_amount' }
+      { name: 'total_amount', label: 'Total', field: 'total_amount' },
     ],
-    ultrasound: [
-      { name: 'id', label: 'ID', field: 'id', align: 'center' },
-      { name: 'body_parts', label: 'Body Parts', field: 'body_parts' },
+    create: (payload) => patientStore.storeNewRadiologyExam(payload),
+    update: (id, payload) => patientStore.updateRadiologyExam(id, payload),
+    delete: (id) => patientStore.deleteExistingRadiologyExam(id),
+  },
+  mammogram: {
+    fetch: () => patientStore.fetchMammogramExams(),
+    rows: () => patientStore.mammogramExams,
+    columns: [
+      { name: 'procedure', label: 'Procedure', field: 'procedure', align: 'left' },
       { name: 'rate', label: 'Rate', field: 'rate' },
       { name: 'service_fee', label: 'Service Fee', field: 'service_fee' },
-      { name: 'total_amount', label: 'Total', field: 'total_amount' }
+      { name: 'total_amount', label: 'Total', field: 'total_amount' },
     ],
-    mammogram: [
-      { name: 'id', label: 'ID', field: 'id', align: 'center' },
-      { name: 'procedure', label: 'Procedure', field: 'procedure' },
+    create: (payload) => patientStore.storeNewMammogramExam(payload),
+    update: (id, payload) => patientStore.updateMammogramExam(id, payload),
+    delete: (id) => patientStore.deleteExistingMammogramExam(id),
+  },
+  ultrasound: {
+    fetch: () => patientStore.fetchUltrasoundExams(),
+    rows: () => patientStore.ultrasoundExams,
+    columns: [
+      { name: 'body_parts', label: 'Body Parts', field: 'body_parts', align: 'left' },
       { name: 'rate', label: 'Rate', field: 'rate' },
       { name: 'service_fee', label: 'Service Fee', field: 'service_fee' },
-      { name: 'total_amount', label: 'Total', field: 'total_amount' }
-    ]
-  }
-
-  return [
-    ...(baseCols[selectedCategory.value] || []), // safe fallback
-    { name: 'actions', label: 'Actions', field: 'actions', align: 'center' }
-  ]
-})
-
-// ---------------- ACTIONS ----------------
-
-async function fetchData () {
-  if (selectedCategory.value === 'examination') await store.fetchExaminations()
-  if (selectedCategory.value === 'radiologies') await store.fetchRadiologies()
-  if (selectedCategory.value === 'ultrasound') await store.fetchUltrasounds()
-  if (selectedCategory.value === 'mammogram') await store.fetchMammograms()
+      { name: 'total_amount', label: 'Total', field: 'total_amount' },
+    ],
+    create: (payload) => patientStore.storeNewUltrasoundExam(payload),
+    update: (id, payload) => patientStore.updateUltrasoundExam(id, payload),
+    delete: (id) => patientStore.deleteExistingUltrasoundExam(id),
+  },
 }
 
-function openAddDialog () {
-  editMode.value = false
-  form.value = {}
-  dialog.value = true
+// computed
+const rows = computed(() => categoryConfig[selectedCategory.value].rows())
+const columns = computed(() => categoryConfig[selectedCategory.value].columns)
+const columnsWithActions = computed(() => [
+  ...columns.value,
+  { name: 'actions', label: 'Actions', field: 'actions', align: 'center' },
+])
+const editableColumns = computed(() => columns.value.filter((c) => c.name !== 'actions'))
+const selectedCategoryLabel = computed(
+  () => categories.find((c) => c.value === selectedCategory.value)?.label || 'Services',
+)
+
+// auto calculate total
+watch(
+  () => [form.value.selling_price, form.value.rate, form.value.service_fee],
+  () => {
+    const price = Number(form.value.selling_price ?? form.value.rate ?? 0)
+    const fee = Number(form.value.service_fee ?? 0)
+    form.value.total_amount = price + fee
+  },
+)
+
+// actions
+async function fetchData() {
+  await categoryConfig[selectedCategory.value].fetch()
 }
 
-function openEditDialog (row) {
-  editMode.value = true
-  form.value = { ...row }
-  dialog.value = true
+function openDialog(row = null) {
+  editingRow.value = row
+  form.value = row ? { ...row } : {}
+  dialogOpen.value = true
 }
 
-async function saveService () {
+async function saveRow() {
+  const cfg = categoryConfig[selectedCategory.value]
   try {
-    if (editMode.value) {
-      if (selectedCategory.value === 'examination') await store.updateExamination(form.value.id, form.value)
-      if (selectedCategory.value === 'radiologies') await store.updateRadiology(form.value.id, form.value)
-      if (selectedCategory.value === 'ultrasound') await store.updateUltrasound(form.value.id, form.value)
-      if (selectedCategory.value === 'mammogram') await store.updateMammogram(form.value.id, form.value)
+    if (editingRow.value) {
+      await cfg.update(editingRow.value.id, form.value)
     } else {
-      if (selectedCategory.value === 'examination') await store.storeExamination(form.value)
-      if (selectedCategory.value === 'radiologies') await store.storeRadiology(form.value)
-      if (selectedCategory.value === 'ultrasound') await store.storeUltrasound(form.value)
-      if (selectedCategory.value === 'mammogram') await store.storeMammogram(form.value)
+      await cfg.create(form.value)
     }
-    dialog.value = false
-    fetchData()
+    dialogOpen.value = false
+    form.value = {} // reset form
+    await fetchData()
   } catch (err) {
     console.error('Save failed:', err)
   }
 }
 
-function confirmDelete (row) {
+async function deleteRow(row) {
+  const cfg = categoryConfig[selectedCategory.value]
   $q.dialog({
     title: 'Confirm',
-    message: 'Delete this service?',
+    message: 'Are you sure you want to delete this item?',
     cancel: true,
-    persistent: true
+    persistent: true,
   }).onOk(async () => {
-    try {
-      if (selectedCategory.value === 'examination') await store.deleteExamination(row.id)
-      if (selectedCategory.value === 'radiologies') await store.deleteRadiology(row.id)
-      if (selectedCategory.value === 'ultrasound') await store.deleteUltrasound(row.id)
-      if (selectedCategory.value === 'mammogram') await store.deleteMammogram(row.id)
-      fetchData()
-    } catch (err) {
-      console.error('Delete failed:', err)
-    }
+    await cfg.delete(row.id)
+    await fetchData()
   })
 }
 
-// Initial load
-fetchData()
-</script>
-
-<style scoped>
-.my-service-table tbody tr:hover {
-  background: #f5f9ff; /* soft blue hover */
-  transition: background 0.2s;
+//  Highlight helper
+function highlightText(text, search) {
+  if (!search) return text
+  const regex = new RegExp(`(${search})`, 'gi')
+  return String(text).replace(regex, '<span class="text-primary bg-blue-2">$1</span>')
 }
 
-.sticky-top-bar {
+// initial load
+onMounted(fetchData)
+</script>
+
+<style>
+.my-sticky-table {
+  max-height: 500px; /* makes rows scrollable */
+}
+
+.my-sticky-header {
   position: sticky;
   top: 0;
   z-index: 10;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-}
-
-.q-table__top {
-  padding: 0 !important;
-}
-
-/* Responsive wrapper for horizontal scroll on small screens */
-.responsive-table-wrapper {
-  width: 100%;
-  overflow-x: auto;
+  background: white; /* prevent text overlap */
 }
 </style>
-
-
-
-

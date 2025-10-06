@@ -105,8 +105,9 @@ export const useServicesLibraryStore = defineStore('servicesLibrary', {
       this.loading = true
       try {
         const response = await api.get('/laboratory/radiology/index')
-        // expect API shape: { radiologies: [...] }
-        this.radiologiesExams = response.data?.radiologies ?? []
+        // If API returns plain array: response.data
+        // If API returns { radiologies: [...] }: response.data.radiologies
+        this.radiologiesExams = response.data.radiology ?? []
         return this.radiologiesExams
       } catch (error) {
         this.handleApiError(error)
@@ -150,7 +151,7 @@ export const useServicesLibraryStore = defineStore('servicesLibrary', {
       this.loading = true
       try {
         const response = await api.delete(`/laboratory/radiology/delete/${id}`)
-        this.radiologiesExams = this.radiologiesExams.filter((item, idx) => idx + 1 !== id)
+        this.radiologiesExams = this.radiologiesExams.filter((item) => item.id !== id)
         return response.data
       } catch (error) {
         this.handleApiError(error)

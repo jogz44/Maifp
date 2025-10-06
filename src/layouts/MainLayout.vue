@@ -222,12 +222,12 @@
           </div>
         </q-item>
 
-        <!-- <q-item clickable v-ripple to="/services">
+        <q-item clickable v-ripple to="/services">
           <div class="row items-center">
             <q-icon name="supervisor_account" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Services</span>
           </div>
-        </q-item> -->
+        </q-item>
       </q-list>
     </q-drawer>
 
@@ -242,6 +242,7 @@
 import auth from 'src/services/auth'
 import { useUserStore } from 'src/stores/userStore'
 import { usePatientStore } from 'src/stores/patientStore'
+import { useServicesLibraryStore } from 'src/stores/servicesLibraryStore'
 // import { useServicesLibraryStore } from 'src/stores/servicesLibraryStore'
 import { usePatientBadgeStore } from 'src/stores/badgeStore'
 import { LocalStorage } from 'quasar'
@@ -253,7 +254,7 @@ export default {
     const ausSrvc = auth
     const userStore = useUserStore()
     const patientStore = usePatientStore()
-    // const servicesLibraryStore = useServicesLibraryStore()
+    const servicesLibraryStore = useServicesLibraryStore()
 
     // fetch patients when mounted
     patientStore.fetchQualifiedPatients()
@@ -265,6 +266,7 @@ export default {
       ausSrvc,
       userStore,
       patientStore,
+      servicesLibraryStore,
       // servicesLibraryStore,
       badgeStore,
     }
