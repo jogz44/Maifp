@@ -335,14 +335,9 @@
             </div>
           </div>
         </q-card-section>
-        <!-- Buttons or Status Chip -->
-        <div
-          class="q-mt-md flex justify-end q-gutter-sm"
-          v-if="
-            !['Complete', 'Done', 'Returned'].includes(transaction?.status) &&
-            (!transaction?.consultation && (!transaction?.laboratories_details || transaction.laboratories_details.length === 0))
-          "
-        >
+
+        <!-- Buttons BELOW the card -->
+        <div class="q-mt-md flex justify-end q-gutter-sm" v-if="isLatest">
           <q-btn
             color="primary"
             label="Require Medication"
@@ -363,18 +358,6 @@
           />
         </div>
 
-        <!-- Chip when status is final OR labs/consultation exist -->
-        <!-- <div v-else class="q-mt-md flex justify-end">
-          <q-chip
-            color="green"
-            text-color="white"
-            :label="
-              ['Complete', 'Done', 'Returned'].includes(transaction?.status)
-                ? transaction.status
-                : 'Transaction Processed'
-            "
-          />
-        </div> -->
       </q-card>
     </div>
   </q-page>
@@ -614,6 +597,21 @@ export default {
             if (patientData) {
               console.log('Patient data loaded:', patientData)
               this.patient = patientData
+
+              // Check if the current transaction is the latest for this patient
+              if (patientData.transaction && Array.isArray(patientData.transaction)) {
+                const sorted = [...patientData.transaction].sort(
+                  (a, b) =>
+                    new Date(b.transaction_date || b.created_at) -
+                    new Date(a.transaction_date || a.created_at)
+                )
+                const latest = sorted[0]
+                this.isLatest = Number(latest.id) === Number(this.transactionId)
+
+                console.log(
+                  `Latest transaction ID: ${latest.id}, Current ID: ${this.transactionId}, isLatest: ${this.isLatest}`
+                )
+              }
             } else {
               console.error('Failed to load patient data')
             }

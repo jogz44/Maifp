@@ -444,7 +444,19 @@ export const usePatientStore = defineStore('patient', {
       this.error = null
       try {
         const response = await api.get('/laboratory/mammogram/index')
-        this.mammogramExams = response.data || []
+
+        // Normalize response data structure
+        const mammogramList =
+          response.data?.data || // e.g. { data: [ ... ] }
+          response.data?.mammogram || // e.g. { mammogram: [ ... ] }
+          response.data || // e.g. [ ... ]
+          []
+
+        // Ensure it's always an array
+        this.mammogramExams = Array.isArray(mammogramList) ? mammogramList : []
+
+        console.log('Fetched Mammogram Exams:', this.mammogramExams)
+
         return this.mammogramExams
       } catch (error) {
         console.error('Error fetching mammogram exams:', error)
