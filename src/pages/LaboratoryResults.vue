@@ -302,7 +302,7 @@
                     class="q-mt-md"
                     :table-header-class="'bg-grey-3 text-black'"
                   >
-                    <template v-slot:body-cell-actions="props">
+                    <template v-slot:body-cell-actions="props" v-if="isLatest">
                       <q-td align="center">
                         <q-btn
                           dense
@@ -405,7 +405,7 @@
                     class="q-mt-md"
                     :table-header-class="'bg-grey-3 text-black'"
                   >
-                    <template v-slot:body-cell-actions="props">
+                    <template v-slot:body-cell-actions="props" v-if="isLatest">
                       <q-td align="center">
                         <q-btn
                           dense
@@ -509,7 +509,7 @@
                     class="q-mt-md"
                     :table-header-class="'bg-grey-3 text-black'"
                   >
-                    <template v-slot:body-cell-actions="props">
+                    <template v-slot:body-cell-actions="props" v-if="isLatest">
                       <q-td align="center">
                         <q-btn
                           dense
@@ -613,7 +613,7 @@
                     class="q-mt-md"
                     :table-header-class="'bg-grey-3 text-black'"
                   >
-                    <template v-slot:body-cell-actions="props">
+                    <template v-slot:body-cell-actions="props" v-if="isLatest">
                       <q-td align="center">
                         <q-btn
                           dense
@@ -1345,7 +1345,16 @@ export default {
         }
 
         const response = await this.patientStore.fetchMammogramsByTransaction(this.transactionId)
-        this.mammogramRows = (response ?? []).map((exam) => ({
+
+        console.log('Raw mammogram transaction response:', response)
+
+        // Normalize possible structures
+        const exams =
+          response?.data ||
+          response?.mammogram ||
+          (Array.isArray(response) ? response : [])
+
+        this.mammogramRows = exams.map((exam) => ({
           ...exam,
           date: exam.date || this.formatDate(new Date()),
           time: exam.time || this.formatTime(new Date()),
@@ -1498,7 +1507,7 @@ export default {
                 timeout: 2000,
               })
 
-              // 🔥 Update local state and storage
+              // Update local state and storage
               if (type === 'examination') {
                 this.labExamRows = this.labExamRows.filter((e) => e.item_id !== id)
                 localStorage.setItem(
@@ -1657,10 +1666,10 @@ export default {
     },
 
     async loadLaboratoryOptions() {
-      await this.patientStore.fetchLaboratoryServices()
+      await this.patientStore.fetchLaboratoryExams() //  fixed: use existing store action
 
       // Mapping API response into dropdown options
-      this.laboratoryOptions = this.patientStore.laboratoryServices.map((s) => ({
+      this.laboratoryOptions = this.patientStore.laboratoryExams.map((s) => ({
         label: s.lab_name,
         value: s.id,
         amount: s.lab_amount,
