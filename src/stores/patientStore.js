@@ -325,6 +325,34 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
+    async storeNewLaboratoryExam(payload) {
+      try {
+        const res = await api.post('/laboratory/exam/store', payload)
+        return res.data
+      } catch (err) {
+        this.handleApiError(err)
+        throw err
+      }
+    },
+    async updateLaboratoryExam(id, payload) {
+      try {
+        const res = await api.post(`/laboratory/exam/update/${id}`, payload)
+        return res.data
+      } catch (err) {
+        this.handleApiError(err)
+        throw err
+      }
+    },
+    async deleteExistingLaboratoryExam(id) {
+      try {
+        const res = await api.delete(`/laboratory/exam/delete/${id}`)
+        return res.data
+      } catch (err) {
+        this.handleApiError(err)
+        throw err
+      }
+    },
+
     async fetchLaboratoryResults(transactionId) {
       try {
         const response = await api.get(`/transactions/${transactionId}`)
@@ -382,6 +410,34 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
+    async storeNewRadiologyExam(payload) {
+      try {
+        const res = await api.post('/laboratory/radiology/store', payload)
+        return res.data
+      } catch (err) {
+        this.handleApiError(err)
+        throw err
+      }
+    },
+    async updateRadiologyExam(id, payload) {
+      try {
+        const res = await api.post(`/laboratory/radiology/update/${id}`, payload)
+        return res.data
+      } catch (err) {
+        this.handleApiError(err)
+        throw err
+      }
+    },
+    async deleteExistingRadiologyExam(id) {
+      try {
+        const res = await api.delete(`/laboratory/radiology/delete/${id}`)
+        return res.data
+      } catch (err) {
+        this.handleApiError(err)
+        throw err
+      }
+    },
+
     // FETCH MAMMOGRAM EXAM
     async fetchMammogramExams() {
       this.loading = true
@@ -421,6 +477,34 @@ export const usePatientStore = defineStore('patient', {
       } catch (error) {
         console.error('Error saving mammogram exams:', error)
         throw error
+      }
+    },
+
+    async storeNewMammogramExam(payload) {
+      try {
+        const res = await api.post('/laboratory/mammogram/store', payload)
+        return res.data
+      } catch (err) {
+        this.handleApiError(err)
+        throw err
+      }
+    },
+    async updateMammogramExam(id, payload) {
+      try {
+        const res = await api.post(`/laboratory/mammogram/update/${id}`, payload)
+        return res.data
+      } catch (err) {
+        this.handleApiError(err)
+        throw err
+      }
+    },
+    async deleteExistingMammogramExam(id) {
+      try {
+        const res = await api.delete(`/laboratory/mammogram/delete/${id}`)
+        return res.data
+      } catch (err) {
+        this.handleApiError(err)
+        throw err
       }
     },
 
@@ -474,6 +558,34 @@ export const usePatientStore = defineStore('patient', {
       } catch (error) {
         console.error('Error saving ultrasound exams:', error)
         throw error
+      }
+    },
+
+    async storeNewUltrasoundExam(payload) {
+      try {
+        const res = await api.post('/laboratory/ultrasound/store', payload)
+        return res.data
+      } catch (err) {
+        this.handleApiError(err)
+        throw err
+      }
+    },
+    async updateUltrasoundExam(id, payload) {
+      try {
+        const res = await api.post(`/laboratory/ultrasound/update/${id}`, payload)
+        return res.data
+      } catch (err) {
+        this.handleApiError(err)
+        throw err
+      }
+    },
+    async deleteExistingUltrasoundExam(id) {
+      try {
+        const res = await api.delete(`/laboratory/ultrasound/delete/${id}`)
+        return res.data
+      } catch (err) {
+        this.handleApiError(err)
+        throw err
       }
     },
 

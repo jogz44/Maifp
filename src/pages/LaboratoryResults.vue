@@ -281,7 +281,7 @@
               >
                 <!-- Lab Exam Tab -->
                 <q-tab-panel name="lab_exam" class="border-left q-pa-md">
-                  <div class="row items-center q-mb-md">
+                  <div class="row items-center q-mb-md" v-if="isLatest">
                     <div class="col">
                       <q-btn
                         color="green"
@@ -384,7 +384,7 @@
 
                 <!-- Radiology Tab -->
                 <q-tab-panel name="radiology" class="border-left q-pa-md">
-                  <div class="row items-center q-mb-md">
+                  <div class="row items-center q-mb-md" v-if="isLatest">
                     <div class="col">
                       <q-btn
                         color="green"
@@ -488,7 +488,7 @@
 
                 <!-- Mammogram Tab -->
                 <q-tab-panel name="mammogram" class="border-left q-pa-md">
-                  <div class="row items-center q-mb-md">
+                  <div class="row items-center q-mb-md" v-if="isLatest">
                     <div class="col">
                       <q-btn
                         color="green"
@@ -592,7 +592,7 @@
 
                 <!-- Ultrasound Tab -->
                 <q-tab-panel name="ultrasound" class="border-left q-pa-md">
-                  <div class="row items-center q-mb-md">
+                  <div class="row items-center q-mb-md" v-if="isLatest">
                     <div class="col">
                       <q-btn
                         color="green"
