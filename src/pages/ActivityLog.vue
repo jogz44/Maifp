@@ -30,7 +30,8 @@
           binary-state-sort
           no-data-label="No activity logs available"
           square
-          :rows-per-page-options="[0]"
+          :pagination="{ rowsPerPage: 10 }"
+          :rows-per-page-options="[5, 10, 15, 20, 25, 50, 0]"
           style="height: 600px"
           :loading="activityStore.loading"
         >

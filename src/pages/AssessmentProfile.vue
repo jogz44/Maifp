@@ -25,7 +25,7 @@
                     />
                     <q-btn color="grey" label="Cancel" @click="cancelEdit" />
                   </template>
-                </div> -->
+</div> -->
               </div>
 
               <q-separator />
@@ -34,173 +34,83 @@
               <div class="text-subtitle2 text-grey-8 q-mt-md q-mb-xs">Personal Details</div>
               <div class="row q-col-gutter-md q-mb-md">
                 <div class="col-12">
-                  <q-input
-                    outlined
-                    dense
-                    v-model="patient.philsys_id"
-                    label="Philsys ID"
-                    :readonly="!isEditMode"
-                  />
+                  <q-input outlined dense v-model="patient.philsys_id" label="Philsys ID" :readonly="!isEditMode" />
                 </div>
                 <div class="col-12">
-                  <q-input
-                    outlined
-                    dense
-                    v-model="patient.philhealth_id"
-                    label="PhilHealth ID"
-                    :readonly="!isEditMode"
-                  />
+                  <q-input outlined dense v-model="patient.philhealth_id" label="PhilHealth ID"
+                    :readonly="!isEditMode" />
                 </div>
               </div>
 
               <!-- Name Fields -->
               <div class="row q-col-gutter-md q-mb-md">
                 <div class="col-6">
-                  <q-input
-                    outlined
-                    dense
-                    v-model="patient.lastname"
-                    label="Last Name"
-                    :readonly="!isEditMode"
-                  />
+                  <q-input outlined dense v-model="patient.lastname" label="Last Name" :readonly="!isEditMode" />
                 </div>
                 <div class="col-6">
-                  <q-input
-                    outlined
-                    dense
-                    v-model="patient.firstname"
-                    label="First Name"
-                    :readonly="!isEditMode"
-                  />
+                  <q-input outlined dense v-model="patient.firstname" label="First Name" :readonly="!isEditMode" />
                 </div>
                 <div class="col-6">
-                  <q-input
-                    outlined
-                    dense
-                    v-model="patient.middlename"
-                    label="Middle Name"
-                    :readonly="!isEditMode"
-                  />
+                  <q-input outlined dense v-model="patient.middlename" label="Middle Name" :readonly="!isEditMode" />
                 </div>
                 <div class="col-6">
-                  <q-input
-                    outlined
-                    dense
-                    v-model="patient.ext"
-                    label="Extension"
-                    :readonly="!isEditMode"
-                  />
+                  <q-input outlined dense v-model="patient.ext" label="Extension" :readonly="!isEditMode" />
                 </div>
               </div>
 
               <!-- Basic Info -->
               <div class="row q-col-gutter-md q-mb-md">
                 <div class="col-6">
-                  <q-select
-                    outlined
-                    dense
-                    v-model="patient.gender"
-                    label="Gender"
-                    :options="isEditMode ? patientStore.genderOptions : undefined"
-                    :readonly="!isEditMode"
-                  />
+                  <q-select outlined dense v-model="patient.gender" label="Gender"
+                    :options="isEditMode ? patientStore.genderOptions : undefined" :readonly="!isEditMode" />
                 </div>
                 <div class="col-6">
                   <q-input outlined dense v-model="patient.age" label="Age" readonly />
                 </div>
                 <div class="col-6">
-                  <q-input
-                    outlined
-                    dense
-                    type="date"
-                    v-model="patient.birthdate"
-                    label="Birthdate"
-                    :readonly="!isEditMode"
-                    @update:model-value="updateAge"
-                  />
+                  <q-input outlined dense type="date" v-model="patient.birthdate" label="Birthdate"
+                    :readonly="!isEditMode" @update:model-value="updateAge" />
                 </div>
                 <div class="col-6">
-                  <q-input
-                    outlined
-                    dense
-                    type="number"
-                    v-model="patient.contact_number"
-                    label="Contact Number"
-                    :readonly="!isEditMode"
-                  />
+                  <q-input outlined dense type="number" v-model="patient.contact_number" label="Contact Number"
+                    :readonly="!isEditMode" />
                 </div>
 
                 <!-- Additional Basic Info -->
                 <div class="col-12">
-                  <q-input
-                    outlined
-                    dense
-                    v-model="patient.place_of_birth"
-                    label="Place of Birth"
-                    :readonly="!isEditMode"
-                  />
+                  <q-input outlined dense v-model="patient.place_of_birth" label="Place of Birth"
+                    :readonly="!isEditMode" />
                 </div>
                 <div class="col-6">
-                  <q-select
-                    outlined
-                    dense
-                    v-model="patient.civil_status"
-                    :options="isEditMode ? patientStore.civilStatusOptions : undefined"
-                    label="Civil Status"
-                    :readonly="!isEditMode"
-                  />
+                  <q-select outlined dense v-model="patient.civil_status"
+                    :options="isEditMode ? patientStore.civilStatusOptions : undefined" label="Civil Status"
+                    :readonly="!isEditMode" />
                 </div>
                 <div class="col-6">
-                  <q-select
-                    outlined
-                    dense
-                    v-model="patient.religion"
-                    :options="isEditMode ? patientStore.religionOptions : undefined"
-                    label="Religion"
-                    :readonly="!isEditMode"
-                  />
+                  <q-select outlined dense v-model="patient.religion"
+                    :options="isEditMode ? patientStore.religionOptions : undefined" label="Religion"
+                    :readonly="!isEditMode" />
                 </div>
                 <div class="col-12">
-                  <q-select
-                    outlined
-                    dense
-                    v-model="patient.education"
+                  <q-select outlined dense v-model="patient.education"
                     :options="isEditMode ? patientStore.educationOptions : undefined"
-                    label="Highest Educational Attainment"
-                    :readonly="!isEditMode"
-                  />
+                    label="Highest Educational Attainment" :readonly="!isEditMode" />
                 </div>
                 <div class="col-6">
-                  <q-input
-                    outlined
-                    dense
-                    v-model="patient.occupation"
-                    label="Occupation"
-                    :readonly="!isEditMode"
-                  />
+                  <q-input outlined dense v-model="patient.occupation" label="Occupation" :readonly="!isEditMode" />
                 </div>
                 <div class="col-6">
-                  <q-select
-                    outlined
-                    dense
-                    v-model="patient.income"
-                    :options="isEditMode ? patientStore.incomeOptions : undefined"
-                    label="Monthly Income"
-                    :readonly="!isEditMode"
-                  />
+                  <q-select outlined dense v-model="patient.income"
+                    :options="isEditMode ? patientStore.incomeOptions : undefined" label="Monthly Income"
+                    :readonly="!isEditMode" />
                 </div>
               </div>
 
               <!-- View More Toggle Button -->
               <div class="text-center q-mb-xs">
-                <q-btn
-                  flat
-                  :icon="showMoreDetails ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
-                  :label="showMoreDetails ? 'View Less' : 'View More Details'"
-                  color="primary"
-                  @click="showMoreDetails = !showMoreDetails"
-                  class="text-caption"
-                />
+                <q-btn flat :icon="showMoreDetails ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
+                  :label="showMoreDetails ? 'View Less' : 'View More Details'" color="primary"
+                  @click="showMoreDetails = !showMoreDetails" class="text-caption" />
               </div>
 
               <!-- Collapsible Additional Details -->
@@ -212,41 +122,18 @@
                   <div class="text-subtitle2 text-grey-8 q-mb-sm">Present Address</div>
                   <div class="row q-col-gutter-md q-mb-md">
                     <div class="col-4">
-                      <q-input
-                        outlined
-                        dense
-                        v-model="patient.purok"
-                        label="Purok"
-                        :readonly="!isEditMode"
-                      />
+                      <q-input outlined dense v-model="patient.purok" label="Purok" :readonly="!isEditMode" />
                     </div>
                     <div class="col-8">
-                      <q-input
-                        outlined
-                        dense
-                        v-model="patient.street"
-                        label="Street"
-                        :readonly="!isEditMode"
-                      />
+                      <q-input outlined dense v-model="patient.street" label="Street" :readonly="!isEditMode" />
                     </div>
                     <div class="col-6">
-                      <q-select
-                        outlined
-                        dense
-                        v-model="patient.barangay"
-                        :options="isEditMode ? TagumBarangay.barangay : undefined"
-                        label="Barangay"
-                        :readonly="!isEditMode"
-                      />
+                      <q-select outlined dense v-model="patient.barangay"
+                        :options="isEditMode ? TagumBarangay.barangay : undefined" label="Barangay"
+                        :readonly="!isEditMode" />
                     </div>
                     <div class="col-6">
-                      <q-input
-                        outlined
-                        dense
-                        v-model="patient.city"
-                        label="City"
-                        :readonly="!isEditMode"
-                      />
+                      <q-input outlined dense v-model="patient.city" label="City" :readonly="!isEditMode" />
                     </div>
                   </div>
 
@@ -256,29 +143,14 @@
                   <div class="text-subtitle2 text-grey-8 q-mb-sm">Other Details</div>
                   <div class="row q-col-gutter-md">
                     <div class="col-12">
-                      <q-input
-                        outlined
-                        dense
-                        v-model="patient.category"
-                        label="Category"
-                        :readonly="!isEditMode"
-                      />
+                      <q-input outlined dense v-model="patient.category" label="Category" :readonly="!isEditMode" />
                     </div>
                     <div class="col-6">
-                      <q-checkbox
-                        v-model="patient.is_pwd"
-                        label="PWD"
-                        :readonly="!isEditMode"
-                        :disable="!isEditMode"
-                      />
+                      <q-checkbox v-model="patient.is_pwd" label="PWD" :readonly="!isEditMode" :disable="!isEditMode" />
                     </div>
                     <div class="col-6">
-                      <q-checkbox
-                        v-model="patient.is_solo"
-                        label="Solo Parent"
-                        :readonly="!isEditMode"
-                        :disable="!isEditMode"
-                      />
+                      <q-checkbox v-model="patient.is_solo" label="Solo Parent" :readonly="!isEditMode"
+                        :disable="!isEditMode" />
                     </div>
                   </div>
                 </div>
@@ -294,15 +166,8 @@
               <div class="row items-center justify-between q-mb-md">
                 <div class="text-h6 text-green text-weight-bolder">Patient Transaction History</div>
                 <div class="row q-gutter-sm">
-                  <q-input
-                    v-model="filterDate"
-                    label="Filter by Date"
-                    type="date"
-                    outlined
-                    dense
-                    style="width: 200px"
-                    :max="today"
-                  />
+                  <q-input v-model="filterDate" label="Filter by Date" type="date" outlined dense style="width: 200px"
+                    :max="today" />
                   <q-btn color="red" label="Close" @click="goBack" />
                 </div>
               </div>
@@ -310,18 +175,9 @@
               <q-separator />
 
               <div class="q-mt-md" style="height: calc(100vh - 200px)">
-                <q-table
-                  bordered
-                  dense
-                  :rows="filteredTransactions"
-                  :columns="transactionColumns"
-                  row-key="id"
-                  no-data-label="No transaction history available"
-                  :pagination="{ rowsPerPage: 0 }"
-                  virtual-scroll
-                  :virtual-scroll-sticky-size-start="48"
-                  style="height: 100%; box-shadow: none"
-                >
+                <q-table bordered dense :rows="filteredTransactions" :columns="transactionColumns" row-key="id"
+                  no-data-label="No transaction history available" :pagination="{ rowsPerPage: 0 }" virtual-scroll
+                  :virtual-scroll-sticky-size-start="48" style="height: 100%; box-shadow: none">
                   <template #body="props">
                     <q-tr :props="props">
                       <q-td key="transaction_date" style="font-size: 11px" align="left">
@@ -332,43 +188,38 @@
                       </q-td>
 
                       <q-td key="status" style="font-size: 11px" align="center">
-                        <div
-                          v-if="props.row.status === 'Complete'"
-                          class="text-caption q-mt-xs text-blue text-bold"
-                        >
-                          {{ props.row.status }}
+                        <div v-if="props.row.status !== 'assessment'" class="text-caption q-mt-xs" :class="{
+                          'text-green': props.row.status === 'qualified',
+                          'text-orange': props.row.status === 'unqualified',
+                          'text-purple': props.row.status === 'Funded',
+                          'text-blue': props.row.status === 'Complete',
+                          'text-grey':
+                            props.row.status !== 'qualified' &&
+                            props.row.status !== 'unqualified' &&
+                            props.row.status !== 'Complete' &&
+                            props.row.status !== 'Funded',
+                        }">
+                          {{ props.row.status || 'unqualified' }}
                         </div>
 
-                        <q-toggle
-                          v-else
-                          :model-value="props.row.status === 'qualified'"
-                          color="green"
-                          @update:model-value="
+                        <div v-if="props.row.status === 'assessment'" class="q-mt-xs">
+                          <q-toggle :model-value="props.row.status === 'qualified'" color="green" @update:model-value="
                             (isChecked) => {
                               confirmStatusChange(
                                 props.row,
                                 isChecked ? 'qualified' : 'unqualified',
                               )
                             }
-                          "
-                          :loading="props.row.statusUpdating"
-                        />
-                        <div
-                          v-if="props.row.status !== 'Complete'"
-                          class="text-caption q-mt-xs"
-                          :class="props.row.status === 'qualified' ? 'text-green' : 'text-orange'"
-                        >
-                          {{ props.row.status || 'unqualified' }}
+                          " :loading="props.row.statusUpdating" />
+
+                          <div class="text-caption text-orange q-mt-xs">
+                            {{ props.row.status === 'qualified' ? 'Qualified' : 'Assessment' }}
+                          </div>
                         </div>
                       </q-td>
 
                       <q-td key="actions" style="font-size: 11px" align="center">
-                        <q-btn
-                          icon="visibility"
-                          flat
-                          class="text-blue"
-                          @click="viewTransactionDetails(props.row)"
-                        />
+                        <q-btn icon="visibility" flat class="text-blue" @click="viewTransactionDetails(props.row)" />
                       </q-td>
                     </q-tr>
                   </template>
@@ -393,8 +244,7 @@
             Are you sure you want to change the status of transaction
             <strong>{{ pendingStatusChange.transaction?.transaction_number }}</strong>
             from <strong class="text-capitalize">{{ pendingStatusChange.oldStatus }}</strong> to
-            <strong class="text-capitalize">{{ pendingStatusChange.newStatus }}</strong
-            >?
+            <strong class="text-capitalize">{{ pendingStatusChange.newStatus }}</strong>?
           </p>
           <p class="text-caption text-grey-7">
             This action will update the qualification status of this transaction.
@@ -403,12 +253,7 @@
 
         <q-card-actions align="right">
           <q-btn flat label="Cancel" color="grey" @click="cancelStatusChange" />
-          <q-btn
-            label="Confirm"
-            color="orange"
-            @click="confirmStatusUpdate"
-            :loading="updatingStatus"
-          />
+          <q-btn label="Confirm" color="orange" @click="confirmStatusUpdate" :loading="updatingStatus" />
         </q-card-actions>
       </q-card>
     </q-dialog>

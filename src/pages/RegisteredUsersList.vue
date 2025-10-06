@@ -25,7 +25,7 @@
             @click="$router.push('/users/new')"
           />
         </div>
-        <q-table :rows="rows" :columns="columns" row-key="id" flat bordered>
+        <q-table :rows="filteredRows" :columns="columns" row-key="id" flat bordered>
           <template #body="props">
             <q-tr :v-bind="props">
               <!-- <q-td key="id" style="font-size: 11px" align="left">
@@ -63,11 +63,7 @@
                     icon="person_off"
                     class="q-mr-sm"
                     color="amber"
-                    @click="
-                      () => {
-                        dialogInactive = true
-                      }
-                    "
+                    @click="openDeactivateDialog(props.row.id)"
                   >
                     <q-tooltip> Deactivate </q-tooltip>
                   </q-btn>
@@ -79,11 +75,7 @@
                     icon="person"
                     class="q-mr-sm"
                     color="amber"
-                    @click="
-                      () => {
-                        dialogActive = true
-                      }
-                    "
+                    @click="openActivateDialog(props.row.id)"
                   >
                     <q-tooltip>Activate </q-tooltip>
                   </q-btn>
@@ -181,8 +173,31 @@ export default {
       ],
     }
   },
+  computed: {
+    filteredRows() {
+      if (!this.search) {
+        return this.rows
+      }
+
+      const searchTerm = this.search.toLowerCase()
+      return this.rows.filter((row) => {
+        const fullName = `${row.last_name}, ${row.first_name} ${row.middle_name}`.toLowerCase()
+        const username = (row.username || '').toLowerCase()
+        const position = (row.position || '').toLowerCase()
+        const office = (row.office || '').toLowerCase()
+        const status = (row.status || '').toLowerCase()
+
+        return (
+          fullName.includes(searchTerm) ||
+          username.includes(searchTerm) ||
+          position.includes(searchTerm) ||
+          office.includes(searchTerm) ||
+          status.includes(searchTerm)
+        )
+      })
+    },
+  },
   mounted() {
-    // Fetch data or perform any setup when the component is mounted
     this.getUsers()
   },
   methods: {
@@ -192,6 +207,18 @@ export default {
       console.log('Setting selected ID:', id)
 
       this.$router.push('/users/user/')
+    },
+    openDeactivateDialog(id) {
+      this.userStore.selected_id = id
+      this.UserCredentialstore.selected_id = id
+      console.log('Setting selected ID for deactivation:', id)
+      this.dialogInactive = true
+    },
+    openActivateDialog(id) {
+      this.userStore.selected_id = id
+      this.UserCredentialstore.selected_id = id
+      console.log('Setting selected ID for activation:', id)
+      this.dialogActive = true
     },
     async getUsers() {
       try {
@@ -229,7 +256,7 @@ export default {
         this.getUsers()
         this.dialogActive = false
       } catch (error) {
-        console.error('Error deactivating user:', error)
+        console.error('Error activating user:', error)
         this.$q.notify({
           type: 'negative',
           message: 'Unable to activate user',
@@ -250,6 +277,4 @@ export default {
 }
 </script>
 
-<style scoped>
-/* Add your styles here */
-</style>
+<style scoped></style>

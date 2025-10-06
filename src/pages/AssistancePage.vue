@@ -259,30 +259,6 @@
                 </p>
               </div>
             </div>
-
-            <!-- Only show representative section if data exists -->
-            <template v-if="hasRepresentativeData">
-              <div class="info-section-title">Representative Information</div>
-              <q-separator />
-              <div class="row">
-                <div class="col-6">
-                  <p>
-                    <strong>Representative Name:</strong>
-                    {{ patient.representative?.rep_name || 'N/A' }}
-                  </p>
-                  <p>
-                    <strong>Relationship:</strong>
-                    {{ patient.representative?.relationship || 'N/A' }}
-                  </p>
-                </div>
-                <div class="col-6">
-                  <p>
-                    <strong>Address:</strong>
-                    {{ patient.representative?.address || 'N/A' }}
-                  </p>
-                </div>
-              </div>
-            </template>
           </div>
 
           <div class="table-container">
@@ -513,15 +489,6 @@ const preparerName = computed(() => {
   if (lastName) fullName += ' ' + lastName
 
   return fullName.trim() || 'Staff Member'
-})
-
-const hasRepresentativeData = computed(() => {
-  return (
-    patient.value.representative &&
-    (patient.value.representative.rep_name ||
-      patient.value.representative.relationship ||
-      patient.value.representative.address)
-  )
 })
 
 const hasExistingAssistance = computed(() => {
