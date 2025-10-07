@@ -39,8 +39,8 @@
               <q-td key="username" style="font-size: 11px" align="left">
                 {{ props.row.username }}
               </q-td>
-              <q-td key="position" style="font-size: 11px" align="left">
-                {{ props.row.position }}
+              <q-td key="role_name" style="font-size: 11px" align="left">
+                {{ props.row.role.role_name }}
               </q-td>
               <q-td key="office" style="font-size: 11px" align="left">
                 {{ props.row.office }}
@@ -164,7 +164,7 @@ export default {
         // { name: 'id', label: 'ID', align: 'left', field: 'id' },
         { name: 'name', label: 'Full Name', align: 'left', field: 'name' },
         { name: 'username', label: 'Username', align: 'left', field: 'username' },
-        { name: 'position', label: 'Position', align: 'left', field: 'position' },
+        { name: 'role_name', label: 'Role', align: 'left', field: 'role_name' },
         { name: 'office', label: 'Office', align: 'left', field: 'office' },
         { name: 'status', label: 'Status', align: 'left', field: 'status' },
         { name: 'actions', label: 'Actions', align: 'left' },

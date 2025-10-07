@@ -1,8 +1,8 @@
 {
   "name": "cho-inventory-v2",
   "version": "0.0.1",
-  "description": "MAIFIP SYSTEM FOR CHO",
-  "productName": "MAIFIP SYSTEM",
+  "description": "City Health Assistance Management Platform",
+  "productName": "CHAMP",
   "author": "Neil Benjamin Roble <neilbenjaminroble@gmail.com>",
   "type": "module",
   "private": true,

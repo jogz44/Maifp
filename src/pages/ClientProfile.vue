@@ -823,7 +823,7 @@ export default {
       transactionColumns: [
         {
           name: 'id',
-          label: 'ID',
+          label: 'No',
           field: 'id',
           sortable: true,
           align: 'left',

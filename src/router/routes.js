@@ -122,6 +122,23 @@ const routes = [
         meta: { requiresAuth: true },
       },
 
+      //billing log
+      {
+        path: '/billinglog',
+        component: () => import('pages/BillingLog.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/billinglog/profile',
+        component: () => import('pages/ProfileBillingLog.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/billinglog/report',
+        component: () => import('pages/BillingLogReport.vue'),
+        meta: { requiresAuth: true },
+      },
+
       //masterlist
       {
         path: '/masterlist',

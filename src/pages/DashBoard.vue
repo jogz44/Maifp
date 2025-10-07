@@ -31,7 +31,7 @@
           <q-card class="h-100 cursor-pointer" hover>
             <!-- Header -->
             <q-card-section class="bg-green-9 text-white flex justify-between items-center">
-              <div class="text-h7">Step {{ index + 1 }}: {{ step.name }}</div>
+              <div class="text-h7">For {{ step.name }}</div>
               <q-badge rounded :color="step.patients.length > 0 ? 'red-9' : 'grey'" class="q-ml-sm">
                 {{ step.patients.length }}
               </q-badge>
@@ -76,7 +76,7 @@ export default {
         { name: 'Assessment', patients: [], route: '/assessment' },
         { name: 'New Consultation', patients: [], route: '/customers/newconsultation' },
         { name: 'Laboratory', patients: [], route: '/customers/laboratory' },
-        { name: 'Returned Consultation', patients: [], route: '/customers/returnconsultation' },
+        { name: 'Reconsultation', patients: [], route: '/customers/returnconsultation' },
         { name: 'Medicine', patients: [], route: '#' },
         { name: 'Billing', patients: [], route: '/billing' },
         { name: 'GL', patients: [], route: '/gl' },

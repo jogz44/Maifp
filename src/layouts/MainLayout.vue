@@ -6,7 +6,7 @@
         <q-btn flat dense round @click="toggleLeftDrawer()" aria-label="Menu" icon="menu" />
         <q-btn flat no-caps no-wrap class="q-ml-xs">
           <img src="/CHO-logo.png" alt="CHO Logo" width="28" />
-          <q-toolbar-title shrink class="text-weight-bold"> MAIFIP System </q-toolbar-title>
+          <q-toolbar-title shrink class="text-weight-bold"> CHAMP </q-toolbar-title>
         </q-btn>
 
         <div class="q-ml-auto q-gutter-sm">
@@ -189,6 +189,13 @@
               rounded
               class="q-ml-sm"
             />
+          </div>
+        </q-item>
+
+        <q-item v-if="canAccessBilling" clickable v-ripple to="/billinglog">
+          <div class="row items-center">
+            <q-icon name="description" size="24px" class="q-mr-md" />
+            <span class="text-sm" style="padding-left: 16px">Billing Record</span>
           </div>
         </q-item>
 

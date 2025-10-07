@@ -5,7 +5,8 @@
         <q-avatar size="200px" class="q-mb-md">
           <img src="../assets/tagumlogo.png" alt="App Logo" />
         </q-avatar>
-        <div class="text-h5 text-weight-bold text-primary">MAIFIP System</div>
+        <div class="text-h5 text-weight-bold text-primary">CHAMP</div>
+        <div class="text-subtitle1 text-grey-7">City Health Assistance Monitoring Platform</div>
         <div class="text-subtitle1 text-grey-7">Login to your account</div>
       </q-card-section>
 

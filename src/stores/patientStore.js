@@ -194,6 +194,22 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
+    async fetchBillingLog() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/billing/report')
+        this.patients = response.data
+        return this.patients
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
     // Step 1 Assessment
     async fetchPatientsAssessment() {
       this.loading = true
