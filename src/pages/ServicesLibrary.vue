@@ -4,7 +4,16 @@
       <q-card-section>
         <div class="row items-center justify-between">
           <div class="text-h6">Service Management</div>
-          <q-btn color="primary" label="Add Service" icon="add" @click="openDialog()" dense />
+
+          <!-- Add button visible only to admin or role = 1 -->
+          <q-btn
+            v-if="isAdmin"
+            color="primary"
+            label="Add Service"
+            icon="add"
+            @click="openDialog()"
+            dense
+          />
         </div>
       </q-card-section>
 
@@ -52,6 +61,7 @@
           <q-card-section class="my-sticky-header q-pa-sm">
             <div class="text-h6">{{ selectedCategoryLabel }}</div>
           </q-card-section>
+
           <q-table
             dense
             flat
@@ -81,17 +91,25 @@
               </q-td>
             </template>
 
-            <!-- Actions column -->
+            <!-- Actions column (only for admin/role 1) -->
             <template v-slot:body-cell-actions="props">
               <q-td align="center">
-                <q-btn flat icon="edit" color="primary" size="sm" @click="openDialog(props.row)" />
-                <q-btn
-                  flat
-                  icon="delete"
-                  color="negative"
-                  size="sm"
-                  @click="deleteRow(props.row)"
-                />
+                <div v-if="isAdmin">
+                  <q-btn
+                    flat
+                    icon="edit"
+                    color="primary"
+                    size="sm"
+                    @click="openDialog(props.row)"
+                  />
+                  <q-btn
+                    flat
+                    icon="delete"
+                    color="negative"
+                    size="sm"
+                    @click="deleteRow(props.row)"
+                  />
+                </div>
               </q-td>
             </template>
           </q-table>
@@ -122,12 +140,13 @@
         <q-separator />
         <q-card-actions align="right">
           <q-btn flat label="Cancel" v-close-popup />
-          <q-btn color="primary" label="Save" @click="saveRow" />
+          <q-btn v-if="isAdmin" color="primary" label="Save" @click="saveRow" />
         </q-card-actions>
       </q-card>
     </q-dialog>
   </q-page>
 </template>
+
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
@@ -141,6 +160,10 @@ const pagination = ref({
   page: 1,
   rowsPerPage: 10, // default rows per page
 })
+
+const userRole = ref('admin') // or '1', or 'user'
+
+const isAdmin = computed(() => userRole.value === 'admin' || userRole.value === 1)
 
 // categories
 const categories = [

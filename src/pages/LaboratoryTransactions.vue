@@ -193,7 +193,6 @@
                   />
                 </div>
               </div>
-
             </q-card>
           </div>
         </q-card-section>
