@@ -21,27 +21,21 @@
               <transition name="fade-slide">
                 <div
                   v-if="showDoctorToast"
-                    class="q-pa-sm text-white text-caption shadow-4 absolute-top-right"
-                    style="
-                      margin-top: 15px;
-                      margin-right: 48px; /* push it left of the info button */
-                      border-radius: 10px;
-                      background: rgba(33, 150, 243, 0.75);
-                      backdrop-filter: blur(6px);
-                      white-space: nowrap;"
-                      >
-                      Consultation fee loaded
+                  class="q-pa-sm text-white text-caption shadow-4 absolute-top-right"
+                  style="
+                    margin-top: 15px;
+                    margin-right: 48px; /* push it left of the info button */
+                    border-radius: 10px;
+                    background: rgba(33, 150, 243, 0.75);
+                    backdrop-filter: blur(6px);
+                    white-space: nowrap;
+                  "
+                >
+                  Consultation fee loaded
                 </div>
               </transition>
               <!-- Info button -->
-              <q-btn
-                icon="info"
-                color="primary"
-                round
-                dense
-                flat
-                @click="openDoctorDialog"
-              />
+              <q-btn icon="info" color="primary" round dense flat @click="openDoctorDialog" />
             </div>
           </div>
         </q-card-section>
@@ -82,11 +76,29 @@
                 <template v-slot:body-cell-actions="props">
                   <q-td :props="props">
                     <div v-if="!props.row.editMode">
-                      <q-btn flat color="primary" label="Edit" size="sm" @click="props.row.editMode = true" />
+                      <q-btn
+                        flat
+                        color="primary"
+                        label="Edit"
+                        size="sm"
+                        @click="props.row.editMode = true"
+                      />
                     </div>
                     <div v-else>
-                      <q-btn flat color="positive" label="Save" size="sm" @click="saveDoctorFee(props.row)" />
-                      <q-btn flat color="negative" label="Cancel" size="sm" @click="cancelEdit(props.row)" />
+                      <q-btn
+                        flat
+                        color="positive"
+                        label="Save"
+                        size="sm"
+                        @click="saveDoctorFee(props.row)"
+                      />
+                      <q-btn
+                        flat
+                        color="negative"
+                        label="Cancel"
+                        size="sm"
+                        @click="cancelEdit(props.row)"
+                      />
                     </div>
                   </q-td>
                 </template>
@@ -338,26 +350,40 @@
 
         <!-- Buttons BELOW the card -->
         <div class="q-mt-md flex justify-end q-gutter-sm" v-if="isLatest">
-          <q-btn
+          <!-- <q-btn
             color="primary"
             label="Require Medication"
             icon="medication"
             @click="onRequireMedication"
-          />
-          <q-btn
-            color="blue"
-            label="Process Lab"
-            icon="biotech"
-            @click="processLab"
-          />
-          <q-btn
-            color="green"
-            label="Done"
-            icon="check_circle"
-            @click="markDone"
-          />
+          /> -->
+          <q-btn color="blue" label="Process Lab" icon="biotech" @click="processLab" />
+          <q-btn color="green" label="Done" icon="check_circle" @click="confirmPrescription" />
         </div>
 
+        <q-dialog v-model="showPrescriptionConfirm" persistent>
+          <q-card style="min-width: 450px; position: relative">
+            <!-- Close Button (Top Right Corner inside the Card) -->
+            <q-btn
+              dense
+              flat
+              round
+              icon="close"
+              color="grey"
+              class="close-btn"
+              @click="showPrescriptionConfirm = false"
+            />
+
+            <q-card-section class="row items-center q-pt-xl q-pb-md">
+              <q-icon name="help_outline" color="primary" size="30px" class="q-mr-sm" />
+              <div class="text-h6">Does the patient have a prescription?</div>
+            </q-card-section>
+
+            <q-card-actions align="right" class="q-pt-none">
+              <q-btn flat label="NO" color="negative" @click="handleNo" />
+              <q-btn flat label="YES" color="primary" @click="handleYes" />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
       </q-card>
     </div>
   </q-page>
@@ -380,9 +406,16 @@ export default {
       showDoctorToast: false,
       doctorDialog: false,
       doctorColumns: [
-        { name: 'doctor_amount', label: "Consultation Fee", field: 'doctor_amount', align: 'center' },
-        { name: 'actions', label: 'Actions', field: 'actions', align: 'center' }
+        {
+          name: 'doctor_amount',
+          label: 'Consultation Fee',
+          field: 'doctor_amount',
+          align: 'center',
+        },
+        { name: 'actions', label: 'Actions', field: 'actions', align: 'center' },
       ],
+
+      showPrescriptionConfirm: false,
 
       // Separate edit modes for transaction and vital signs
       isTransactionEditMode: false,
@@ -400,7 +433,7 @@ export default {
     },
   },
 
-  mounted () {
+  mounted() {
     this.patientId = this.$route.query.patientId
     this.transactionId = this.$route.query.transactionId
 
@@ -426,15 +459,14 @@ export default {
   },
 
   methods: {
-
-    async openDoctorDialog () {
+    async openDoctorDialog() {
       try {
         await this.patientStore.fetchDoctors()
         this.doctorDialog = true
       } catch {
         this.$q.notify({
           type: 'negative',
-          message: 'Failed to load doctor data'
+          message: 'Failed to load doctor data',
         })
       }
     },
@@ -443,7 +475,7 @@ export default {
       try {
         const payload = { id: row.id, doctor_amount: row.doctor_amount }
         await this.patientStore.updateDoctorFee(payload)
-        this.$q.notify({ type: 'positive', message: "Consultation fee updated!" })
+        this.$q.notify({ type: 'positive', message: 'Consultation fee updated!' })
       } catch {
         this.$q.notify({ type: 'negative', message: 'Failed to update fee' })
       }
@@ -453,7 +485,7 @@ export default {
         const payload = { doctor_amount: row.doctor_amount }
         await this.patientStore.updateDoctorFee(row.id, payload)
         row.editMode = false
-        this.$q.notify({ type: 'positive', message: "Consultation fee updated!" })
+        this.$q.notify({ type: 'positive', message: 'Consultation fee updated!' })
       } catch {
         this.$q.notify({ type: 'negative', message: 'Failed to update fee' })
       }
@@ -463,12 +495,26 @@ export default {
       row.editMode = false
     },
 
+    //  Confirmation Dialog for "Done"
+    confirmPrescription() {
+      this.showPrescriptionConfirm = true
+    },
+    handleYes() {
+      this.showPrescriptionConfirm = false
+      this.onRequireMedication()
+    },
+    handleNo() {
+      this.showPrescriptionConfirm = false
+      this.markDone()
+    },
+
+    // Require Medication Logic
     async onRequireMedication() {
       const patientStore = usePatientStore()
 
       const now = new Date()
-      const consultationDate = now.toISOString().split('T')[0] // YYYY-MM-DD
-      const consultationTime = now.toTimeString().split(' ')[0] // HH:MM:SS
+      const consultationDate = now.toISOString().split('T')[0]
+      const consultationTime = now.toTimeString().split(' ')[0]
 
       const payload = {
         patient_id: this.patientId,
@@ -481,28 +527,26 @@ export default {
 
       try {
         await patientStore.storeNewConsultation(payload)
-
         this.$q.notify({
           type: 'positive',
-          message: 'New Consultation status updated to Medication',
+          message: 'Consultation status proceeds to Medication',
         })
-
-        // If you want, redirect to pharmacy page
         this.$router.push({ path: '/customers/newConsultation' })
       } catch (error) {
         this.$q.notify({
           type: 'negative',
-          message: `Failed to update New Consultation: ${error.message}`,
+          message: `Failed to update Consultation: ${error.message}`,
         })
       }
     },
 
+    // Process Laboratory Logic
     async processLab() {
       const patientStore = usePatientStore()
 
       const now = new Date()
-      const consultationDate = now.toISOString().split('T')[0] // YYYY-MM-DD
-      const consultationTime = now.toTimeString().split(' ')[0] // HH:MM:SS
+      const consultationDate = now.toISOString().split('T')[0]
+      const consultationTime = now.toTimeString().split(' ')[0]
 
       const payload = {
         patient_id: this.patientId,
@@ -515,16 +559,11 @@ export default {
 
       try {
         await patientStore.storeLaboratoryPatient(payload)
-
         this.$q.notify({
           type: 'positive',
           message: 'Patient sent to Laboratory successfully!',
         })
-
-        // Refresh laboratory list
         await patientStore.fetchLaboratoryPatients()
-
-        // (Optional) Navigate if you want to redirect
         this.$router.push({ path: '/customers/newConsultation' })
       } catch (error) {
         this.$q.notify({
@@ -534,12 +573,13 @@ export default {
       }
     },
 
+    // Mark as Done Logic
     async markDone() {
       const patientStore = usePatientStore()
 
       const now = new Date()
-      const consultationDate = now.toISOString().split('T')[0] // YYYY-MM-DD
-      const consultationTime = now.toTimeString().split(' ')[0] // HH:MM:SS
+      const consultationDate = now.toISOString().split('T')[0]
+      const consultationTime = now.toTimeString().split(' ')[0]
 
       const payload = {
         patient_id: this.patientId,
@@ -552,18 +592,15 @@ export default {
 
       try {
         await patientStore.storeNewConsultation(payload)
-
         this.$q.notify({
           type: 'positive',
-          message: 'New Consultation status updated to Medication',
+          message: 'Consultation status Done',
         })
-
-        // If you want, redirect to pharmacy page
         this.$router.push({ path: '/customers/newConsultation' })
       } catch (error) {
         this.$q.notify({
           type: 'negative',
-          message: `Failed to update New Consultation: ${error.message}`,
+          message: `Failed to update Consultation: ${error.message}`,
         })
       }
     },
@@ -603,13 +640,13 @@ export default {
                 const sorted = [...patientData.transaction].sort(
                   (a, b) =>
                     new Date(b.transaction_date || b.created_at) -
-                    new Date(a.transaction_date || a.created_at)
+                    new Date(a.transaction_date || a.created_at),
                 )
                 const latest = sorted[0]
                 this.isLatest = Number(latest.id) === Number(this.transactionId)
 
                 console.log(
-                  `Latest transaction ID: ${latest.id}, Current ID: ${this.transactionId}, isLatest: ${this.isLatest}`
+                  `Latest transaction ID: ${latest.id}, Current ID: ${this.transactionId}, isLatest: ${this.isLatest}`,
                 )
               }
             } else {
@@ -882,5 +919,12 @@ export default {
 .fade-slide-leave-from {
   opacity: 0.2;
   transform: translateX(0);
+}
+
+.close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
 }
 </style>

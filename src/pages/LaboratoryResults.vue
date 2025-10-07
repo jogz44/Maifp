@@ -256,6 +256,7 @@
         <!-- MORE LABORATORY TABS -->
         <div>
           <q-splitter
+            v-if="!loading"
             v-model="splitterModel"
             style="height: 290px"
             class="text-green border rounded-borders"
@@ -783,7 +784,6 @@ export default {
       reviewLabExams: [], // for staging before finalizing
       labExamRows: [],
       labExamColumns: [
-        { name: 'item_id', label: 'Item ID', field: 'item_id', align: 'left' },
         {
           name: 'item_description',
           label: 'Item Description',
@@ -804,7 +804,6 @@ export default {
       reviewRadiologies: [],
       radiologyRows: [],
       radiologyColumns: [
-        { name: 'id', label: 'Item ID', field: 'id', align: 'left' },
         {
           name: 'item_description',
           label: 'Item Description',
@@ -825,7 +824,6 @@ export default {
       reviewMammograms: [],
       mammogramRows: [],
       mammogramColumns: [
-        { name: 'id', label: 'Item ID', field: 'id', align: 'left' },
         { name: 'procedure', label: 'Procedure', field: 'procedure', align: 'left' },
         { name: 'rate', label: 'Rate (Php)', field: 'rate', align: 'right' },
         { name: 'service_fee', label: 'ESPF', field: 'service_fee', align: 'right' },
@@ -841,7 +839,6 @@ export default {
       reviewUltrasounds: [],
       ultrasoundRows: [],
       ultrasoundColumns: [
-        { name: 'id', label: 'Item ID', field: 'id', align: 'left' },
         { name: 'body_parts', label: 'Body Parts', field: 'body_parts', align: 'left' },
         { name: 'rate', label: 'Rate (Php)', field: 'rate', align: 'right' },
         { name: 'service_fee', label: 'ESPF', field: 'service_fee', align: 'right' },
@@ -1350,9 +1347,7 @@ export default {
 
         // Normalize possible structures
         const exams =
-          response?.data ||
-          response?.mammogram ||
-          (Array.isArray(response) ? response : [])
+          response?.data || response?.mammogram || (Array.isArray(response) ? response : [])
 
         this.mammogramRows = exams.map((exam) => ({
           ...exam,
