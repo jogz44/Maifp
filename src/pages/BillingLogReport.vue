@@ -483,16 +483,17 @@ const hasExistingAssistance = computed(() => {
   )
 })
 
-const totalExistingAssistance = computed(() => {
-  if (!hasExistingAssistance.value) return 0
-  return patient.value.assistance.funds.reduce((total, fund) => {
-    return total + parseAmount(fund.fund_amount)
-  }, 0)
-})
-
 const finalAmountDue = computed(() => {
   const originalAmount = parseAmount(patient.value.final_billing)
-  const assistanceAmount = hasExistingAssistance.value ? totalExistingAssistance.value : 0
+
+  // Calculate assistance amount excluding MAIFIP
+  let assistanceAmount = 0
+  if (hasExistingAssistance.value) {
+    assistanceAmount = patient.value.assistance.funds
+      .filter((fund) => fund.fund_source !== 'MAIFIP')
+      .reduce((total, fund) => total + parseAmount(fund.fund_amount), 0)
+  }
+
   return Math.max(0, originalAmount - assistanceAmount)
 })
 
