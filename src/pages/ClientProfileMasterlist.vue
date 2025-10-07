@@ -653,8 +653,8 @@ export default {
         city: 'Tagum City',
         province: 'Davao del Norte',
         category: '',
-        is_pwd: false,
-        is_solo: false,
+        is_pwd: null,
+        is_solo: null,
       },
       transactions: [],
       selectedTransaction: null,
@@ -692,7 +692,7 @@ export default {
       transactionColumns: [
         {
           name: 'id',
-          label: 'ID',
+          label: 'No',
           field: 'id',
           sortable: true,
           align: 'left',

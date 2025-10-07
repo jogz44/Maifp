@@ -146,11 +146,24 @@
                       <q-input outlined dense v-model="patient.category" label="Category" :readonly="!isEditMode" />
                     </div>
                     <div class="col-6">
-                      <q-checkbox v-model="patient.is_pwd" label="PWD" :readonly="!isEditMode" :disable="!isEditMode" />
+                      <q-checkbox
+                        v-model="patient.is_pwd"
+                        label="PWD"
+                        :readonly="!isEditMode"
+                        :disable="!isEditMode"
+                        :true-value="1"
+                        :false-value="0"
+                      />
                     </div>
                     <div class="col-6">
-                      <q-checkbox v-model="patient.is_solo" label="Solo Parent" :readonly="!isEditMode"
-                        :disable="!isEditMode" />
+                      <q-checkbox
+                        v-model="patient.is_solo"
+                        label="Solo Parent"
+                        :readonly="!isEditMode"
+                        :disable="!isEditMode"
+                        :true-value="1"
+                        :false-value="0"
+                      />
                     </div>
                   </div>
                 </div>
@@ -298,8 +311,8 @@ export default {
         city: 'Tagum City',
         province: 'Davao del Norte',
         category: '',
-        is_pwd: false,
-        is_solo: false,
+        is_pwd: null,
+        is_solo: null,
         philsys_id: '',
         philhealth_id: '',
         place_of_birth: '',
