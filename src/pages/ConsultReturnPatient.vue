@@ -167,25 +167,34 @@
                 </div>
               </div>
 
-              <!-- Status Indicators -->
-              <div class="row q-gutter-sm q-mt-xs">
-                <div class="col-12 col-md-2 q-pa-sm">
-                  <q-checkbox
-                    v-model="patient.is_pwd"
-                    label="PWD"
-                    :readonly="!isEditMode"
-                    :disable="!isEditMode"
-                  />
-                </div>
-                <div class="col-12 col-md-2 q-pa-sm">
-                  <q-checkbox
-                    v-model="patient.is_solo"
-                    label="Solo Parent"
-                    :readonly="!isEditMode"
-                    :disable="!isEditMode"
-                  />
-                </div>
+            <!-- Status Indicators -->
+            <div class="row q-gutter-sm q-mt-xs">
+              <!-- PWD -->
+              <div class="col-12 col-md-2 q-pa-sm" v-if="patient.is_pwd">
+                <q-checkbox
+                  :model-value="true"
+                  label="PWD"
+                  color="positive"
+                  readonly
+                  checked-icon="check_box"
+                  unchecked-icon="check_box_outline_blank"
+                />
               </div>
+
+              <!-- Solo Parent -->
+              <div class="col-12 col-md-2 q-pa-sm" v-if="patient.is_solo">
+                <q-checkbox
+                  :model-value="true"
+                  label="Solo Parent"
+                  color="positive"
+                  readonly
+                  checked-icon="check_box"
+                  unchecked-icon="check_box_outline_blank"
+                />
+              </div>
+            </div>
+
+
             </q-card>
           </div>
         </q-card-section>
@@ -462,66 +471,6 @@ export default {
       }
     },
 
-    toggleEditMode() {
-      this.isEditMode = true
-      // Store original data for potential cancellation
-      this.originalPatientData = { ...this.patient }
-    },
-
-    async savePatientChanges() {
-      try {
-        // Validate required fields
-        if (!this.patient.firstname || !this.patient.lastname) {
-          this.$q.notify({
-            type: 'negative',
-            message: 'First name and last name are required',
-            position: 'top',
-            timeout: 2000,
-          })
-          return
-        }
-
-        // Update the patient using the store action
-        const updatedPatient = await this.patientStore.updatePatient(this.patient.id, this.patient)
-
-        if (updatedPatient) {
-          this.$q.notify({
-            type: 'positive',
-            message: 'Patient information updated successfully',
-            position: 'top',
-            timeout: 2000,
-          })
-
-          // Exit edit mode
-          this.isEditMode = false
-          this.originalPatientData = null
-        }
-      } catch (error) {
-        console.error('Error updating patient:', error)
-        this.$q.notify({
-          type: 'negative',
-          message: 'Failed to update patient information',
-          position: 'top',
-          timeout: 2000,
-        })
-      }
-    },
-
-    cancelEdit() {
-      // Restore original data
-      if (this.originalPatientData) {
-        this.patient = { ...this.originalPatientData }
-      }
-      this.isEditMode = false
-      this.originalPatientData = null
-    },
-
-    updateAge() {
-      if (this.patient.birthdate) {
-        this.patient.age = this.patientStore.calculateAge(this.patient.birthdate)
-      }
-    },
-
     viewTransactionDetails(transaction) {
       console.log('Viewing transaction:', transaction)
       this.$router.push({
@@ -530,132 +479,6 @@ export default {
       })
     },
 
-    addNewTransaction() {
-      console.log('Adding new transaction for patient ID:', this.patient.id)
-      // Navigate to transaction creation page or open a dialog
-      // Include patient ID so new transaction is linked to this patient
-      this.$router.push({
-        path: '/customers/profile',
-        query: { patientId: this.patient.id },
-      })
-    },
-
-    // New Transaction Modal Methods
-    resetNewTransaction() {
-      this.newTransaction = {
-        transaction_date: '',
-        transaction_mode: '',
-        transaction_type: '',
-        purpose: '',
-        patient_id: this.patient.id,
-        height: '',
-        weight: '',
-        bmi: '',
-        waist: '',
-        heart_rate: '',
-        blood_pressure: '',
-        respiratory_rate: '',
-        pulse_rate: '',
-        temperature: '',
-        sp02: '',
-        LMP: '',
-        medicine: '',
-      }
-    },
-
-    updateNewTransactionBMI() {
-      const height = parseFloat(this.newTransaction.height)
-      const weight = parseFloat(this.newTransaction.weight)
-
-      if (height > 0 && weight > 0) {
-        const heightInMeters = height / 100
-        const bmi = weight / (heightInMeters * heightInMeters)
-        this.newTransaction.bmi = bmi.toFixed(1)
-      } else {
-        this.newTransaction.bmi = ''
-      }
-    },
-
-    getBmiCategory(bmi) {
-      const bmiValue = parseFloat(bmi)
-      if (bmiValue < 18.5) return 'Underweight'
-      if (bmiValue < 25) return 'Normal'
-      if (bmiValue < 30) return 'Overweight'
-      return 'Obese'
-    },
-
-    async createNewTransaction() {
-      try {
-        // Validate required fields
-        if (!this.newTransaction.transaction_date) {
-          this.$q.notify({
-            type: 'negative',
-            message: 'Transaction date is required',
-            position: 'top',
-            timeout: 2000,
-          })
-          return
-        }
-
-        if (!this.newTransaction.transaction_mode) {
-          this.$q.notify({
-            type: 'negative',
-            message: 'Transaction mode is required',
-            position: 'top',
-            timeout: 2000,
-          })
-          return
-        }
-
-        if (!this.newTransaction.transaction_type) {
-          this.$q.notify({
-            type: 'negative',
-            message: 'Transaction type is required',
-            position: 'top',
-            timeout: 2000,
-          })
-          return
-        }
-
-        this.creatingTransaction = true
-
-        // Prepare transaction data with vital signs
-        const transactionData = {
-          ...this.newTransaction,
-          patient_id: this.patient.id,
-          vital_signs: this.newTransaction,
-        }
-
-        // Create the transaction using the store action
-        const createdTransaction = await this.patientStore.createNewTransaction(transactionData)
-
-        if (createdTransaction) {
-          this.$q.notify({
-            type: 'positive',
-            message: 'Transaction created successfully',
-            position: 'top',
-            timeout: 2000,
-          })
-
-          // Add the new transaction to the local list
-          this.transactions.unshift(createdTransaction)
-
-          // Close modal and reset form
-          this.showNewTransactionModal = false
-          this.resetNewTransaction()
-        }
-      } catch (error) {
-        console.error('Error creating transaction:', error)
-        this.$q.notify({
-          type: 'negative',
-          message: `Failed to create transaction: ${error.message}`,
-          position: 'top',
-          timeout: 2000,
-        })
-      } finally {
-        this.creatingTransaction = false
-      }
-    },
 
     goBack() {
       this.$router.go(-1)

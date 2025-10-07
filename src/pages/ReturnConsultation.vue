@@ -12,6 +12,7 @@
 
         <q-card-section>
           <q-table
+            v-if="!loading"
             flat
             bordered
             :filter="search"
@@ -161,6 +162,8 @@ export default {
       rows: [
       ],
 
+      loading: false,
+
       CustomerInfo: {
         firstname: '',
         lastname: '',
@@ -185,6 +188,7 @@ export default {
   },
   methods: {
     async getPatients() {
+      this.loading = true
       try {
         const patients = await this.Patients.fetchReturnedPatients()
         this.rows = Array.isArray(patients) ? patients.map(p => ({ ...p })) : []
@@ -192,6 +196,8 @@ export default {
       } catch (error) {
         console.error('Error fetching qualified patients:', error)
         this.rows = []
+      } finally {
+        this.loading = false
       }
     },
 

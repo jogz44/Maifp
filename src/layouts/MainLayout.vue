@@ -231,8 +231,8 @@
 
         <q-item clickable v-ripple to="/services">
           <div class="row items-center">
-            <q-icon name="supervisor_account" size="24px" class="q-mr-md" />
-            <span class="text-sm" style="padding-left: 16px">Services</span>
+            <q-icon name="archive" size="24px" class="q-mr-md" />
+            <span class="text-sm" style="padding-left: 16px">Library</span>
           </div>
         </q-item>
       </q-list>

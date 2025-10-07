@@ -11,7 +11,14 @@
         </q-card-section>
 
         <q-card-section>
+          <!-- Loading overlay while fetching data -->
+          <q-inner-loading :showing="loading">
+            <q-spinner color="primary" size="50px" />
+          </q-inner-loading>
+
+          <!-- Table only displays once loading is done -->
           <q-table
+            v-if="!loading"
             flat
             bordered
             :filter="search"
@@ -26,7 +33,6 @@
             :rows-per-page-options="[0]"
             style="height: 600px"
           >
-
             <template #body="props">
               <q-tr :v-bind="props">
                 <q-td key="lastname" style="font-size: 11px" align="left">
@@ -173,6 +179,7 @@ export default {
       rows: [
 
       ],
+      loading: false,
 
       CustomerInfo: {
         firstname: '',
@@ -198,11 +205,10 @@ export default {
   },
   methods: {
     async getPatients() {
+      this.loading = true // show spinner
       try {
-        // First fetch (this updates the store state)
         await this.Patients.fetchLaboratoryPatients()
 
-        // Then read directly from the store state
         if (Array.isArray(this.Patients.laboratoryPatients) && this.Patients.laboratoryPatients.length > 0) {
           this.rows = this.Patients.laboratoryPatients.map(p => ({
             id: p.id,
@@ -222,6 +228,8 @@ export default {
         console.log('Mapped laboratory patients:', this.rows)
       } catch (error) {
         console.error('Error fetching laboratory patients:', error)
+      } finally {
+        this.loading = false // hide spinner
       }
     },
 

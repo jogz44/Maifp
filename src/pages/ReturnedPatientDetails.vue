@@ -253,8 +253,9 @@
 
         <!-- LABORATORY SERVICES TABLE -->
         <q-card-section v-if="mergedLabResults.length">
-          <div class="text-subtitle2 q-mb-sm">Laboratory Services</div>
+          <div class="text-subtitle2 q-mb-sm" v-if="!loading">Laboratory Services</div>
           <q-table
+            v-if="!loading"
             :rows="mergedLabResults"
             :columns="mergedColumns"
             row-key="unique_id"
@@ -267,25 +268,40 @@
 
         <!-- Buttons BELOW the card -->
         <div class="q-mt-md flex justify-end q-gutter-sm" v-if="isLatest">
-          <q-btn
+          <!-- <q-btn
             color="primary"
             label="Require Medication"
             icon="medication"
             @click="onRequireMedication"
-          />
-          <q-btn
-            color="blue"
-            label="Process Lab"
-            icon="biotech"
-            @click="processLab"
-          />
-          <q-btn
-            color="green"
-            label="Done"
-            icon="check_circle"
-            @click="markDone"
-          />
+          /> -->
+          <q-btn color="blue" label="Process Lab" icon="biotech" @click="processLab" />
+          <q-btn color="green" label="Done" icon="check_circle" @click="confirmPrescription" />
         </div>
+
+        <q-dialog v-model="showPrescriptionConfirm" persistent>
+          <q-card style="min-width: 450px; position: relative">
+            <!-- Close Button (Top Right Corner inside the Card) -->
+            <q-btn
+              dense
+              flat
+              round
+              icon="close"
+              color="grey"
+              class="close-btn"
+              @click="showPrescriptionConfirm = false"
+            />
+
+            <q-card-section class="row items-center q-pt-xl q-pb-md">
+              <q-icon name="help_outline" color="primary" size="30px" class="q-mr-sm" />
+              <div class="text-h6">Does the patient have a prescription?</div>
+            </q-card-section>
+
+            <q-card-actions align="right" class="q-pt-none">
+              <q-btn flat label="NO" color="negative" @click="handleNo" />
+              <q-btn flat label="YES" color="primary" @click="handleYes" />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
       </q-card>
     </div>
   </q-page>
@@ -306,6 +322,8 @@ export default {
       vitalSigns: {},
       loading: true,
 
+      showPrescriptionConfirm: false,
+
       // Separate edit modes for transaction and vital signs
       isTransactionEditMode: false,
       isVitalSignsEditMode: false,
@@ -317,13 +335,18 @@ export default {
       mergedLabResults: [],
 
       mergedColumns: [
-        { name: 'id', label: 'ID', field: 'id', align: 'left' },
+        { name: 'id', label: 'Item No.', field: 'id', align: 'center' },
         { name: 'category', label: 'Category', field: 'category', align: 'left' },
         { name: 'description', label: 'Description', field: 'description', align: 'left' },
-        { name: 'selling_price', label: 'Selling Price / Rate', field: 'selling_price', align: 'right' },
+        {
+          name: 'selling_price',
+          label: 'Selling Price / Rate',
+          field: 'selling_price',
+          align: 'right',
+        },
         { name: 'service_fee', label: 'Service Fee', field: 'service_fee', align: 'right' },
-        { name: 'total_amount', label: 'Total Amount', field: 'total_amount', align: 'right' }
-      ]
+        { name: 'total_amount', label: 'Total Amount', field: 'total_amount', align: 'right' },
+      ],
     }
   },
 
@@ -357,13 +380,26 @@ export default {
   },
 
   methods: {
+    //  Confirmation Dialog for "Done"
+    confirmPrescription() {
+      this.showPrescriptionConfirm = true
+    },
+    handleYes() {
+      this.showPrescriptionConfirm = false
+      this.onRequireMedication()
+    },
+    handleNo() {
+      this.showPrescriptionConfirm = false
+      this.markDone()
+    },
 
+    // Require Medication Logic
     async onRequireMedication() {
       const patientStore = usePatientStore()
 
       const now = new Date()
-      const consultationDate = now.toISOString().split('T')[0] // YYYY-MM-DD
-      const consultationTime = now.toTimeString().split(' ')[0] // HH:MM:SS
+      const consultationDate = now.toISOString().split('T')[0]
+      const consultationTime = now.toTimeString().split(' ')[0]
 
       const payload = {
         patient_id: this.patientId,
@@ -376,27 +412,26 @@ export default {
 
       try {
         await patientStore.storeNewConsultation(payload)
-
         this.$q.notify({
           type: 'positive',
-          message: 'Returned Consultation status updated to Medication',
+          message: 'Returned Consultation status proceeds to Medication',
         })
-
-        // If you want, redirect to pharmacy page
         this.$router.push({ path: '/customers/returnConsultation' })
       } catch (error) {
         this.$q.notify({
           type: 'negative',
-          message: `Failed to update Returned Consultation: ${error.message}`,
+          message: `Failed to update Consultation: ${error.message}`,
         })
       }
     },
+
+    // Process Laboratory Logic
     async processLab() {
       const patientStore = usePatientStore()
 
       const now = new Date()
-      const consultationDate = now.toISOString().split('T')[0] // YYYY-MM-DD
-      const consultationTime = now.toTimeString().split(' ')[0] // HH:MM:SS
+      const consultationDate = now.toISOString().split('T')[0]
+      const consultationTime = now.toTimeString().split(' ')[0]
 
       const payload = {
         patient_id: this.patientId,
@@ -409,17 +444,12 @@ export default {
 
       try {
         await patientStore.storeLaboratoryPatient(payload)
-
         this.$q.notify({
           type: 'positive',
-          message: 'Patient sent to Laboratory successfully!',
+          message: 'Returned Patient sent to Laboratory successfully!',
         })
-
-        // Refresh laboratory list
         await patientStore.fetchLaboratoryPatients()
-
-        // (Optional) Navigate if you want to redirect
-        this.$router.push({ path: '/customers/newConsultation' })
+        this.$router.push({ path: '/customers/returnConsultation' })
       } catch (error) {
         this.$q.notify({
           type: 'negative',
@@ -428,12 +458,13 @@ export default {
       }
     },
 
+    // Mark as Done Logic
     async markDone() {
       const patientStore = usePatientStore()
 
       const now = new Date()
-      const consultationDate = now.toISOString().split('T')[0] // YYYY-MM-DD
-      const consultationTime = now.toTimeString().split(' ')[0] // HH:MM:SS
+      const consultationDate = now.toISOString().split('T')[0]
+      const consultationTime = now.toTimeString().split(' ')[0]
 
       const payload = {
         patient_id: this.patientId,
@@ -446,18 +477,15 @@ export default {
 
       try {
         await patientStore.storeNewConsultation(payload)
-
         this.$q.notify({
           type: 'positive',
-          message: 'Returned Consultation status updated to Done',
+          message: 'Returned Consultation status Done',
         })
-
-        // If you want, redirect to pharmacy page
         this.$router.push({ path: '/customers/returnConsultation' })
       } catch (error) {
         this.$q.notify({
           type: 'negative',
-          message: `Failed to update Returned Consultation: ${error.message}`,
+          message: `Failed to update Consultation: ${error.message}`,
         })
       }
     },
@@ -475,54 +503,49 @@ export default {
         // normalize and merge into one array
         let counter = 1
 
-        const examinations = (labData.examination || []).map(item => ({
+        const examinations = (labData.examination || []).map((item) => ({
           id: counter++, // auto-increment
           category: 'Examination',
           description: item.item_description,
           selling_price: item.selling_price,
           service_fee: item.service_fee,
           total_amount: item.total_amount,
-          unique_id: `exam-${counter}`
+          unique_id: `exam-${counter}`,
         }))
 
-        const radiologies = (labData.radiologies || []).map(item => ({
+        const radiologies = (labData.radiologies || []).map((item) => ({
           id: counter++, // continue increment
           category: 'Radiology',
           description: item.item_description,
           selling_price: item.selling_price,
           service_fee: item.service_fee,
           total_amount: item.total_amount,
-          unique_id: `rad-${counter}`
+          unique_id: `rad-${counter}`,
         }))
 
-        const ultrasounds = (labData.ultrasound || []).map(item => ({
+        const ultrasounds = (labData.ultrasound || []).map((item) => ({
           id: counter++, // continue increment
           category: 'Ultrasound',
           description: item.body_parts,
           selling_price: item.rate,
           service_fee: item.service_fee,
           total_amount: item.total_amount,
-          unique_id: `ultra-${counter}`
+          unique_id: `ultra-${counter}`,
         }))
 
-        const mammograms = (labData.mammogram || []).map(item => ({
+        const mammograms = (labData.mammogram || []).map((item) => ({
           id: counter++, // continue increment
           category: 'Mammogram',
           description: item.procedure,
           selling_price: item.rate,
           service_fee: item.service_fee,
           total_amount: item.total_amount,
-          unique_id: `mammo-${counter}`
+          unique_id: `mammo-${counter}`,
         }))
 
-        this.mergedLabResults = [
-          ...examinations,
-          ...radiologies,
-          ...ultrasounds,
-          ...mammograms
-        ]
+        this.mergedLabResults = [...examinations, ...radiologies, ...ultrasounds, ...mammograms]
 
-        console.log("Merged Lab Results:", this.mergedLabResults)
+        console.log('Merged Lab Results:', this.mergedLabResults)
 
         // fetch patient for latest check
         const patientData = await this.patientStore.getPatient(this.patientId)
@@ -530,14 +553,16 @@ export default {
           this.patient = patientData
           if (patientData.transaction && Array.isArray(patientData.transaction)) {
             const sorted = [...patientData.transaction].sort(
-              (a, b) => new Date(b.transaction_date || b.created_at) - new Date(a.transaction_date || a.created_at)
+              (a, b) =>
+                new Date(b.transaction_date || b.created_at) -
+                new Date(a.transaction_date || a.created_at),
             )
             const latest = sorted[0]
             this.isLatest = Number(latest.id) === Number(this.transactionId)
           }
         }
       } catch (error) {
-        console.error("Error loading transaction data:", error)
+        console.error('Error loading transaction data:', error)
       } finally {
         this.loading = false
       }
@@ -769,5 +794,12 @@ export default {
   .q-btn {
     display: none !important;
   }
+}
+
+.close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
 }
 </style>
