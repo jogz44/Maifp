@@ -603,23 +603,33 @@ export const usePatientStore = defineStore('patient', {
 
     // DELETE LAB EXAM / RADIOLOGY / MAMMOGRAM / ULTRASOUND
     async deleteLaboratoryExam(transactionId, id, type) {
-      try {
-        const payload = {
-          transaction_id: transactionId,
-          type: type,
-          id: id,
-        }
+  try {
+    // If examination → backend expects "id"
+    const payload =
+      type === 'examination'
+        ? {
+            transaction_id: transactionId,
+            type,
+            id, // ✅ the backend expects this
+            item_id: id, // optional, if backend uses it
+          }
+        : {
+            transaction_id: transactionId,
+            type,
+            id,
+          }
 
-        console.log('Delete Payload:', payload)
+    console.log('Delete Payload:', payload)
 
-        const response = await api.delete('/laboratory/delete', { data: payload })
-        console.log('Delete Response:', response.data)
-        return response.data
-      } catch (error) {
-        console.error(`Error deleting ${type}:`, error)
-        throw error
-      }
-    },
+    const response = await api.delete('/laboratory/delete', { data: payload })
+    console.log('Delete Response:', response.data)
+    return response.data
+  } catch (error) {
+    console.error(`Error deleting ${type}:`, error)
+    throw error
+  }
+}
+,
 
     // FETCH OVERALL LABORATORY TRANSACTION DETAILS
     async fetchLaboratoryDetails(transactionId) {

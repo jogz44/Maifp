@@ -268,19 +268,33 @@
 
         <!-- Buttons BELOW the card -->
         <div class="q-mt-md flex justify-end q-gutter-sm" v-if="isLatest">
-          <!-- <q-btn
-            color="primary"
-            label="Require Medication"
-            icon="medication"
-            @click="onRequireMedication"
-          /> -->
-          <q-btn color="blue" label="Process Lab" icon="biotech" @click="processLab" />
-          <q-btn color="green" label="Done" icon="check_circle" @click="confirmPrescription" />
+        <!-- <q-btn
+              color="primary"
+              label="Require Medication"
+              icon="medication"
+              @click="onRequireMedication"
+            /> -->
+          <q-btn
+            color="blue"
+            label="Process Lab"
+            icon="biotech"
+            @click="handleProcessLab"
+            :loading="isProcessingLab"
+            :disable="isProcessingLab || isHandlingPrescription"
+          />
+          <q-btn
+            color="green"
+            label="Done"
+            icon="check_circle"
+            @click="confirmPrescription"
+            :loading="isHandlingPrescription"
+            :disable="isProcessingLab || isHandlingPrescription"
+          />
         </div>
 
+        <!-- Confirmation Dialog -->
         <q-dialog v-model="showPrescriptionConfirm" persistent>
           <q-card style="min-width: 450px; position: relative">
-            <!-- Close Button (Top Right Corner inside the Card) -->
             <q-btn
               dense
               flat
@@ -289,6 +303,7 @@
               color="grey"
               class="close-btn"
               @click="showPrescriptionConfirm = false"
+              :disable="isHandlingPrescription"
             />
 
             <q-card-section class="row items-center q-pt-xl q-pb-md">
@@ -297,8 +312,22 @@
             </q-card-section>
 
             <q-card-actions align="right" class="q-pt-none">
-              <q-btn flat label="NO" color="negative" @click="handleNo" />
-              <q-btn flat label="YES" color="primary" @click="handleYes" />
+              <q-btn
+                flat
+                label="NO"
+                color="negative"
+                @click="handleNo"
+                :loading="isHandlingPrescription"
+                :disable="isHandlingPrescription"
+              />
+              <q-btn
+                flat
+                label="YES"
+                color="primary"
+                @click="handleYes"
+                :loading="isHandlingPrescription"
+                :disable="isHandlingPrescription"
+              />
             </q-card-actions>
           </q-card>
         </q-dialog>
@@ -309,6 +338,7 @@
 
 <script>
 import { usePatientStore } from 'src/stores/patientStore'
+import { debounce } from 'quasar'
 
 export default {
   name: 'TransactionDetails',
@@ -323,6 +353,8 @@ export default {
       loading: true,
 
       showPrescriptionConfirm: false,
+      isProcessingLab: false,
+      isHandlingPrescription: false,
 
       // Separate edit modes for transaction and vital signs
       isTransactionEditMode: false,
@@ -380,32 +412,51 @@ export default {
   },
 
   methods: {
+    // debounce wrapper to prevent rapid clicks
+    debouncedSaveDoctorFee: debounce(function (row) {
+      this.saveDoctorFee(row)
+    }, 500),
+
     //  Confirmation Dialog for "Done"
     confirmPrescription() {
       this.showPrescriptionConfirm = true
     },
-    handleYes() {
+
+    async handleYes() {
       this.showPrescriptionConfirm = false
-      this.onRequireMedication()
+      await this.safeAction(this.onRequireMedication, 'isHandlingPrescription')
     },
-    handleNo() {
+
+    async handleNo() {
       this.showPrescriptionConfirm = false
-      this.markDone()
+      await this.safeAction(this.markDone, 'isHandlingPrescription')
+    },
+
+    async handleProcessLab() {
+      await this.safeAction(this.processLab, 'isProcessingLab')
+    },
+
+    // Centralized safe-action helper (prevents double clicks + handles spinner)
+    async safeAction(actionFn, flagName) {
+      if (this[flagName]) return // already running
+
+      this[flagName] = true
+      try {
+        await actionFn.call(this)
+      } finally {
+        this[flagName] = false
+      }
     },
 
     // Require Medication Logic
     async onRequireMedication() {
       const patientStore = usePatientStore()
-
       const now = new Date()
-      const consultationDate = now.toISOString().split('T')[0]
-      const consultationTime = now.toTimeString().split(' ')[0]
-
       const payload = {
         patient_id: this.patientId,
         transaction_id: this.transactionId,
-        consultation_date: consultationDate,
-        consultation_time: consultationTime,
+        consultation_date: now.toISOString().split('T')[0],
+        consultation_time: now.toTimeString().split(' ')[0],
         status: 'Medication',
         transaction_type: 'consultation',
       }
@@ -414,7 +465,7 @@ export default {
         await patientStore.storeNewConsultation(payload)
         this.$q.notify({
           type: 'positive',
-          message: 'Returned Consultation status proceeds to Medication',
+          message: 'Consultation status proceeds to Medication',
         })
         this.$router.push({ path: '/customers/returnConsultation' })
       } catch (error) {
@@ -428,16 +479,12 @@ export default {
     // Process Laboratory Logic
     async processLab() {
       const patientStore = usePatientStore()
-
       const now = new Date()
-      const consultationDate = now.toISOString().split('T')[0]
-      const consultationTime = now.toTimeString().split(' ')[0]
-
       const payload = {
         patient_id: this.patientId,
         transaction_id: this.transactionId,
-        consultation_date: consultationDate,
-        consultation_time: consultationTime,
+        consultation_date: now.toISOString().split('T')[0],
+        consultation_time: now.toTimeString().split(' ')[0],
         status: 'Processing',
         transaction_type: 'consultation',
       }
@@ -446,7 +493,7 @@ export default {
         await patientStore.storeLaboratoryPatient(payload)
         this.$q.notify({
           type: 'positive',
-          message: 'Returned Patient sent to Laboratory successfully!',
+          message: 'Patient sent to Laboratory successfully!',
         })
         await patientStore.fetchLaboratoryPatients()
         this.$router.push({ path: '/customers/returnConsultation' })
@@ -461,16 +508,12 @@ export default {
     // Mark as Done Logic
     async markDone() {
       const patientStore = usePatientStore()
-
       const now = new Date()
-      const consultationDate = now.toISOString().split('T')[0]
-      const consultationTime = now.toTimeString().split(' ')[0]
-
       const payload = {
         patient_id: this.patientId,
         transaction_id: this.transactionId,
-        consultation_date: consultationDate,
-        consultation_time: consultationTime,
+        consultation_date: now.toISOString().split('T')[0],
+        consultation_time: now.toTimeString().split(' ')[0],
         status: 'Done',
         transaction_type: 'consultation',
       }
@@ -479,7 +522,7 @@ export default {
         await patientStore.storeNewConsultation(payload)
         this.$q.notify({
           type: 'positive',
-          message: 'Returned Consultation status Done',
+          message: 'Consultation status Done',
         })
         this.$router.push({ path: '/customers/returnConsultation' })
       } catch (error) {
@@ -568,167 +611,6 @@ export default {
       }
     },
 
-    // Transaction Edit Methods
-    toggleTransactionEditMode() {
-      this.isTransactionEditMode = true
-      // Store original data for potential cancellation
-      this.originalTransactionData = { ...this.transaction }
-    },
-
-    async saveTransactionChanges() {
-      try {
-        // Validate required fields
-        if (!this.transaction.transaction_date || !this.transaction.transaction_type) {
-          this.$q.notify({
-            type: 'negative',
-            message: 'Transaction date and type are required',
-            position: 'top',
-            timeout: 2000,
-          })
-          return
-        }
-
-        // Prepare the transaction data (exclude vital signs)
-        const transactionDataToUpdate = {
-          id: this.transaction.id,
-          transaction_date: this.transaction.transaction_date,
-          transaction_type: this.transaction.transaction_type,
-          transaction_mode: this.transaction.transaction_mode,
-          purpose: this.transaction.purpose,
-          patient_id: this.transaction.patient_id,
-          // Include any other transaction-specific fields but exclude vital
-        }
-
-        console.log('Updating transaction with data:', transactionDataToUpdate)
-
-        // Update the transaction using the store action
-        const updatedTransaction = await this.patientStore.updateTransaction(
-          this.transaction.id,
-          transactionDataToUpdate,
-        )
-
-        if (updatedTransaction) {
-          this.$q.notify({
-            type: 'positive',
-            message: 'Transaction updated successfully',
-            position: 'top',
-            timeout: 2000,
-          })
-
-          // Update local transaction data with the response
-          this.transaction = { ...this.transaction, ...updatedTransaction }
-
-          // Exit edit mode
-          this.isTransactionEditMode = false
-          this.originalTransactionData = null
-        }
-      } catch (error) {
-        console.error('Error updating transaction:', error)
-        this.$q.notify({
-          type: 'negative',
-          message: 'Failed to update transaction',
-          position: 'top',
-          timeout: 2000,
-        })
-      }
-    },
-
-    cancelTransactionEdit() {
-      // Restore original transaction data
-      if (this.originalTransactionData) {
-        this.transaction = { ...this.originalTransactionData }
-      }
-
-      this.isTransactionEditMode = false
-      this.originalTransactionData = null
-    },
-
-    // Vital Signs Edit Methods
-    toggleVitalSignsEditMode() {
-      this.isVitalSignsEditMode = true
-      // Store original data for potential cancellation
-      this.originalVitalSigns = { ...this.vitalSigns }
-    },
-
-    async saveVitalSignsChanges() {
-      try {
-        // Validate vital signs if needed
-        // You can add validation here for specific vital sign requirements
-
-        // Prepare the vital signs data
-        const vitalDataToUpdate = {
-          ...this.vitalSigns,
-          transaction_id: this.transactionId, // Ensure transaction_id is included
-        }
-
-        console.log('Updating vital signs with data:', vitalDataToUpdate)
-        console.log('Current vital signs before update:', this.vitalSigns)
-
-        // Check if vital signs already exist (has an ID) or need to be created
-        let updatedVital
-        if (this.vitalSigns.id) {
-          // Update existing vital signs using the updateVital action
-          updatedVital = await this.patientStore.updateVital(this.vitalSigns.id, vitalDataToUpdate)
-        } else {
-          // If no vital signs exist, you might need to create new ones
-          // This depends on your API structure - you may need to add a createVital method
-          console.log('No vital signs ID found, may need to create new vital record')
-          // For now, we'll assume updateVital can handle both cases
-          updatedVital = await this.patientStore.updateVital(
-            this.transactionId, // Use transaction ID if no vital ID exists
-            vitalDataToUpdate,
-          )
-        }
-
-        console.log('Updated vital signs response:', updatedVital)
-
-        if (updatedVital) {
-          this.$q.notify({
-            type: 'positive',
-            message: 'Vital signs updated successfully',
-            position: 'top',
-            timeout: 2000,
-          })
-
-          // Update local vital signs data with the response
-          // Make sure to preserve the structure
-          this.vitalSigns = { ...this.vitalSigns, ...updatedVital }
-
-          // Also update the transaction's vital property to keep data in sync
-          if (this.transaction && this.transaction.vital) {
-            this.transaction.vital = { ...this.vitalSigns }
-          }
-
-          console.log('Local vital signs after update:', this.vitalSigns)
-
-          // Exit edit mode
-          this.isVitalSignsEditMode = false
-          this.originalVitalSigns = null
-
-          // Optional: Refresh the entire transaction data to ensure consistency
-          // Uncomment the line below if the vital signs still don't display properly
-          // await this.refreshTransactionData()
-        }
-      } catch (error) {
-        console.error('Error updating vital signs:', error)
-        this.$q.notify({
-          type: 'negative',
-          message: 'Failed to update vital signs',
-          position: 'top',
-          timeout: 2000,
-        })
-      }
-    },
-
-    cancelVitalSignsEdit() {
-      // Restore original vital signs data
-      if (this.originalVitalSigns) {
-        this.vitalSigns = { ...this.originalVitalSigns }
-      }
-
-      this.isVitalSignsEditMode = false
-      this.originalVitalSigns = null
-    },
 
     // Method to refresh transaction data after updates
     async refreshTransactionData() {
@@ -744,17 +626,6 @@ export default {
         }
       } catch (error) {
         console.error('Error refreshing transaction data:', error)
-      }
-    },
-
-    updateBMI() {
-      if (this.vitalSigns.height && this.vitalSigns.weight) {
-        this.vitalSigns.bmi = this.patientStore.calculateBMI(
-          parseFloat(this.vitalSigns.height),
-          parseFloat(this.vitalSigns.weight),
-        )
-      } else {
-        this.vitalSigns.bmi = ''
       }
     },
 
