@@ -296,7 +296,7 @@
                   <q-table
                     :rows="labExamRows"
                     :columns="labExamColumns"
-                    row-key="item_id"
+                    row-key="id"
                     flat
                     bordered
                     dense
@@ -310,8 +310,8 @@
                           flat
                           icon="delete"
                           color="negative"
-                          :loading="deletingId === props.row.item_id"
-                          @click="confirmDelete(props.row.item_id, 'examination')"
+                          :loading="deletingId === props.row.id"
+                          @click="confirmDelete(props.row.id, 'examination')"
                         />
                       </q-td>
                     </template>
@@ -1553,7 +1553,7 @@ export default {
               })
 
               if (type === 'examination') {
-                this.labExamRows = this.labExamRows.filter((e) => e.item_id !== id)
+                this.labExamRows = this.labExamRows.filter((e) => e.id !== id)
                 localStorage.setItem(
                   `labExamRows_${this.transactionId}`,
                   JSON.stringify(this.labExamRows),
