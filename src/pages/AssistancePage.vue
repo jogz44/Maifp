@@ -28,6 +28,13 @@
             @click="showAssistanceDialog = true"
           />
           <q-btn
+            class="q-mr-sm"
+            color="secondary"
+            label="Print PDF"
+            icon="picture_as_pdf"
+            @click="handlePrint"
+          />
+          <q-btn
             color="green-9"
             label="Complete"
             icon="save"
@@ -36,33 +43,45 @@
             :disable="completing"
             @click="showConfirmDialog = true"
           />
-          <q-btn color="secondary" label="Print PDF" icon="picture_as_pdf" @click="handlePrint" />
         </div>
       </div>
 
       <q-dialog v-model="showConfirmDialog" persistent>
-        <q-card style="min-width: 400px">
+        <q-card style="min-width: 400px; position: relative">
+          <!-- Close (X) Button -->
+          <q-btn
+            dense
+            flat
+            icon="close"
+            class="q-dialog__close absolute-top-right"
+            @click="closeConfirmDialog"
+            :disable="completing"
+          />
+
           <q-card-section class="row items-center">
             <q-avatar icon="help" color="green-9" text-color="white" />
-            <span class="q-ml-sm text-h6">Complete Transaction</span>
+            <span class="q-ml-sm text-h6">Transaction</span>
           </q-card-section>
+
           <q-card-section>
-            <p>Are you sure you want to mark this transaction as completed?</p>
+            <p>Are you sure you want to proceed this transaction in gl?</p>
             <p class="text-caption text-grey-7">
               <strong>Note:</strong> This action cannot be undone.
             </p>
           </q-card-section>
+
           <q-card-actions align="right">
             <q-btn
               flat
-              label="Cancel"
+              label="No"
               color="grey"
-              @click="showConfirmDialog = false"
+              @click="fromPhilHealth"
+              :loading="completing"
               :disable="completing"
             />
             <q-btn
               flat
-              label="Complete"
+              label="Yes"
               color="green-9"
               @click="completeTransaction"
               :loading="completing"
@@ -417,6 +436,8 @@ const patient = ref({
   birthdate: '',
   address: {},
   contact_number: '',
+  maifip: null,
+  philhealth: null,
   transaction_date: '',
   representative: {},
   consultation_amount: 0,
@@ -573,6 +594,10 @@ function formatDate(dateString) {
   return date.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
+function closeConfirmDialog() {
+  showConfirmDialog.value = false
+}
+
 function cancelAssistance() {
   assistanceForm.value = {
     assistanceItems: [{ fundSource: 'Select Funds Source', amount: 0, id: 1 }],
@@ -654,7 +679,7 @@ async function applyAssistance() {
       final_billing: parseAmount(patient.value.final_billing),
       assistances: validAssistanceItems,
       total_assistance: totalAssistanceAmount.value,
-      status: 'Complete',
+      // status: 'Complete',
     }
 
     const result = await assistanceStore.applyAssistance(payload)
@@ -720,6 +745,44 @@ async function completeTransaction() {
     $q.notify({
       type: 'negative',
       message: 'Failed to complete transaction. Please try again.',
+      position: 'top',
+    })
+  } finally {
+    completing.value = false
+    showConfirmDialog.value = false
+  }
+}
+
+async function fromPhilHealth() {
+  if (!store.transaction_id) {
+    $q.notify({ type: 'negative', message: 'Transaction ID not found', position: 'top' })
+    return
+  }
+  completing.value = true
+  try {
+    // Update the local patient maifip value first
+    patient.value.maifip = 1
+
+    // Call the store method to update transaction evaluation with maifip = 1
+    const result = await store.updateTransactionEvaluation(store.transaction_id, 'evaluation', {
+      maifip: 1,
+    })
+
+    if (result) {
+      $q.notify({
+        type: 'positive',
+        message: 'Transaction sent to PhilHealth evaluation successfully!',
+        position: 'top',
+      })
+      setTimeout(() => router.push('/billing'), 1500)
+    } else {
+      throw new Error('Failed to update transaction status')
+    }
+  } catch (error) {
+    console.error('Error in fromPhilHealth:', error)
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to send transaction to PhilHealth evaluation. Please try again.',
       position: 'top',
     })
   } finally {

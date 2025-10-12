@@ -106,6 +106,7 @@ export default {
             social: '/dashboard-social',
             coder: '/dashboard-encoder',
             billing: '/dashboard-billing',
+            assessor: '/dashboard-assessor',
           }
 
           const redirectPath = roleRoutes[role] || '/'

@@ -11,6 +11,8 @@ export const usePatientBadgeStore = defineStore('patientBadge', {
       totalReturnedCount: 0,
       totalBillingCount: 0,
       totalGLCount: 0,
+      totalphilhealth_to_maifip: 0,
+      totalphilhealth: 0,
     },
     loading: false,
     error: null,
@@ -24,6 +26,8 @@ export const usePatientBadgeStore = defineStore('patientBadge', {
     returned: (state) => state.badges.totalReturnedCount,
     billing: (state) => state.badges.totalBillingCount,
     gl: (state) => state.badges.totalGLCount,
+    p_assessment: (state) => state.badges.totalphilhealth_to_maifip,
+    philhealth: (state) => state.badges.totalphilhealth,
   },
 
   actions: {
@@ -50,6 +54,8 @@ export const usePatientBadgeStore = defineStore('patientBadge', {
         totalReturnedCount: 0,
         totalBillingCount: 0,
         totalGLCount: 0,
+        totalphilhealth_to_maifip: 0,
+        totalphilhealth: 0,
       }
     },
   },

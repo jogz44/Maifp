@@ -2,6 +2,17 @@
   <q-page padding>
     <!-- Patient Monitoring Section -->
     <div class="text-h6 text-green-9 font-bold q-mt-none q-mb-md">Patient Monitoring</div>
+    <!-- Header Fund Cards -->
+    <!-- <div class="row q-col-gutter-md q-mb-lg">
+      <div class="col-xs-12 col-sm-12">
+        <q-card>
+          <q-card-section>
+            <div class="text-h6 text-green-9">Released Funds</div>
+            <div class="text-subtitle1">₱ {{ fundStore.releasedFunds.toLocaleString() }}</div>
+          </q-card-section>
+        </q-card>
+      </div>
+    </div> -->
 
     <!-- Header Fund Cards by Source -->
     <div class="row q-col-gutter-md q-mb-lg">
@@ -23,7 +34,6 @@
         </q-card>
       </div>
     </div>
-
     <!-- Steps -->
     <div class="row q-col-gutter-md">
       <div v-for="(step, index) in steps" :key="index" class="col-xs-12 col-sm-6 col-md">
@@ -47,8 +57,7 @@
                   :key="pIndex"
                   class="col-12 q-mb-xs"
                 >
-                  {{ patient?.firstname || patient?.patient?.firstname || 'Unknown' }}
-                  {{ patient.lastname || patient?.patient?.lastname || 'Unknown' }}
+                  {{ patient.firstname }} {{ patient.lastname }}
                 </div>
 
                 <div v-if="step.patients.length === 0" class="col-12 text-grey text-center">
@@ -72,17 +81,7 @@ export default {
 
   data() {
     return {
-      steps: [
-        { name: 'Assessment', patients: [], route: '/assessment' },
-        { name: 'PhilHealth', patients: [], route: '/philhealth' },
-        { name: 'New Consultation', patients: [], route: '/customers/newconsultation' },
-        { name: 'Laboratory', patients: [], route: '/customers/laboratory' },
-        { name: 'Reconsultation', patients: [], route: '/customers/returnconsultation' },
-        { name: 'Medicine', patients: [], route: '#' },
-        { name: 'Billing', patients: [], route: '/billing' },
-        { name: 'P-Assessment', patients: [], route: '/fromphilhealth' },
-        { name: 'GL', patients: [], route: '/gl' },
-      ],
+      steps: [{ name: 'PhilHealth', patients: [], route: '/philhealth' }],
       intervalId: null,
       fundStore: null,
       patientStore: null,
@@ -93,7 +92,7 @@ export default {
     this.fundStore = useFundsStore()
     this.patientStore = usePatientStore()
     this.loadAllData()
-    this.intervalId = setInterval(this.loadAllData, 10000)
+    this.intervalId = setInterval(this.loadAllData, 30000)
   },
 
   beforeUnmount() {
@@ -102,17 +101,7 @@ export default {
 
   methods: {
     async loadStepPatients() {
-      const results = await Promise.allSettled([
-        this.patientStore.fetchPatientsAssessment(),
-        this.patientStore.fetchPatientsPhilHealth(),
-        this.patientStore.fetchPatientsNew(),
-        this.patientStore.fetchPatientsLaboratory(),
-        this.patientStore.fetchPatientsReturned(),
-        this.patientStore.fetchPatientsMedicine(),
-        this.patientStore.fetchPatientsBilling(),
-        this.patientStore.fetchPatientsfromPhilHealth(),
-        this.patientStore.fetchPatientsGL(),
-      ])
+      const results = await Promise.allSettled([this.patientStore.fetchPatientsPhilHealth()])
 
       results.forEach((result, index) => {
         if (result.status === 'fulfilled') {

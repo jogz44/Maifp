@@ -18,7 +18,6 @@
         </div>
         <div class="header-actions">
           <q-btn
-            v-if="!hasMAIFIP && billingData.transaction.status !== 'Funded'"
             color="orange-9"
             label="MAIFIP"
             icon="volunteer_activism"
@@ -28,7 +27,6 @@
             @click="showAssistanceDialog = true"
           />
           <q-btn
-            v-if="hasMAIFIP && billingData.transaction.status !== 'Funded'"
             color="primary"
             label="Submit"
             icon="save"
@@ -478,11 +476,11 @@ const patientFullName = computed(() => {
   return `${first} ${last}`.trim()
 })
 
-const hasMAIFIP = computed(() => {
-  return (
-    billingData.value.funds && billingData.value.funds.some((fund) => fund.fund_source === 'MAIFIP')
-  )
-})
+// const hasMAIFIP = computed(() => {
+//   return (
+//     billingData.value.funds && billingData.value.funds.some((fund) => fund.fund_source === 'MAIFIP')
+//   )
+// })
 
 const assistanceAmountRules = [
   (val) => val >= 0 || 'Assistance amount cannot be negative',
@@ -515,7 +513,7 @@ onMounted(async () => {
   }
 
   try {
-    const data = await store.getGLDetails(store.transaction_id)
+    const data = await store.getBillingDetails(store.transaction_id)
     if (data) {
       billingData.value = {
         ...data,

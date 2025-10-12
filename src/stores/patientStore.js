@@ -227,6 +227,40 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
+    // Step 1 Assessment
+    async fetchPatientsPhilHealth() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/patients/philhealth/assessment')
+        this.patients = response.data
+        return this.patients
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // Step 1 Assessment
+    async fetchPatientsfromPhilHealth() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get('/patients/philhealth/maifip/assessment')
+        this.patients = response.data
+        return this.patients
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+
     // Step 2 New Consultation
     async fetchPatientsNew() {
       this.loading = true
@@ -505,6 +539,8 @@ export const usePatientStore = defineStore('patient', {
         place_of_birth: patientData.place_of_birth,
         civil_status: patientData.civil_status,
         religion: patientData.religion,
+        philhealth: null,
+        maifip: null,
         // education_attainment: patientData.education_attainment,
         occupation: patientData.occupation,
         monthly_income: patientData.monthly_income,
@@ -659,6 +695,89 @@ export const usePatientStore = defineStore('patient', {
         }
 
         return { id: id, status: status }
+      } catch (error) {
+        console.error('Error updating transaction status:', error)
+        this.handleApiError(error)
+        throw error
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async updateTransactionEvaluation(id, status, additionalData = {}) {
+      this.loading = true
+      this.error = null
+
+      try {
+        console.log(`Updating transaction ${id} status to: ${status}`)
+        console.log('Additional data:', additionalData)
+
+        // Build the payload with status and any additional data (like maifip)
+        const payload = {
+          status: status,
+          ...additionalData,
+        }
+
+        console.log('Payload being sent:', payload)
+
+        // Send the payload to the API
+        const response = await api.put(`/transactions/${id}/update/philhealth`, payload)
+
+        console.log('Transaction status update response:', response.data)
+
+        // Update the current patient's transactions if they exist
+        if (this.currentPatient && this.currentPatient.transaction) {
+          const transactionIndex = this.currentPatient.transaction.findIndex((t) => t.id === id)
+          if (transactionIndex !== -1) {
+            // Update the status field and any additional data
+            this.currentPatient.transaction[transactionIndex].status = status
+
+            // Update additional fields if provided
+            Object.keys(additionalData).forEach((key) => {
+              this.currentPatient.transaction[transactionIndex][key] = additionalData[key]
+            })
+
+            console.log(`Updated transaction ${id} in currentPatient`)
+          }
+        }
+
+        // Also update the patients list if the transaction exists there
+        if (this.patients && this.patients.length > 0) {
+          for (let patient of this.patients) {
+            if (patient.transaction && Array.isArray(patient.transaction)) {
+              const transactionIndex = patient.transaction.findIndex((t) => t.id === id)
+              if (transactionIndex !== -1) {
+                // Update the status field and any additional data
+                patient.transaction[transactionIndex].status = status
+
+                // Update additional fields if provided
+                Object.keys(additionalData).forEach((key) => {
+                  patient.transaction[transactionIndex][key] = additionalData[key]
+                })
+
+                console.log(`Updated transaction ${id} in patients list`)
+                break
+              }
+            }
+          }
+        }
+
+        // Update any cached transactions list (if exists in your store)
+        if (this.transactions && this.transactions.length > 0) {
+          const transactionIndex = this.transactions.findIndex((t) => t.id === id)
+          if (transactionIndex !== -1) {
+            this.transactions[transactionIndex].status = status
+
+            // Update additional fields if provided
+            Object.keys(additionalData).forEach((key) => {
+              this.transactions[transactionIndex][key] = additionalData[key]
+            })
+
+            console.log(`Updated transaction ${id} in transactions list`)
+          }
+        }
+
+        return { id: id, status: status, ...additionalData }
       } catch (error) {
         console.error('Error updating transaction status:', error)
         this.handleApiError(error)

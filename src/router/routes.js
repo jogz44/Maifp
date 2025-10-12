@@ -40,6 +40,11 @@ const routes = [
         component: () => import('pages/DashBoardBilling.vue'),
         meta: { requiresAuth: true },
       },
+      {
+        path: '/dashboard-assessor',
+        component: () => import('pages/DashBoardAssessor.vue'),
+        meta: { requiresAuth: true },
+      },
 
       //patients
       {
@@ -81,12 +86,29 @@ const routes = [
         meta: { requiresAuth: true },
       },
 
-      //fundings
-      // {
-      //   path: '/fundings',
-      //   component: () => import('pages/FundingPage.vue'),
-      //   meta: { requiresAuth: true },
-      // },
+      //from philhealth
+      {
+        path: '/fromphilhealth',
+        component: () => import('pages/fromPhilHealthPage.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/fromphilhealth/profile',
+        component: () => import('pages/fromPhilHealthProfile.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      //philhealth
+      {
+        path: '/philhealth',
+        component: () => import('pages/PhilHealthPage.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/philhealth/profile',
+        component: () => import('pages/AssessmentProfile.vue'),
+        meta: { requiresAuth: true },
+      },
 
       //guaranteed letter
       {

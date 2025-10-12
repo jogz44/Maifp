@@ -90,6 +90,24 @@
             </q-item-section>
           </q-item>
 
+          <q-item clickable v-ripple to="/fromphilhealth">
+            <q-item-section class="q-ml-sm">
+              <q-item-label class="text-caption">
+                <q-icon name="diversity_3" class="q-ml-md q-mr-lg" size="24px" />
+                P-Assessment
+              </q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-badge
+                v-if="badgeStore.p_assessment > 0"
+                :label="badgeStore.p_assessment"
+                color="red-9"
+                rounded
+                class="q-ml-sm"
+              />
+            </q-item-section>
+          </q-item>
+
           <q-item clickable v-ripple to="/gl">
             <q-item-section class="q-ml-sm">
               <q-item-label class="text-caption">
@@ -117,6 +135,21 @@
             </q-item-section>
           </q-item> -->
         </q-expansion-item>
+
+        <!-- PhilHealth MENU - Available to admin and assessor -->
+        <q-item v-if="canAccessPhilHealth" clickable v-ripple to="/philhealth">
+          <div class="row items-center">
+            <q-icon name="diversity_1" size="24px" class="q-mr-md" />
+            <span class="text-sm" style="padding-left: 16px">PhilHealth</span>
+            <q-badge
+              v-if="badgeStore.philhealth > 0"
+              :label="badgeStore.philhealth"
+              color="red-9"
+              rounded
+              class="q-ml-sm"
+            />
+          </div>
+        </q-item>
 
         <!-- CONSULTATION MENU - Available to admin and doctor -->
         <q-expansion-item
@@ -276,12 +309,14 @@ export default {
           'billing',
           'masterlist',
           'user-management',
+          'philhealth',
         ],
         social: ['dashboard', 'maifip'],
         coder: ['dashboard', 'patient-info'],
         doctor: ['dashboard', 'consultation'],
         laboratory: ['dashboard', 'laboratory'],
         billing: ['dashboard', 'billing'],
+        assessor: ['dashboard', 'philhealth'],
       },
     }
   },
@@ -323,6 +358,10 @@ export default {
       return this.allowedModules.includes('user-management')
     },
 
+    canAccessPhilHealth() {
+      return this.allowedModules.includes('philhealth')
+    },
+
     dashboardRoute() {
       switch (this.currentUserRole) {
         case 'admin':
@@ -337,6 +376,8 @@ export default {
           return '/dashboard-lab'
         case 'billing':
           return '/dashboard-billing'
+        case 'assessor':
+          return '/dashboard-assessor'
         default:
           return '/:catchAll(.*)*'
       }
@@ -364,7 +405,6 @@ export default {
       this.userStore.authenticatedUser = user.id
     },
 
-    // Method to check if user can access specific modules
     canAccess(allowedRoles) {
       return allowedRoles.includes(this.currentUserRole)
     },

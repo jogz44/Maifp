@@ -17,7 +17,6 @@ export const useRequisitionIssuanceSlip = defineStore('ris', {
       try {
         const response = await api.post('daily/ris/date', payload)
         this.ris_list = response.data.list
-
       } catch (error) {
         console.log(error)
         Notify.create({

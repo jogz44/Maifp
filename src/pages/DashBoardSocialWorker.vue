@@ -74,6 +74,7 @@ export default {
     return {
       steps: [
         { name: 'Assessment', patients: [], route: '/assessment' },
+        { name: 'P-Assessment', patients: [], route: '/fromphilhealth' },
         { name: 'GL', patients: [], route: '/gl' },
       ],
       intervalId: null,
@@ -97,6 +98,7 @@ export default {
     async loadStepPatients() {
       const results = await Promise.allSettled([
         this.patientStore.fetchPatientsAssessment(),
+        this.patientStore.fetchPatientsfromPhilHealth(),
         this.patientStore.fetchPatientsGL(),
       ])
 
