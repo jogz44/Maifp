@@ -208,19 +208,19 @@
               <div class="col-6">
                 <p>
                   <strong>Date of Transaction:</strong>
-                  {{ formatDate(billingData.transaction?.transaction_date) }}
+                  {{ formatDate(billingData.transaction_date) }}
                 </p>
-                <p><strong>Surname:</strong> {{ billingData.patient?.lastname || 'N/A' }}</p>
-                <p><strong>First Name:</strong> {{ billingData.patient?.firstname || 'N/A' }}</p>
-                <p><strong>Middle Name:</strong> {{ billingData.patient?.middlename || 'N/A' }}</p>
+                <p><strong>Surname:</strong> {{ billingData.lastname || 'N/A' }}</p>
+                <p><strong>First Name:</strong> {{ billingData.firstname || 'N/A' }}</p>
+                <p><strong>Middle Name:</strong> {{ billingData.middlename || 'N/A' }}</p>
               </div>
               <div class="col-6">
-                <p><strong>Gender:</strong> {{ billingData.patient?.gender || 'N/A' }}</p>
-                <p><strong>Age:</strong> {{ billingData.patient?.age || 'N/A' }}</p>
-                <p><strong>Birthdate:</strong> {{ formatDate(billingData.patient?.birthdate) }}</p>
+                <p><strong>Gender:</strong> {{ billingData.gender || 'N/A' }}</p>
+                <p><strong>Age:</strong> {{ billingData.age || 'N/A' }}</p>
+                <p><strong>Birthdate:</strong> {{ formatDate(billingData.birthdate) }}</p>
                 <p>
                   <strong>Address:</strong>
-                  {{ billingData.patient?.address || 'N/A' }}
+                  {{ formatAddress(billingData.address) }}
                 </p>
               </div>
             </div>
@@ -246,16 +246,8 @@
                   <td class="text-left"></td>
                   <td class="text-right">{{ formatAmount(billingData.consultation_amount) }}</td>
                 </tr>
-                <!-- Laboratories
-                <tr v-for="lab in patient.laboratories_details" :key="'lab-' + lab.id">
-                  <td>{{ lab.laboratory_type }}</td>
-                  <td class="text-left"></td>
-                  <td class="text-left"></td>
-                  <td class="text-left"></td>
-                  <td class="text-right">{{ formatAmount(lab.total_amount) }}</td>
-                </tr> -->
                 <!-- Radiology -->
-                <tr v-for="rad in billingData.radiology_details" :key="'rad-' + rad.id">
+                <tr v-for="rad in billingData.radiologies_details" :key="'rad-' + rad.id">
                   <td>{{ rad.item_description }}</td>
                   <td class="text-left"></td>
                   <td class="text-left"></td>
@@ -380,47 +372,52 @@ const showErrorDialog = ref(false)
 const errorMessage = ref([])
 const currentUser = ref(null)
 
-// Billing data structure
+// Updated billing data structure to match new JSON format
 const billingData = ref({
-  id: null,
-  gl_number: '',
   patient_id: null,
   transaction_id: null,
-  radiology_details: [],
+  transaction_type: '',
+  firstname: '',
+  lastname: '',
+  middlename: '',
+  birthdate: '',
+  age: null,
+  gender: '',
+  category: '',
+  is_pwd: 0,
+  is_solo: 0,
+  contact_number: '',
+  maifip: 0,
+  transaction_status: '',
+  philhealth: 0,
+  address: {
+    street: '',
+    purok: '',
+    barangay: '',
+  },
+  transaction_date: '',
+  consultation_amount: '0.00',
+  radiology_total: 0,
+  ultrasound_total: 0,
+  examination_total: 0,
+  mammogram_total: 0,
+  medication_total: 0,
+  total_billing: 0,
+  discount: 0,
+  final_billing: 0,
+  radiologies_details: [], // Changed from radiology_details
   examination_details: [],
   mammogram_details: [],
   ultrasound_details: [],
-  // laboratories_details: [],
   medication: [],
-  consultation_amount: '0.00',
-  // laboratory_total: '0.00',
-  medication_total: '0.00',
-  total_billing: '0.00',
-  discount: '0.00',
-  final_billing: '0.00',
-  status: null,
-  funds: [],
-  transaction: {
+  representative: {
     id: null,
-    transaction_number: '',
-    patient_id: null,
-    transaction_type: '',
-    status: '',
-    transaction_date: '',
-    transaction_mode: '',
-    purpose: '',
-    representative_id: null,
-  },
-  patient: {
-    id: null,
-    lastname: '',
-    firstname: '',
-    middlename: '',
-    gender: '',
-    age: null,
-    birthdate: '',
+    rep_name: '',
+    relationship: '',
     address: '',
   },
+  assistance: null,
+  funds: [], // Keep this for existing assistance functionality
 })
 
 const hasExistingAssistance = computed(() => {
@@ -471,16 +468,10 @@ const preparerName = computed(() => {
 })
 
 const patientFullName = computed(() => {
-  const first = billingData.value.patient?.firstname || ''
-  const last = billingData.value.patient?.lastname || ''
+  const first = billingData.value.firstname || ''
+  const last = billingData.value.lastname || ''
   return `${first} ${last}`.trim()
 })
-
-// const hasMAIFIP = computed(() => {
-//   return (
-//     billingData.value.funds && billingData.value.funds.some((fund) => fund.fund_source === 'MAIFIP')
-//   )
-// })
 
 const assistanceAmountRules = [
   (val) => val >= 0 || 'Assistance amount cannot be negative',
@@ -498,10 +489,7 @@ const isAssistanceFormValid = computed(() => {
   return hasControlNumber && hasValidAmount && amountNotExceeded
 })
 
-const transactionId = computed(
-  () =>
-    store.transaction_id || billingData.value.transaction_id || billingData.value.transaction?.id,
-)
+const transactionId = computed(() => store.transaction_id || billingData.value.transaction_id)
 
 // Lifecycle
 onMounted(async () => {
@@ -515,11 +503,25 @@ onMounted(async () => {
   try {
     const data = await store.getBillingDetails(store.transaction_id)
     if (data) {
+      // Map the new JSON structure directly
       billingData.value = {
         ...data,
-        laboratories_details: data.laboratories_details || [],
+        // Ensure arrays exist
+        radiologies_details: data.radiologies_details || [],
+        examination_details: data.examination_details || [],
+        mammogram_details: data.mammogram_details || [],
+        ultrasound_details: data.ultrasound_details || [],
         medication: data.medication || [],
-        funds: data.funds || [],
+        funds: data.funds || [], // Keep for existing assistance functionality
+        // Ensure address is properly structured
+        address: data.address || { street: '', purok: '', barangay: '' },
+        // Ensure representative exists
+        representative: data.representative || {
+          id: null,
+          rep_name: '',
+          relationship: '',
+          address: '',
+        },
       }
     } else {
       error.value = 'No billing data found'
@@ -548,6 +550,19 @@ function formatDate(dateString) {
   if (!dateString) return 'N/A'
   const date = new Date(dateString)
   return date.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
+}
+
+// New function to handle address formatting
+function formatAddress(address) {
+  if (!address) return 'N/A'
+  if (typeof address === 'string') return address
+
+  const parts = []
+  if (address.street) parts.push(address.street)
+  if (address.purok) parts.push(`Purok ${address.purok}`)
+  if (address.barangay) parts.push(`Brgy. ${address.barangay}`)
+
+  return parts.length > 0 ? parts.join(', ') : 'N/A'
 }
 
 // Assistance functions
