@@ -520,7 +520,7 @@ const patient = ref({
 })
 
 const assistanceForm = ref({
-  assistanceItems: [{ fundSource: 'Select Source', amount: 0, id: 1 }],
+  assistanceItems: [{ fundSource: 'PHIC - Case Rate', amount: 0, id: 1 }],
   remarks: '',
 })
 
