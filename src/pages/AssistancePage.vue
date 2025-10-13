@@ -34,37 +34,50 @@
             icon="picture_as_pdf"
             @click="handlePrint"
           />
+
           <q-btn
+            v-if="finalAmountDue > 0"
             color="green-9"
-            label="Complete"
+            label="GL"
             icon="save"
             class="q-mr-sm"
             :loading="completing"
             :disable="completing"
-            @click="showConfirmDialog = true"
+            @click="showGLConfirmDialog = true"
+          />
+
+          <q-btn
+            v-if="finalAmountDue === 0"
+            color="blue-9"
+            label="Complete"
+            icon="check"
+            class="q-mr-sm"
+            :loading="completing"
+            :disable="completing"
+            @click="showCompleteConfirmDialog = true"
           />
         </div>
       </div>
 
-      <q-dialog v-model="showConfirmDialog" persistent>
+      <!-- GL Confirmation Dialog -->
+      <q-dialog v-model="showGLConfirmDialog" persistent>
         <q-card style="min-width: 400px; position: relative">
-          <!-- Close (X) Button -->
           <q-btn
             dense
             flat
             icon="close"
             class="q-dialog__close absolute-top-right"
-            @click="closeConfirmDialog"
+            @click="closeGLConfirmDialog"
             :disable="completing"
           />
 
           <q-card-section class="row items-center">
             <q-avatar icon="help" color="green-9" text-color="white" />
-            <span class="q-ml-sm text-h6">Transaction</span>
+            <span class="q-ml-sm text-h6">GL Transaction</span>
           </q-card-section>
 
           <q-card-section>
-            <p>Are you sure you want to proceed this transaction in gl?</p>
+            <p>Are you sure you want to proceed this transaction to GL?</p>
             <p class="text-caption text-grey-7">
               <strong>Note:</strong> This action cannot be undone.
             </p>
@@ -73,17 +86,63 @@
           <q-card-actions align="right">
             <q-btn
               flat
-              label="No"
-              color="grey"
+              label="Send to PhilHealth"
+              color="blue"
               @click="fromPhilHealth"
               :loading="completing"
               :disable="completing"
             />
             <q-btn
               flat
-              label="Yes"
+              label="Yes, Proceed to GL"
               color="green-9"
               @click="completeTransaction"
+              :loading="completing"
+              :disable="completing"
+            />
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+
+      <!-- Complete Transaction Confirmation Dialog -->
+      <q-dialog v-model="showCompleteConfirmDialog" persistent>
+        <q-card style="min-width: 400px; position: relative">
+          <!-- Close (X) Button -->
+          <q-btn
+            dense
+            flat
+            icon="close"
+            class="q-dialog__close absolute-top-right"
+            @click="closeCompleteConfirmDialog"
+            :disable="completing"
+          />
+
+          <q-card-section class="row items-center">
+            <q-avatar icon="check_circle" color="blue-9" text-color="white" />
+            <span class="q-ml-sm text-h6">Complete Transaction</span>
+          </q-card-section>
+
+          <q-card-section>
+            <p>Are you sure you want to mark this transaction as funded?</p>
+            <p class="text-caption text-grey-7">
+              <strong>Note:</strong> This will mark the transaction as funded and completed.
+            </p>
+          </q-card-section>
+
+          <q-card-actions align="right">
+            <q-btn
+              flat
+              label="Cancel"
+              color="grey"
+              @click="closeCompleteConfirmDialog"
+              :loading="completing"
+              :disable="completing"
+            />
+            <q-btn
+              flat
+              label="Complete"
+              color="blue-9"
+              @click="markAsFunded"
               :loading="completing"
               :disable="completing"
             />
@@ -263,6 +322,9 @@
                 <p>
                   <strong>Date of Transaction:</strong> {{ formatDate(patient.transaction_date) }}
                 </p>
+                <p v-if="patient.philhealth_id">
+                  <strong>PhilHealth Number:</strong> {{ patient.philhealth_id }}
+                </p>
                 <p><strong>Surname:</strong> {{ patient.lastname }}</p>
                 <p><strong>First Name:</strong> {{ patient.firstname }}</p>
                 <p><strong>Middle Name:</strong> {{ patient.middlename || 'N/A' }}</p>
@@ -424,10 +486,12 @@ const error = ref(null)
 const completing = ref(false)
 const processing = ref(false)
 const showAssistanceDialog = ref(false)
-const showConfirmDialog = ref(false)
+const showGLConfirmDialog = ref(false)
+const showCompleteConfirmDialog = ref(false)
 
 const patient = ref({
   id: null,
+  philhealth_id: null,
   firstname: '',
   middlename: '',
   lastname: '',
@@ -594,8 +658,12 @@ function formatDate(dateString) {
   return date.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-function closeConfirmDialog() {
-  showConfirmDialog.value = false
+function closeGLConfirmDialog() {
+  showGLConfirmDialog.value = false
+}
+
+function closeCompleteConfirmDialog() {
+  showCompleteConfirmDialog.value = false
 }
 
 function cancelAssistance() {
@@ -723,6 +791,7 @@ async function applyAssistance() {
   }
 }
 
+// GL Transaction (when grand total is 0)
 async function completeTransaction() {
   if (!store.transaction_id) {
     $q.notify({ type: 'negative', message: 'Transaction ID not found', position: 'top' })
@@ -734,7 +803,7 @@ async function completeTransaction() {
     if (result) {
       $q.notify({
         type: 'positive',
-        message: 'Transaction completed successfully!',
+        message: 'Transaction completed successfully and sent to GL!',
         position: 'top',
       })
       setTimeout(() => router.push('/billing'), 1500)
@@ -749,10 +818,42 @@ async function completeTransaction() {
     })
   } finally {
     completing.value = false
-    showConfirmDialog.value = false
+    showGLConfirmDialog.value = false
   }
 }
 
+// Mark as Funded (when grand total is greater than 0)
+async function markAsFunded() {
+  if (!store.transaction_id) {
+    $q.notify({ type: 'negative', message: 'Transaction ID not found', position: 'top' })
+    return
+  }
+  completing.value = true
+  try {
+    const result = await store.updateTransactionStatus(store.transaction_id, 'Funded')
+    if (result) {
+      $q.notify({
+        type: 'positive',
+        message: 'Transaction marked as funded successfully!',
+        position: 'top',
+      })
+      setTimeout(() => router.push('/billing'), 1500)
+    } else {
+      throw new Error('Failed to update transaction status')
+    }
+  } catch {
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to mark transaction as funded. Please try again.',
+      position: 'top',
+    })
+  } finally {
+    completing.value = false
+    showCompleteConfirmDialog.value = false
+  }
+}
+
+// Send to PhilHealth evaluation
 async function fromPhilHealth() {
   if (!store.transaction_id) {
     $q.notify({ type: 'negative', message: 'Transaction ID not found', position: 'top' })
@@ -787,7 +888,7 @@ async function fromPhilHealth() {
     })
   } finally {
     completing.value = false
-    showConfirmDialog.value = false
+    showGLConfirmDialog.value = false
   }
 }
 
@@ -1125,6 +1226,14 @@ async function handlePrint() {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dialog close button positioning */
+.q-dialog__close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 1;
 }
 
 /* Print-specific styles */

@@ -17,7 +17,9 @@
           <q-btn flat round color="primary" icon="arrow_back" @click="$router.back()" />
         </div>
         <div class="header-actions">
+          <!-- Show MAIFIP button only if no MAIFIP assistance exists -->
           <q-btn
+            v-if="!hasMAIFIPAssistance"
             color="orange-9"
             label="MAIFIP"
             icon="volunteer_activism"
@@ -26,7 +28,10 @@
             :disable="processing"
             @click="showAssistanceDialog = true"
           />
+
+          <!-- Show Submit button only if MAIFIP assistance exists -->
           <q-btn
+            v-if="hasMAIFIPAssistance"
             color="primary"
             label="Submit"
             icon="save"
@@ -34,6 +39,7 @@
             @click="showConfirmDialog = true"
             :loading="submitting"
           />
+
           <q-btn color="secondary" label="Print PDF" icon="picture_as_pdf" @click="handlePrint" />
         </div>
       </div>
@@ -312,8 +318,8 @@
                 <!-- Financial Assistance Rows - Show existing assistance -->
                 <template v-if="hasExistingAssistance">
                   <tr
-                    v-for="(fund, index) in billingData.funds"
-                    :key="'assistance-' + fund.id || index"
+                    v-for="(fund, index) in assistanceFunds"
+                    :key="'assistance-' + (fund.id || index)"
                     class="assistance-row"
                   >
                     <td colspan="4" class="text-right">
@@ -405,7 +411,7 @@ const billingData = ref({
   total_billing: 0,
   discount: 0,
   final_billing: 0,
-  radiologies_details: [], // Changed from radiology_details
+  radiologies_details: [],
   examination_details: [],
   mammogram_details: [],
   ultrasound_details: [],
@@ -417,23 +423,46 @@ const billingData = ref({
     address: '',
   },
   assistance: null,
-  funds: [], // Keep this for existing assistance functionality
+  funds: [], // For compatibility
+})
+
+// Assistance funds array that safely handles all possible data structures
+const assistanceFunds = computed(() => {
+  const funds = []
+
+  // Check billingData.funds first (for compatibility)
+  if (Array.isArray(billingData.value.funds)) {
+    funds.push(...billingData.value.funds)
+  }
+
+  // Check billingData.assistance.funds (from API response)
+  if (billingData.value.assistance && Array.isArray(billingData.value.assistance.funds)) {
+    funds.push(...billingData.value.assistance.funds)
+  }
+
+  return funds
 })
 
 const hasExistingAssistance = computed(() => {
-  return billingData.value.funds && billingData.value.funds.length > 0
+  return assistanceFunds.value.length > 0
+})
+
+const hasMAIFIPAssistance = computed(() => {
+  return assistanceFunds.value.some(
+    (fund) => fund.fund_source && fund.fund_source.toUpperCase().includes('MAIFIP'),
+  )
 })
 
 const totalExistingAssistance = computed(() => {
   if (!hasExistingAssistance.value) return 0
-  return billingData.value.funds.reduce((total, fund) => {
+  return assistanceFunds.value.reduce((total, fund) => {
     return total + parseAmount(fund.fund_amount)
   }, 0)
 })
 
 const finalAmountDue = computed(() => {
   const originalAmount = parseAmount(billingData.value.final_billing)
-  const assistanceAmount = hasExistingAssistance.value ? totalExistingAssistance.value : 0
+  const assistanceAmount = totalExistingAssistance.value
   return Math.max(0, originalAmount - assistanceAmount)
 })
 
@@ -441,12 +470,19 @@ const finalAmountDue = computed(() => {
 const assistanceForm = ref({
   controlNumber: '',
   fund_source: 'MAIFIP',
-  amount: finalAmountDue.value,
+  amount: 0,
 })
 
-watch(finalAmountDue, (newFinalAmountDue) => {
-  assistanceForm.value.amount = newFinalAmountDue
-})
+// Watch for changes in finalAmountDue to update assistance form amount
+watch(
+  finalAmountDue,
+  (newFinalAmountDue) => {
+    if (!hasMAIFIPAssistance.value) {
+      assistanceForm.value.amount = newFinalAmountDue
+    }
+  },
+  { immediate: true },
+)
 
 // Initialize current user
 try {
@@ -512,7 +548,7 @@ onMounted(async () => {
         mammogram_details: data.mammogram_details || [],
         ultrasound_details: data.ultrasound_details || [],
         medication: data.medication || [],
-        funds: data.funds || [], // Keep for existing assistance functionality
+        funds: [], // Initialize as empty array for compatibility
         // Ensure address is properly structured
         address: data.address || { street: '', purok: '', barangay: '' },
         // Ensure representative exists
@@ -522,6 +558,8 @@ onMounted(async () => {
           relationship: '',
           address: '',
         },
+        // Keep assistance as is from API
+        assistance: data.assistance || null,
       }
     } else {
       error.value = 'No billing data found'
@@ -569,7 +607,8 @@ function formatAddress(address) {
 function cancelAssistance() {
   assistanceForm.value = {
     controlNumber: '',
-    amount: 0,
+    fund_source: 'MAIFIP',
+    amount: finalAmountDue.value,
   }
   showAssistanceDialog.value = false
 }
@@ -595,11 +634,62 @@ async function applyMAIFIP() {
 
   processing.value = true
   try {
+    // Prepare complete payload with all required fields
     const payload = {
+      transaction_id: billingData.value.transaction_id,
       fund_source: 'MAIFIP',
       fund_amount: parseFloat(assistanceForm.value.amount),
       gl_number: assistanceForm.value.controlNumber.trim(),
+
+      // Required billing fields
+      consultation_amount: parseFloat(billingData.value.consultation_amount) || 0,
+      total_billing: parseFloat(billingData.value.total_billing) || 0,
+      discount: parseFloat(billingData.value.discount) || 0,
+      final_billing: parseFloat(billingData.value.final_billing) || 0,
+      radiology_total: parseFloat(billingData.value.radiology_total) || 0,
+      examination_total: parseFloat(billingData.value.examination_total) || 0,
+      ultrasound_total: parseFloat(billingData.value.ultrasound_total) || 0,
+      mammogram_total: parseFloat(billingData.value.mammogram_total) || 0,
+
+      // Required details arrays
+      ultrasound_details: billingData.value.ultrasound_details || [],
+      mammogram_details: billingData.value.mammogram_details || [],
+      radiology_details: billingData.value.radiologies_details || [], // Note: using radiologies_details from API
+      examination_details: billingData.value.examination_details || [],
+
+      // Additional fields that might be needed
+      medication: billingData.value.medication || [],
+      patient_id: billingData.value.patient_id,
+      firstname: billingData.value.firstname || '',
+      lastname: billingData.value.lastname || '',
+      middlename: billingData.value.middlename || '',
+      birthdate: billingData.value.birthdate || '',
+      age: billingData.value.age || 0,
+      gender: billingData.value.gender || '',
+      category: billingData.value.category || '',
+      is_pwd: billingData.value.is_pwd || 0,
+      is_solo: billingData.value.is_solo || 0,
+      contact_number: billingData.value.contact_number || '',
+      maifip: billingData.value.maifip || 0,
+      transaction_status: billingData.value.transaction_status || '',
+      philhealth: billingData.value.philhealth || 0,
+      address: billingData.value.address || {
+        street: '',
+        purok: '',
+        barangay: '',
+      },
+      transaction_date: billingData.value.transaction_date || '',
+      transaction_type: billingData.value.transaction_type || '',
+      medication_total: billingData.value.medication_total || 0,
+      representative: billingData.value.representative || {
+        id: null,
+        rep_name: '',
+        relationship: '',
+        address: '',
+      },
     }
+
+    console.log('MAIFIP Payload:', payload) // For debugging
 
     const result = await assistanceStore.applyMAIFIP(transactionId.value, payload)
 
@@ -610,16 +700,28 @@ async function applyMAIFIP() {
       (result && !result.error)
 
     if (isSuccess) {
-      billingData.value.funds.push({
+      // Safely add the new fund to assistance
+      const newFund = {
         id: result.assistance?.id || Date.now(),
         fund_source: 'MAIFIP',
         fund_amount: assistanceForm.value.amount.toString(),
         control_number: assistanceForm.value.controlNumber,
-      })
+      }
+
+      // Ensure assistance object exists and has funds array
+      if (!billingData.value.assistance) {
+        billingData.value.assistance = { funds: [] }
+      } else if (!billingData.value.assistance.funds) {
+        billingData.value.assistance.funds = []
+      }
+
+      // Add the new fund
+      billingData.value.assistance.funds.push(newFund)
 
       showAssistanceDialog.value = false
       assistanceForm.value = {
         controlNumber: '',
+        fund_source: 'MAIFIP',
         amount: 0,
       }
 
@@ -635,10 +737,24 @@ async function applyMAIFIP() {
     console.error('Error applying assistance:', error)
     let errorMessage = 'Failed to apply financial assistance. Please try again.'
 
-    if (error.message.includes('No Assistance record found')) {
-      errorMessage = 'Transaction not found. Please refresh the page and try again.'
+    // Handle validation errors
+    if (error.response?.data?.errors) {
+      const errors = error.response.data.errors
+      const errorMessages = []
+
+      Object.keys(errors).forEach((field) => {
+        if (Array.isArray(errors[field])) {
+          errorMessages.push(...errors[field])
+        } else {
+          errorMessages.push(errors[field])
+        }
+      })
+
+      errorMessage = errorMessages.length > 0 ? errorMessages.join(' ') : errorMessage
     } else if (error.response?.data?.message) {
       errorMessage = error.response.data.message
+    } else if (error.message.includes('No Assistance record found')) {
+      errorMessage = 'Transaction not found. Please refresh the page and try again.'
     } else if (error.message) {
       errorMessage = error.message
     }
@@ -647,6 +763,7 @@ async function applyMAIFIP() {
       type: 'negative',
       message: errorMessage,
       position: 'top',
+      timeout: 5000, // Show error longer for validation messages
     })
   } finally {
     processing.value = false

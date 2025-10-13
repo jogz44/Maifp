@@ -262,6 +262,13 @@
           </div>
         </q-item>
       </q-list>
+
+      <div class="absolute-bottom q-pa-sm">
+        <div class="text-caption text-white-7 text-center">
+          <q-icon name="info" size="14px" class="q-mr-xs" />
+          v{{ appVersion }}
+        </div>
+      </div>
     </q-drawer>
 
     <!-- PAGE CONTENT -->
@@ -276,6 +283,7 @@ import auth from 'src/services/auth'
 import { useUserStore } from 'src/stores/userStore'
 import { usePatientBadgeStore } from 'src/stores/badgeStore'
 import { LocalStorage } from 'quasar'
+import packageInfo from '../../package.json'
 
 export default {
   name: 'MyLayout',
@@ -299,6 +307,7 @@ export default {
       expandedConsultation: false,
       badgeInterval: null,
       userRole: null,
+      appVersion: packageInfo.version,
       rolePermissions: {
         admin: [
           'dashboard',

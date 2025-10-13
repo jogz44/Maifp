@@ -40,6 +40,7 @@
                     v-model="patient.philsys_id"
                     label="Philsys ID"
                     :readonly="!isEditMode"
+                    mask="####-####-####-####"
                   />
                 </div>
                 <div class="col-12">
@@ -48,6 +49,7 @@
                     dense
                     v-model="patient.philhealth_id"
                     label="PhilHealth ID"
+                    mask="##-#########-#"
                     :readonly="!isEditMode"
                   />
                 </div>
