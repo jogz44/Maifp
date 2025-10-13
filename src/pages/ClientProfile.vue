@@ -442,6 +442,7 @@
                 label="Date *"
                 class="text-caption"
                 :rules="[(val) => !!val || 'Transaction date is required']"
+                readonly
               />
             </div>
             <div class="col-12 col-md-4">
