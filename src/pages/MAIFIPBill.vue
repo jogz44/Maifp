@@ -543,12 +543,12 @@ onMounted(async () => {
       billingData.value = {
         ...data,
         // Ensure arrays exist
-        radiologies_details: data.radiologies_details || [],
-        examination_details: data.examination_details || [],
-        mammogram_details: data.mammogram_details || [],
-        ultrasound_details: data.ultrasound_details || [],
-        medication: data.medication || [],
-        funds: [], // Initialize as empty array for compatibility
+        radiologies_details: data.radiologies_details || null,
+        examination_details: data.examination_details || null,
+        mammogram_details: data.mammogram_details || null,
+        ultrasound_details: data.ultrasound_details || null,
+        medication: data.medication || null,
+        funds: null, // Initialize as empty array for compatibility
         // Ensure address is properly structured
         address: data.address || { street: '', purok: '', barangay: '' },
         // Ensure representative exists
@@ -652,13 +652,13 @@ async function applyMAIFIP() {
       mammogram_total: parseFloat(billingData.value.mammogram_total) || 0,
 
       // Required details arrays
-      ultrasound_details: billingData.value.ultrasound_details || [],
-      mammogram_details: billingData.value.mammogram_details || [],
-      radiology_details: billingData.value.radiologies_details || [], // Note: using radiologies_details from API
-      examination_details: billingData.value.examination_details || [],
+      ultrasound_details: billingData.value.ultrasound_details || null,
+      mammogram_details: billingData.value.mammogram_details || null,
+      radiology_details: billingData.value.radiologies_details || null, // Note: using radiologies_details from API
+      examination_details: billingData.value.examination_details || null,
 
       // Additional fields that might be needed
-      medication: billingData.value.medication || [],
+      medication: billingData.value.medication || null,
       patient_id: billingData.value.patient_id,
       firstname: billingData.value.firstname || '',
       lastname: billingData.value.lastname || '',
