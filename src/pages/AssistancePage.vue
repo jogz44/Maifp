@@ -86,7 +86,7 @@
           <q-card-actions align="right">
             <q-btn
               flat
-              label="Send to PhilHealth"
+              label="Send to MAIFIP"
               color="blue"
               @click="fromPhilHealth"
               :loading="completing"
