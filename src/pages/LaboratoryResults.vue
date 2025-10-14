@@ -296,7 +296,7 @@
                   <q-table
                     :rows="labExamRows"
                     :columns="labExamColumns"
-                    row-key="item_id"
+                    row-key="id"
                     flat
                     bordered
                     dense
@@ -310,7 +310,8 @@
                           flat
                           icon="delete"
                           color="negative"
-                          @click="confirmDelete(props.row.item_id, 'examination')"
+                          :loading="deletingId === props.row.id"
+                          @click="confirmDelete(props.row.id, 'examination')"
                         />
                       </q-td>
                     </template>
@@ -377,7 +378,14 @@
 
                       <q-card-actions align="right">
                         <q-btn flat label="Cancel" color="negative" v-close-popup />
-                        <q-btn flat label="Save" color="positive" @click="saveLaboratoryExams" />
+                        <q-btn
+                          flat
+                          label="Save"
+                          color="positive"
+                          @click="debouncedSaveLaboratoryExams"
+                          :loading="isSaving"
+                          :disable="isSaving"
+                        />
                       </q-card-actions>
                     </q-card>
                   </q-dialog>
@@ -413,6 +421,7 @@
                           flat
                           icon="delete"
                           color="negative"
+                          :loading="deletingId === props.row.id"
                           @click="confirmDelete(props.row.id, 'radiology')"
                         />
                       </q-td>
@@ -481,7 +490,14 @@
 
                       <q-card-actions align="right">
                         <q-btn flat label="Cancel" color="negative" v-close-popup />
-                        <q-btn flat label="Save" color="positive" @click="saveRadiologies" />
+                        <q-btn
+                          flat
+                          label="Save"
+                          color="positive"
+                          @click="debouncedSaveRadiologies"
+                          :loading="isSaving"
+                          :disable="isSaving"
+                        />
                       </q-card-actions>
                     </q-card>
                   </q-dialog>
@@ -517,6 +533,7 @@
                           flat
                           icon="delete"
                           color="negative"
+                          :loading="deletingId === props.row.id"
                           @click="confirmDelete(props.row.id, 'mammogram')"
                         />
                       </q-td>
@@ -585,7 +602,14 @@
 
                       <q-card-actions align="right">
                         <q-btn flat label="Cancel" color="negative" v-close-popup />
-                        <q-btn flat label="Save" color="positive" @click="saveMammograms" />
+                        <q-btn
+                          flat
+                          label="Save"
+                          color="positive"
+                          @click="debouncedSaveMammograms"
+                          :loading="isSaving"
+                          :disable="isSaving"
+                        />
                       </q-card-actions>
                     </q-card>
                   </q-dialog>
@@ -621,6 +645,7 @@
                           flat
                           icon="delete"
                           color="negative"
+                          :loading="deletingId === props.row.id"
                           @click="confirmDelete(props.row.id, 'ultrasound')"
                         />
                       </q-td>
@@ -691,7 +716,14 @@
 
                       <q-card-actions align="right">
                         <q-btn flat label="Cancel" color="negative" v-close-popup />
-                        <q-btn flat label="Save" color="positive" @click="saveUltrasounds" />
+                        <q-btn
+                          flat
+                          label="Save"
+                          color="positive"
+                          @click="debouncedSaveUltrasounds"
+                          :loading="isSaving"
+                          :disable="isSaving"
+                        />
                       </q-card-actions>
                     </q-card>
                   </q-dialog>
@@ -709,14 +741,18 @@
             color="blue"
             label="Return"
             icon="ios_share"
-            @click="markReturn"
+            @click="handleMarkReturn"
+            :loading="isReturning"
+            :disable="isReturning || isMarkingDone"
           />
           <q-btn
             v-if="transaction.transaction_type === 'Laboratory'"
             color="green"
             label="Done"
             icon="check_circle"
-            @click="markDone"
+            @click="handleMarkDone"
+            :loading="isMarkingDone"
+            :disable="isReturning || isMarkingDone"
           />
         </div>
       </q-card>
@@ -726,6 +762,7 @@
 
 <script>
 import { usePatientStore } from 'src/stores/patientStore'
+import _ from 'lodash'
 
 export default {
   name: 'TransactionDetails',
@@ -740,6 +777,11 @@ export default {
       loading: true,
 
       isLatest: false,
+      isReturning: false,
+      isMarkingDone: false,
+      isSaving: false, // for spinner/loading state
+      saveTimeout: null, // for debounce
+      deletingId: null,
 
       // UI states
       isTransactionEditMode: false,
@@ -945,60 +987,6 @@ export default {
   },
 
   methods: {
-    //SERVICE LIBRARY
-    async addService() {
-      const payload = {
-        lab_name: this.newServiceName,
-        lab_amount: parseFloat(this.newServiceFee) || 0,
-        service_fee: parseFloat(this.newServiceAdditionalFee) || 0,
-        total_amount: this.newServiceTotal, // computed total
-      }
-
-      try {
-        await this.patientStore.addLaboratoryService(payload)
-        this.$q.notify({ type: 'positive', message: 'Service added!' })
-        this.loadLaboratoryOptions()
-        this.newServiceName = ''
-        this.newServiceFee = null
-        this.newServiceAdditionalFee = null
-        this.newServiceDialogOpen = false
-      } catch (error) {
-        console.error('Add Service Error:', error)
-        this.$q.notify({ type: 'negative', message: 'Failed to add service' })
-      }
-    },
-
-    editService(service) {
-      this.editServiceId = service.value
-      this.editServiceName = service.label
-      this.editServiceFee = service.amount
-      this.editServiceAdditionalFee = service.service_fee || 0
-      this.editDialogOpen = true
-    },
-
-    async updateService() {
-      try {
-        const amount = parseFloat(this.editServiceFee) || 0
-        const service_fee = parseFloat(this.editServiceAdditionalFee) || 0
-
-        const payload = {
-          id: this.editServiceId,
-          lab_name: this.editServiceName,
-          lab_amount: amount,
-          service_fee: service_fee,
-          total_amount: amount + service_fee,
-        }
-
-        await this.patientStore.updateLaboratoryService(payload)
-        this.$q.notify({ type: 'positive', message: 'Service updated!' })
-        this.loadLaboratoryOptions()
-        this.editDialogOpen = false
-      } catch (error) {
-        console.error('Update Service Error:', error)
-        this.$q.notify({ type: 'negative', message: 'Failed to update service' })
-      }
-    },
-
     // Fetch lab exams from Pinia store
     async loadLaboratoryExamsOptions() {
       try {
@@ -1052,7 +1040,20 @@ export default {
       this.reviewLabExams = this.reviewLabExams.filter((e) => e.id !== id)
     },
 
+    debouncedSaveLaboratoryExams() {
+      // clear any ongoing debounce
+      clearTimeout(this.saveTimeout)
+
+      // debounce by 500ms to avoid double clicks
+      this.saveTimeout = setTimeout(() => {
+        this.saveLaboratoryExams()
+      }, 500)
+    },
+
     async saveLaboratoryExams() {
+      if (this.isSaving) return // prevent duplicates
+      this.isSaving = true
+
       try {
         const payload = {
           transaction_id: this.transactionId,
@@ -1079,10 +1080,7 @@ export default {
           }),
         )
 
-        // Update table rows
         this.labExamRows = [...this.labExamRows, ...savedExams]
-
-        // Persist per-transaction
         localStorage.setItem(`labExamRows_${this.transactionId}`, JSON.stringify(this.labExamRows))
 
         this.labExamModalOpen = false
@@ -1090,6 +1088,8 @@ export default {
       } catch (error) {
         console.error('Save Error:', error)
         this.$q.notify({ type: 'negative', message: 'Failed to save lab exams' })
+      } finally {
+        this.isSaving = false
       }
     },
 
@@ -1171,7 +1171,19 @@ export default {
       this.reviewRadiologies = this.reviewRadiologies.filter((e) => e.id !== id)
     },
 
+    debouncedSaveRadiologies() {
+      clearTimeout(this.saveTimeout)
+
+      // debounce to prevent double-clicks
+      this.saveTimeout = setTimeout(() => {
+        this.saveRadiologies()
+      }, 500)
+    },
+
     async saveRadiologies() {
+      if (this.isSaving) return
+      this.isSaving = true
+
       try {
         const payload = {
           transaction_id: this.transactionId,
@@ -1200,7 +1212,6 @@ export default {
 
         this.radiologyRows = [...this.radiologyRows, ...savedExams]
 
-        // Persist per-transaction
         localStorage.setItem(
           `radiologyRows_${this.transactionId}`,
           JSON.stringify(this.radiologyRows),
@@ -1214,6 +1225,8 @@ export default {
           type: 'negative',
           message: error.response?.data?.message || 'Failed to save radiology exams',
         })
+      } finally {
+        this.isSaving = false
       }
     },
 
@@ -1293,7 +1306,19 @@ export default {
       this.reviewMammograms = this.reviewMammograms.filter((e) => e.id !== id)
     },
 
+    debouncedSaveMammograms() {
+      clearTimeout(this.saveTimeout)
+
+      // debounce to prevent double-clicks
+      this.saveTimeout = setTimeout(() => {
+        this.saveMammograms()
+      }, 500)
+    },
+
     async saveMammograms() {
+      if (this.isSaving) return
+      this.isSaving = true
+
       try {
         const payload = {
           transaction_id: this.transactionId,
@@ -1303,8 +1328,8 @@ export default {
             rate: parseFloat(exam.rate),
             service_fee: parseFloat(exam.service_fee),
             total_amount: parseFloat(exam.total_amount),
-            date: exam.date,
-            time: exam.time,
+            date: exam.date || this.formatDate(new Date()),
+            time: exam.time || this.formatTime(new Date()),
           })),
         }
 
@@ -1320,6 +1345,7 @@ export default {
 
         this.mammogramRows = [...this.mammogramRows, ...savedExams]
 
+        // persist per-transaction
         localStorage.setItem(
           `mammogramRows_${this.transactionId}`,
           JSON.stringify(this.mammogramRows),
@@ -1328,8 +1354,13 @@ export default {
         this.mammogramModalOpen = false
         this.reviewMammograms = []
       } catch (error) {
-        console.error('Save Error:', error)
-        this.$q.notify({ type: 'negative', message: 'Failed to save mammogram exams' })
+        console.error('Save Error:', error.response?.data || error)
+        this.$q.notify({
+          type: 'negative',
+          message: error.response?.data?.message || 'Failed to save mammogram exams',
+        })
+      } finally {
+        this.isSaving = false
       }
     },
 
@@ -1415,7 +1446,18 @@ export default {
       this.reviewUltrasounds = this.reviewUltrasounds.filter((e) => e.id !== id)
     },
 
+    debouncedSaveUltrasounds() {
+      clearTimeout(this.saveTimeout)
+
+      this.saveTimeout = setTimeout(() => {
+        this.saveUltrasounds()
+      }, 500)
+    },
+
     async saveUltrasounds() {
+      if (this.isSaving) return
+      this.isSaving = true
+
       try {
         const payload = {
           transaction_id: this.transactionId,
@@ -1425,8 +1467,8 @@ export default {
             rate: parseFloat(exam.rate),
             service_fee: parseFloat(exam.service_fee),
             total_amount: parseFloat(exam.total_amount),
-            date: exam.date,
-            time: exam.time,
+            date: exam.date || this.formatDate(new Date()),
+            time: exam.time || this.formatTime(new Date()),
           })),
         }
 
@@ -1452,8 +1494,13 @@ export default {
         this.ultrasoundModalOpen = false
         this.reviewUltrasounds = []
       } catch (error) {
-        console.error('Save Ultrasound Error:', error)
-        this.$q.notify({ type: 'negative', message: 'Failed to save ultrasound exams' })
+        console.error('Save Ultrasound Error:', error.response?.data || error)
+        this.$q.notify({
+          type: 'negative',
+          message: error.response?.data?.message || 'Failed to save ultrasound exams',
+        })
+      } finally {
+        this.isSaving = false
       }
     },
 
@@ -1482,7 +1529,7 @@ export default {
       }
     },
 
-    confirmDelete(id, type) {
+    confirmDelete: _.debounce(function (id, type) {
       this.$q
         .dialog({
           title: 'Confirm Delete',
@@ -1491,20 +1538,22 @@ export default {
           persistent: true,
         })
         .onOk(async () => {
+          this.deletingId = id // show spinner on button
+
           try {
             const res = await this.patientStore.deleteLaboratoryExam(this.transactionId, id, type)
+            await new Promise((resolve) => setTimeout(resolve, 500)) // short UX delay
 
             if (res.deleted === 1) {
               this.$q.notify({
                 type: 'positive',
-                message: `${type} record deleted successfully`,
+                message: `${type} record deleted successfully.`,
                 position: 'top',
                 timeout: 2000,
               })
 
-              // Update local state and storage
               if (type === 'examination') {
-                this.labExamRows = this.labExamRows.filter((e) => e.item_id !== id)
+                this.labExamRows = this.labExamRows.filter((e) => e.id !== id)
                 localStorage.setItem(
                   `labExamRows_${this.transactionId}`,
                   JSON.stringify(this.labExamRows),
@@ -1531,7 +1580,7 @@ export default {
             } else {
               this.$q.notify({
                 type: 'negative',
-                message: res.message || `No ${type} record found to delete`,
+                message: res.message || `No ${type} record found to delete.`,
                 position: 'top',
                 timeout: 2000,
               })
@@ -1540,13 +1589,15 @@ export default {
             console.error(err)
             this.$q.notify({
               type: 'negative',
-              message: `Failed to delete ${type}`,
+              message: `Failed to delete ${type}.`,
               position: 'top',
               timeout: 2000,
             })
+          } finally {
+            this.deletingId = null // remove spinner
           }
         })
-    },
+    }, 800),
 
     formatDate(date = new Date()) {
       return new Intl.DateTimeFormat('en-US', {
@@ -1565,12 +1616,31 @@ export default {
       }).format(date)
     },
 
+    async handleMarkReturn() {
+      await this.safeAction(this.markReturn, 'isReturning')
+    },
+
+    async handleMarkDone() {
+      await this.safeAction(this.markDone, 'isMarkingDone')
+    },
+
+    // Centralized async safe-action handler
+    async safeAction(actionFn, flagName) {
+      if (this[flagName]) return
+      this[flagName] = true
+      try {
+        await actionFn.call(this)
+      } finally {
+        this[flagName] = false
+      }
+    },
+
+    // Return Logic
     async markReturn() {
       const patientStore = usePatientStore()
-
       const now = new Date()
-      const consultationDate = now.toISOString().split('T')[0] // YYYY-MM-DD
-      const consultationTime = now.toTimeString().split(' ')[0] // HH:MM:SS
+      const consultationDate = now.toISOString().split('T')[0]
+      const consultationTime = now.toTimeString().split(' ')[0]
 
       const payload = {
         patient_id: this.patientId,
@@ -1582,12 +1652,10 @@ export default {
 
       try {
         await patientStore.laboratoryStatus(payload)
-
         this.$q.notify({
           type: 'positive',
           message: 'Laboratory returned successfully',
         })
-
         this.$router.push({ path: '/customers/laboratory' })
       } catch (error) {
         this.$q.notify({
@@ -1597,9 +1665,9 @@ export default {
       }
     },
 
+    // Done Logic
     async markDone() {
       const patientStore = usePatientStore()
-
       const now = new Date()
       const consultationDate = now.toISOString().split('T')[0]
       const consultationTime = now.toTimeString().split(' ')[0]
@@ -1614,12 +1682,10 @@ export default {
 
       try {
         await patientStore.laboratoryStatus(payload)
-
         this.$q.notify({
           type: 'positive',
           message: 'Laboratory marked as done successfully',
         })
-
         this.$router.push({ path: '/customers/laboratory' })
       } catch (error) {
         this.$q.notify({
@@ -1751,168 +1817,6 @@ export default {
       }
     },
 
-    // Transaction Edit Methods
-    toggleTransactionEditMode() {
-      this.isTransactionEditMode = true
-      // Store original data for potential cancellation
-      this.originalTransactionData = { ...this.transaction }
-    },
-
-    async saveTransactionChanges() {
-      try {
-        // Validate required fields
-        if (!this.transaction.transaction_date || !this.transaction.transaction_type) {
-          this.$q.notify({
-            type: 'negative',
-            message: 'Transaction date and type are required',
-            position: 'top',
-            timeout: 2000,
-          })
-          return
-        }
-
-        // Prepare the transaction data (exclude vital signs)
-        const transactionDataToUpdate = {
-          id: this.transaction.id,
-          transaction_date: this.transaction.transaction_date,
-          transaction_type: this.transaction.transaction_type,
-          transaction_mode: this.transaction.transaction_mode,
-          purpose: this.transaction.purpose,
-          patient_id: this.transaction.patient_id,
-          // Include any other transaction-specific fields but exclude vital
-        }
-
-        console.log('Updating transaction with data:', transactionDataToUpdate)
-
-        // Update the transaction using the store action
-        const updatedTransaction = await this.patientStore.updateTransaction(
-          this.transaction.id,
-          transactionDataToUpdate,
-        )
-
-        if (updatedTransaction) {
-          this.$q.notify({
-            type: 'positive',
-            message: 'Transaction updated successfully',
-            position: 'top',
-            timeout: 2000,
-          })
-
-          // Update local transaction data with the response
-          this.transaction = { ...this.transaction, ...updatedTransaction }
-
-          // Exit edit mode
-          this.isTransactionEditMode = false
-          this.originalTransactionData = null
-        }
-      } catch (error) {
-        console.error('Error updating transaction:', error)
-        this.$q.notify({
-          type: 'negative',
-          message: 'Failed to update transaction',
-          position: 'top',
-          timeout: 3000,
-        })
-      }
-    },
-
-    cancelTransactionEdit() {
-      // Restore original transaction data
-      if (this.originalTransactionData) {
-        this.transaction = { ...this.originalTransactionData }
-      }
-
-      this.isTransactionEditMode = false
-      this.originalTransactionData = null
-    },
-
-    // Vital Signs Edit Methods
-    toggleVitalSignsEditMode() {
-      this.isVitalSignsEditMode = true
-      // Store original data for potential cancellation
-      this.originalVitalSigns = { ...this.vitalSigns }
-    },
-
-    async saveVitalSignsChanges() {
-      try {
-        // Validate vital signs if needed
-        // You can add validation here for specific vital sign requirements
-
-        // Prepare the vital signs data
-        const vitalDataToUpdate = {
-          ...this.vitalSigns,
-          transaction_id: this.transactionId, // Ensure transaction_id is included
-        }
-
-        console.log('Updating vital signs with data:', vitalDataToUpdate)
-        console.log('Current vital signs before update:', this.vitalSigns)
-
-        // Check if vital signs already exist (has an ID) or need to be created
-        let updatedVital
-        if (this.vitalSigns.id) {
-          // Update existing vital signs using the updateVital action
-          updatedVital = await this.patientStore.updateVital(this.vitalSigns.id, vitalDataToUpdate)
-        } else {
-          // If no vital signs exist, you might need to create new ones
-          // This depends on your API structure - you may need to add a createVital method
-          console.log('No vital signs ID found, may need to create new vital record')
-          // For now, we'll assume updateVital can handle both cases
-          updatedVital = await this.patientStore.updateVital(
-            this.transactionId, // Use transaction ID if no vital ID exists
-            vitalDataToUpdate,
-          )
-        }
-
-        console.log('Updated vital signs response:', updatedVital)
-
-        if (updatedVital) {
-          this.$q.notify({
-            type: 'positive',
-            message: 'Vital signs updated successfully',
-            position: 'top',
-            timeout: 2000,
-          })
-
-          // Update local vital signs data with the response
-          // Make sure to preserve the structure
-          this.vitalSigns = { ...this.vitalSigns, ...updatedVital }
-
-          // Also update the transaction's vital property to keep data in sync
-          if (this.transaction && this.transaction.vital) {
-            this.transaction.vital = { ...this.vitalSigns }
-          }
-
-          console.log('Local vital signs after update:', this.vitalSigns)
-
-          // Exit edit mode
-          this.isVitalSignsEditMode = false
-          this.originalVitalSigns = null
-
-          // Optional: Refresh the entire transaction data to ensure consistency
-          // Uncomment the line below if the vital signs still don't display properly
-          // await this.refreshTransactionData()
-        }
-      } catch (error) {
-        console.error('Error updating vital signs:', error)
-        this.$q.notify({
-          type: 'negative',
-          message: 'Failed to update vital signs',
-          position: 'top',
-          timeout: 2000,
-        })
-      }
-    },
-
-    cancelVitalSignsEdit() {
-      // Restore original vital signs data
-      if (this.originalVitalSigns) {
-        this.vitalSigns = { ...this.originalVitalSigns }
-      }
-
-      this.isVitalSignsEditMode = false
-      this.originalVitalSigns = null
-    },
-
     // Method to refresh transaction data after updates
     async refreshTransactionData() {
       try {
@@ -1927,17 +1831,6 @@ export default {
         }
       } catch (error) {
         console.error('Error refreshing transaction data:', error)
-      }
-    },
-
-    updateBMI() {
-      if (this.vitalSigns.height && this.vitalSigns.weight) {
-        this.vitalSigns.bmi = this.patientStore.calculateBMI(
-          parseFloat(this.vitalSigns.height),
-          parseFloat(this.vitalSigns.weight),
-        )
-      } else {
-        this.vitalSigns.bmi = ''
       }
     },
 

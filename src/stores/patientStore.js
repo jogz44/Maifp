@@ -853,12 +853,20 @@ export const usePatientStore = defineStore('patient', {
     // DELETE LAB EXAM / RADIOLOGY / MAMMOGRAM / ULTRASOUND
     async deleteLaboratoryExam(transactionId, id, type) {
       try {
-        const payload = {
-          transaction_id: transactionId,
-          type: type,
-          id: id,
-        }
-
+        // If examination → backend expects "id"
+        const payload =
+          type === 'examination'
+            ? {
+                transaction_id: transactionId,
+                type,
+                id, // the backend expects this
+                item_id: id, // optional, if backend uses it
+              }
+            : {
+                transaction_id: transactionId,
+                type,
+                id,
+              }
         console.log('Delete Payload:', payload)
 
         const response = await api.delete('/laboratory/delete', { data: payload })
