@@ -57,6 +57,13 @@
           Powered by City Information and Communications Technology Management Office - BPM Division
         </span>
       </q-card-section>
+
+      <div class="absolute-bottom q-pa-sm">
+        <div class="text-caption text-grey-7 text-center">
+          <q-icon name="info" size="14px" class="q-mr-xs" />
+          v{{ appVersion }}
+        </div>
+      </div>
     </q-card>
   </div>
 </template>
@@ -64,6 +71,7 @@
 <script>
 import { useUserStore } from 'src/stores/userStore'
 import { Notify } from 'quasar'
+import packageInfo from '../../package.json'
 
 export default {
   setup() {
@@ -77,6 +85,7 @@ export default {
         password: '',
       },
       loading: false,
+      appVersion: packageInfo.version,
     }
   },
   methods: {
@@ -106,6 +115,7 @@ export default {
             social: '/dashboard-social',
             coder: '/dashboard-encoder',
             billing: '/dashboard-billing',
+            assessor: '/dashboard-assessor',
           }
 
           const redirectPath = roleRoutes[role] || '/'

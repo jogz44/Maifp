@@ -40,6 +40,7 @@
                     v-model="patient.philsys_id"
                     label="Philsys ID"
                     :readonly="!isEditMode"
+                    mask="####-####-####-####"
                   />
                 </div>
                 <div class="col-12">
@@ -48,6 +49,7 @@
                     dense
                     v-model="patient.philhealth_id"
                     label="PhilHealth ID"
+                    mask="##-#########-#"
                     :readonly="!isEditMode"
                   />
                 </div>
@@ -440,6 +442,7 @@
                 label="Date *"
                 class="text-caption"
                 :rules="[(val) => !!val || 'Transaction date is required']"
+                readonly
               />
             </div>
             <div class="col-12 col-md-4">

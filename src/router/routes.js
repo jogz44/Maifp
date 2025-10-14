@@ -40,6 +40,11 @@ const routes = [
         component: () => import('pages/DashBoardBilling.vue'),
         meta: { requiresAuth: true },
       },
+      {
+        path: '/dashboard-assessor',
+        component: () => import('pages/DashBoardAssessor.vue'),
+        meta: { requiresAuth: true },
+      },
 
       //patients
       {
@@ -129,10 +134,28 @@ const routes = [
         component: () => import('pages/PatientDetailsAssessment.vue'),
         meta: { requiresAuth: true },
       },
-      //lib services
+
+      //from philhealth
       {
-        path: '/services',
-        component: () => import('pages/ServicesLibrary.vue'),
+        path: '/fromphilhealth',
+        component: () => import('pages/fromPhilHealthPage.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/fromphilhealth/profile',
+        component: () => import('pages/fromPhilHealthProfile.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      //philhealth
+      {
+        path: '/philhealth',
+        component: () => import('pages/PhilHealthPage.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/philhealth/profile',
+        component: () => import('pages/AssessmentProfile.vue'),
         meta: { requiresAuth: true },
       },
 

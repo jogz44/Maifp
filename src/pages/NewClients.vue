@@ -457,8 +457,8 @@
             <div class="row q-gutter-md">
               <q-checkbox
                 v-model="isChild"
-                :val="'Children'"
-                label="Children"
+                :val="'Child'"
+                label="Child"
                 class="text-caption"
                 disable
               />
@@ -739,6 +739,7 @@ export default defineComponent({
     })
     const hasRepresentative = ref(false)
     const sameAsPatientAddress = ref(true)
+
     const sameAsPermanentAddress = ref(true)
 
     // UI state
