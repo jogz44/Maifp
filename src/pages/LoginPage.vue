@@ -168,7 +168,7 @@ export default {
           <q-separator class="text-black"></q-separator>
 
           <div class="text-subtitle1 text-center text-black text-weight-bold text-primary">
-            City Health Assistance Monitoring Platform
+            City Health Assistance Management Platform
           </div>
           <div class="text-subtitle2 text-weight-light text-black text-center q-mb-lg">
             Mabini Street, Tagum City, Davao del Norte
@@ -252,7 +252,7 @@ export default {
             />
 
             <div class="text-caption text-white text-center q-mt-md">
-              Powered by CICTMO - BPM Division
+              Powered by CICTMO - SPM Section
             </div>
 
             <div class="text-caption text-white text-center q-mt-sm">
