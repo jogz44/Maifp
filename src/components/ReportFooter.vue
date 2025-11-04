@@ -5,13 +5,7 @@
         <div class="footer-icon">
           <q-icon name="location_on" size="9px" />
         </div>
-        <div class="footer-text">
-          2
-          <sup>nd</sup>
-          Floor, City Hall of Tagum,
-          <br />
-          JV Ayala Ave., Brgy. Apokon
-        </div>
+        <div class="footer-text">Mabini Street, Tagum City, Davao del Norte</div>
       </div>
     </div>
     <div class="footer-item">

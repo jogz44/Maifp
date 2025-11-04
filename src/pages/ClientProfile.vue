@@ -48,7 +48,7 @@
                     outlined
                     dense
                     v-model="patient.philhealth_id"
-                    label="PhilHealth ID"
+                    label="PhilHealth ID Number"
                     mask="##-#########-#"
                     :readonly="!isEditMode"
                   />

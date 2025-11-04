@@ -56,6 +56,13 @@
                 <q-td key="actions" style="font-size: 11px" align="center">
                   <q-btn flat color="blue-9" @click="showClient(props.row)" icon="article" />
                   <q-btn flat color="green-9" @click="showBill(props.row)" icon="payment" />
+                  <q-btn
+                    v-if="props.row.isMAIFIP_LGU == 1 || props.row.isMAIFIP_Congressman == 1"
+                    flat
+                    color="green-9"
+                    @click="showGL(props.row)"
+                    label="GL"
+                  />
                 </q-td>
               </q-tr>
             </template>
@@ -219,6 +226,24 @@ function showBill(row) {
 
   router.push({
     path: '/gl/report',
+    query: {
+      patientId: row.id || row.patient_id,
+      transactionId: row.transaction_id,
+    },
+  })
+}
+
+function showGL(row) {
+  console.log('Navigating with IDs:', {
+    patientId: row.id || row.patient_id,
+    transactionId: row.transaction_id,
+  })
+
+  store.patient_id = row.id || row.patient_id
+  store.transaction_id = row.transaction_id
+
+  router.push({
+    path: '/gl/letter',
     query: {
       patientId: row.id || row.patient_id,
       transactionId: row.transaction_id,

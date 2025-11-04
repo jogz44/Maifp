@@ -126,6 +126,11 @@ const routes = [
         component: () => import('pages/SWViewing.vue'),
         meta: { requiresAuth: true },
       },
+      {
+        path: '/gl/letter',
+        component: () => import('pages/GuaranteedLetter.vue'),
+        meta: { requiresAuth: true },
+      },
 
       //billing
       {
