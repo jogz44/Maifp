@@ -1122,7 +1122,7 @@ async function handleSubmit() {
         position: 'top',
       })
       showConfirmDialog.value = false
-      setTimeout(() => router.push('/billing'), 1500)
+      setTimeout(() => router.push('/gl'), 1500)
     } else {
       throw new Error('Failed to update transaction status')
     }
