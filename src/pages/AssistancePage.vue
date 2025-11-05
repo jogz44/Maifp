@@ -292,7 +292,7 @@
                 <tr>
                   <td class="logo-cell" width="25%">
                     <div class="logo-container">
-                      <img src="/Doh.svg" alt="DOH" class="logo" />
+                      <img src="../assets/DOH.svg" alt="DOH" class="logo" />
                       <img src="../assets/BP.png" alt="BP" class="logo" />
                     </div>
                   </td>

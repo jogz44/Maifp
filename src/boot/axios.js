@@ -34,7 +34,7 @@ api.interceptors.response.use(
       console.error('API Error: Unauthenticated. Redirecting to login...')
       // Example: clear token and redirect to login
       localStorage.removeItem('auth_token')
-      window.location.href = '/login'
+      window.location.href = '/'
     }
     return Promise.reject(error)
   },
