@@ -362,7 +362,7 @@
                               (isChecked) => {
                                 confirmStatusChange(
                                   props.row,
-                                  isChecked ? 'complete' : 'unqualified',
+                                  isChecked ? 'qualified' : 'unqualified',
                                 )
                               }
                             "
@@ -393,32 +393,50 @@
 
     <!-- Status Change Confirmation Modal -->
     <q-dialog v-model="showStatusConfirmModal" persistent>
-      <q-card style="min-width: 400px">
-        <q-card-section class="row items-center">
-          <q-avatar icon="warning" color="orange" text-color="white" />
-          <span class="q-ml-sm text-h6">Confirm Status Change</span>
+      <q-card style="min-width: 500px">
+        <q-card-section class="row items-center justify-between q-mb-md">
+          <div class="row items-center">
+            <q-avatar icon="help" color="primary" text-color="white" />
+            <span class="q-ml-sm text-h6">Change Transaction Status</span>
+          </div>
+          <q-btn icon="close" flat round dense color="grey" @click="cancelStatusChange" />
         </q-card-section>
 
-        <q-card-section class="q-pt-none">
-          <p class="q-mb-sm">
-            Are you sure you want to change the status of transaction
-            <strong>{{ pendingStatusChange.transaction?.transaction_number }}</strong>
-            from <strong class="text-capitalize">{{ pendingStatusChange.oldStatus }}</strong> to
-            <strong class="text-capitalize">{{ pendingStatusChange.newStatus }}</strong
-            >?
+        <q-separator />
+
+        <q-card-section class="q-pt-md">
+          <p class="q-mb-md text-subtitle2">
+            Select the status for transaction
+            <strong class="text-primary">{{
+              pendingStatusChange.transaction?.transaction_number
+            }}</strong
+            >:
           </p>
-          <p class="text-caption text-grey-7">
-            This action will update the completion status of this transaction.
+
+          <p class="text-caption text-grey-7 q-mb-lg">
+            Current status:
+            <strong class="text-capitalize">{{ pendingStatusChange.oldStatus }}</strong>
           </p>
         </q-card-section>
 
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" color="grey" @click="cancelStatusChange" />
+        <q-separator />
+
+        <q-card-actions align="right" class="q-pa-md q-gutter-md">
           <q-btn
-            label="Confirm"
-            color="orange"
-            @click="confirmStatusUpdate"
+            label="Complete"
+            color="green-9"
+            text-color="white"
+            @click="updateStatusAndClose('Complete')"
             :loading="updatingStatus"
+            size="md"
+          />
+          <q-btn
+            label="Unqualified"
+            color="red"
+            text-color="white"
+            @click="updateStatusAndClose('unqualified')"
+            :loading="updatingStatus"
+            size="md"
           />
         </q-card-actions>
       </q-card>
@@ -446,7 +464,7 @@ export default {
       patientId: null,
       isEditMode: false,
       originalPatientData: null,
-      showMoreDetails: false, // Add collapsible section toggle
+      showMoreDetails: false,
       patient: {
         id: null,
         firstname: '',
@@ -635,32 +653,31 @@ export default {
       this.showStatusConfirmModal = true
     },
 
-    async confirmStatusUpdate() {
+    async updateStatusAndClose(status) {
       try {
         this.updatingStatus = true
         const transaction = this.pendingStatusChange.transaction
-        const newStatus = this.pendingStatusChange.newStatus
 
         transaction.statusUpdating = true
 
         const updatedTransaction = await this.patientStore.updateTransactionStatus(
           transaction.id,
-          newStatus,
+          status,
         )
 
         if (updatedTransaction) {
-          transaction.status = newStatus
+          transaction.status = status
 
           this.$q.notify({
             type: 'positive',
-            message: `Transaction status updated to ${newStatus}`,
+            message: `Transaction status updated to ${status}`,
             position: 'top',
             timeout: 2000,
           })
-        }
 
-        this.showStatusConfirmModal = false
-        this.resetPendingStatusChange()
+          this.showStatusConfirmModal = false
+          this.resetPendingStatusChange()
+        }
       } catch (error) {
         console.error('Error updating transaction status:', error)
         this.$q.notify({
