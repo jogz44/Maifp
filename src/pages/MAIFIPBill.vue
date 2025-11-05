@@ -30,16 +30,26 @@
           />
 
           <!-- Show Letter button if MAIFIP assistance exists -->
-          <q-btn
+          <!-- <q-btn
             v-if="hasMAIFIPAssistance"
             color="primary"
             label="Letter"
             icon="description"
             class="q-mr-sm"
             @click="showGL"
-          />
+          /> -->
 
           <q-btn color="secondary" label="Print PDF" icon="picture_as_pdf" @click="handlePrint" />
+
+          <q-btn
+            v-if="hasMAIFIPAssistance"
+            color="primary"
+            label="Submit"
+            icon="save"
+            class="q-mr-sm"
+            @click="showConfirmDialog = true"
+            :loading="submitting"
+          />
         </div>
       </div>
 
@@ -58,8 +68,21 @@
             </div>
           </q-card-section>
           <q-card-actions align="right" class="text-primary">
-            <q-btn flat label="Cancel" @click="showConfirmDialog = false" color="dark" />
-            <q-btn flat label="Confirm" @click="handleSubmit" color="green-9" />
+            <q-btn
+              flat
+              label="Cancel"
+              @click="showConfirmDialog = false"
+              color="dark"
+              :disable="submitting"
+            />
+            <q-btn
+              flat
+              label="Confirm"
+              @click="handleSubmit"
+              color="green-9"
+              :loading="submitting"
+              :disable="submitting"
+            />
           </q-card-actions>
         </q-card>
       </q-dialog>
@@ -87,7 +110,7 @@
         <q-card style="min-width: 750px">
           <q-card-section class="row items-center">
             <q-avatar icon="volunteer_activism" color="orange-9" text-color="white" />
-            <span class="q-ml-sm text-h6">Apply Financial Assistance</span>
+            <span class="q-ml-sm text-h6">Apply MAIFIP</span>
             <q-space />
             <q-linear-progress
               v-if="fetchingGLNumber"
@@ -443,6 +466,7 @@ const router = useRouter()
 const loading = ref(true)
 const error = ref(null)
 const processing = ref(false)
+const submitting = ref(false)
 const showConfirmDialog = ref(false)
 const showAssistanceDialog = ref(false)
 const showErrorDialog = ref(false)
@@ -1079,25 +1103,70 @@ async function applyAssistance() {
 }
 
 /**
+ * Handle transaction submission - mark as Funded
+ */
+async function handleSubmit() {
+  if (!transactionId.value) {
+    $q.notify({ type: 'negative', message: 'Transaction ID not found', position: 'top' })
+    return
+  }
+
+  submitting.value = true
+  try {
+    const result = await store.updateTransactionStatus(transactionId.value, 'Funded')
+
+    if (result) {
+      $q.notify({
+        type: 'positive',
+        message: 'Transaction marked as funded successfully!',
+        position: 'top',
+      })
+      showConfirmDialog.value = false
+      setTimeout(() => router.push('/billing'), 1500)
+    } else {
+      throw new Error('Failed to update transaction status')
+    }
+  } catch (err) {
+    console.error('Error marking transaction as funded:', err)
+
+    let errorMsg = 'Failed to mark transaction as funded. Please try again.'
+    if (err.response?.data?.message) {
+      errorMsg = err.response.data.message
+    } else if (err.message) {
+      errorMsg = err.message
+    }
+
+    $q.notify({
+      type: 'negative',
+      message: errorMsg,
+      position: 'top',
+      timeout: 5000,
+    })
+  } finally {
+    submitting.value = false
+  }
+}
+
+/**
  * Navigate to GL Letter page
  */
-function showGL() {
-  console.log('Navigating with IDs:', {
-    patientId: billingData.value.patient_id,
-    transactionId: billingData.value.transaction_id,
-  })
+// function showGL() {
+//   console.log('Navigating with IDs:', {
+//     patientId: billingData.value.patient_id,
+//     transactionId: billingData.value.transaction_id,
+//   })
 
-  store.patient_id = billingData.value.patient_id
-  store.transaction_id = billingData.value.transaction_id
+//   store.patient_id = billingData.value.patient_id
+//   store.transaction_id = billingData.value.transaction_id
 
-  router.push({
-    path: '/gl/letter',
-    query: {
-      patientId: billingData.value.patient_id,
-      transactionId: billingData.value.transaction_id,
-    },
-  })
-}
+//   router.push({
+//     path: '/gl/letter',
+//     query: {
+//       patientId: billingData.value.patient_id,
+//       transactionId: billingData.value.transaction_id,
+//     },
+//   })
+// }
 
 async function handlePrint() {
   const element = document.querySelector('.certification-report-container')
