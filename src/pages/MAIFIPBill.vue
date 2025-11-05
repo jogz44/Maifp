@@ -1,4 +1,5 @@
 <template>
+  <!-- Template remains the same as before -->
   <q-page class="q-pa-md flex flex-center bg-grey-2">
     <div v-if="loading" class="text-center">
       <q-spinner size="3em" color="primary" />
@@ -17,7 +18,6 @@
           <q-btn flat round color="primary" icon="arrow_back" @click="$router.back()" />
         </div>
         <div class="header-actions">
-          <!-- Show MAIFIP button only if grand total > 0 -->
           <q-btn
             v-if="grandTotalAfterExistingAssistance > 0"
             color="orange-9"
@@ -28,16 +28,6 @@
             :disable="processing"
             @click="openAssistanceDialog"
           />
-
-          <!-- Show Letter button if MAIFIP assistance exists -->
-          <!-- <q-btn
-            v-if="hasMAIFIPAssistance"
-            color="primary"
-            label="Letter"
-            icon="description"
-            class="q-mr-sm"
-            @click="showGL"
-          /> -->
 
           <q-btn color="secondary" label="Print PDF" icon="picture_as_pdf" @click="handlePrint" />
 
@@ -53,6 +43,7 @@
         </div>
       </div>
 
+      <!-- Rest of dialogs remain the same -->
       <!-- Confirm Dialog -->
       <q-dialog v-model="showConfirmDialog" persistent>
         <q-card style="min-width: 400px">
@@ -156,21 +147,15 @@
                     </q-td>
                     <q-td key="amount" :props="props">
                       <q-input
-                        v-model.number="props.row.amount"
-                        type="number"
+                        :model-value="formatAmountInput(props.row.amount)"
+                        @update:model-value="(val) => updateAssistanceAmount(props.rowIndex, val)"
+                        type="text"
+                        inputmode="decimal"
                         dense
                         outlined
                         prefix="₱"
-                        :rules="[
-                          (val) => val >= 0 || 'Amount cannot be negative',
-                          (val) => val > 0 || 'Amount must be greater than 0',
-                          (val) =>
-                            totalNewAssistanceAmount - props.row.amount + (Number(val) || 0) <=
-                              grandTotalAfterExistingAssistance ||
-                            'Total assistance exceeds remaining amount',
-                        ]"
-                        min="0"
-                        step="0.01"
+                        placeholder="0.00"
+                        :rules="[(val) => validateAssistanceAmount(val, props.rowIndex)]"
                       />
                     </q-td>
                     <q-td key="actions" :props="props" class="text-center">
@@ -407,11 +392,11 @@
                     <strong>{{ formatAmount(billingData.final_billing) }}</strong>
                   </td>
                 </tr>
-                <!-- Financial Assistance Rows - Show existing assistance -->
+                <!-- Financial Assistance Rows - Show existing assistance (NO DUPLICATION) -->
                 <template v-if="hasExistingAssistance">
                   <tr
                     v-for="(fund, index) in assistanceFunds"
-                    :key="'assistance-' + (fund.id || index)"
+                    :key="'assistance-' + (fund.id || fund.fund_source || index)"
                     class="assistance-row"
                   >
                     <td colspan="4" class="text-right">
@@ -520,7 +505,6 @@ const billingData = ref({
     address: '',
   },
   assistance: null,
-  funds: [],
 })
 
 // ==================== ASSISTANCE FORM ====================
@@ -567,20 +551,27 @@ const assistanceColumns = [
 // ==================== COMPUTED PROPERTIES ====================
 
 /**
- * Extract all assistance funds from multiple possible sources
+ * FIX: Extract assistance funds - deduplicate by fund_source + fund_amount
+ * This prevents showing the same assistance multiple times
  */
 const assistanceFunds = computed(() => {
-  const funds = []
+  const funds = billingData.value.assistance?.funds || []
 
-  if (Array.isArray(billingData.value.funds) && billingData.value.funds.length > 0) {
-    funds.push(...billingData.value.funds)
-  }
+  // Deduplicate funds by creating a unique key from fund_source and fund_amount
+  const uniqueFunds = []
+  const seenKeys = new Set()
 
-  if (billingData.value.assistance && Array.isArray(billingData.value.assistance.funds)) {
-    funds.push(...billingData.value.assistance.funds)
-  }
+  funds.forEach((fund) => {
+    // Create a unique key combining fund_source and fund_amount
+    const key = `${fund.fund_source}_${parseAmount(fund.fund_amount)}`
 
-  return funds
+    if (!seenKeys.has(key)) {
+      seenKeys.add(key)
+      uniqueFunds.push(fund)
+    }
+  })
+
+  return uniqueFunds
 })
 
 /**
@@ -699,7 +690,6 @@ onMounted(async () => {
         mammogram_details: data.mammogram_details || [],
         ultrasound_details: data.ultrasound_details || [],
         medication: data.medication || [],
-        funds: [],
         address: data.address || { street: '', purok: '', barangay: '' },
         representative: data.representative || {
           id: null,
@@ -707,8 +697,10 @@ onMounted(async () => {
           relationship: '',
           address: '',
         },
-        assistance: data.assistance || null,
+        // FIX: Keep original assistance data from server without modification
+        assistance: data.assistance ? JSON.parse(JSON.stringify(data.assistance)) : { funds: [] },
       }
+      console.log('✅ Initial assistance loaded:', billingData.value.assistance)
     } else {
       error.value = 'No billing data found'
     }
@@ -747,6 +739,43 @@ function parseAmount(amount) {
 function formatAmount(amount) {
   const num = parseAmount(amount)
   return `₱${num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+/**
+ * Format amount input to always show 2 decimal places
+ */
+function formatAmountInput(amount) {
+  const num = parseAmount(amount)
+  return num.toFixed(2)
+}
+
+/**
+ * Update assistance amount with validation
+ */
+function updateAssistanceAmount(rowIndex, value) {
+  const cleanValue = value.replace(/[^\d.]/g, '')
+  let numValue = parseFloat(cleanValue) || 0
+  numValue = Math.round(numValue * 100) / 100
+  assistanceForm.value.assistanceItems[rowIndex].amount = numValue
+}
+
+/**
+ * Validate assistance amount
+ */
+function validateAssistanceAmount(val, rowIndex) {
+  const numVal = parseAmount(val)
+
+  if (numVal < 0) return 'Amount cannot be negative'
+  if (numVal === 0) return 'Amount must be greater than 0'
+
+  const currentRowAmount = assistanceForm.value.assistanceItems[rowIndex].amount
+  const otherAmount = totalNewAssistanceAmount.value - currentRowAmount
+
+  if (numVal + otherAmount > grandTotalAfterExistingAssistance.value) {
+    return 'Total assistance exceeds remaining amount'
+  }
+
+  return true
 }
 
 function formatDate(dateString) {
@@ -1027,24 +1056,11 @@ async function applyAssistance() {
       (result && !result.error)
 
     if (isSuccess) {
-      // Add all funds from the response
-      const funds = result.assistance?.funds || []
-
-      if (funds.length > 0) {
-        if (!billingData.value.assistance) {
-          billingData.value.assistance = { funds: [] }
-        } else if (!billingData.value.assistance.funds) {
-          billingData.value.assistance.funds = []
-        }
-
-        funds.forEach((fund) => {
-          billingData.value.assistance.funds.push({
-            id: fund.id || Date.now(),
-            fund_source: fund.fund_source,
-            fund_amount: fund.fund_amount,
-            control_number: fund.control_number || fund.gl_number,
-          })
-        })
+      // FIX: Replace the entire assistance object with fresh data from server
+      // This prevents duplication of existing assistance
+      if (result.assistance && result.assistance.funds) {
+        billingData.value.assistance = JSON.parse(JSON.stringify(result.assistance))
+        console.log('✅ Assistance updated with server response:', billingData.value.assistance)
       }
 
       showAssistanceDialog.value = false
@@ -1122,7 +1138,7 @@ async function handleSubmit() {
         position: 'top',
       })
       showConfirmDialog.value = false
-      setTimeout(() => router.push('/billing'), 1500)
+      setTimeout(() => router.push('/gl'), 1500)
     } else {
       throw new Error('Failed to update transaction status')
     }
@@ -1146,27 +1162,6 @@ async function handleSubmit() {
     submitting.value = false
   }
 }
-
-/**
- * Navigate to GL Letter page
- */
-// function showGL() {
-//   console.log('Navigating with IDs:', {
-//     patientId: billingData.value.patient_id,
-//     transactionId: billingData.value.transaction_id,
-//   })
-
-//   store.patient_id = billingData.value.patient_id
-//   store.transaction_id = billingData.value.transaction_id
-
-//   router.push({
-//     path: '/gl/letter',
-//     query: {
-//       patientId: billingData.value.patient_id,
-//       transactionId: billingData.value.transaction_id,
-//     },
-//   })
-// }
 
 async function handlePrint() {
   const element = document.querySelector('.certification-report-container')
