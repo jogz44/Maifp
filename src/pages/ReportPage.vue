@@ -20,10 +20,26 @@
       <q-card-section>
         <q-form @submit.prevent="onFilter">
           <div class="row q-col-gutter-md items-end">
+            <!-- Fund Source Filter -->
+            <div class="col-12 col-md-auto">
+              <q-select
+                v-model="fundSource"
+                :options="fundSourceOptions"
+                label="Fund Source"
+                outlined
+                dense
+                emit-value
+                map-options
+                color="green-8"
+              />
+            </div>
+
+            <!-- Date Range Toggle -->
             <div class="col-12 col-md-auto">
               <q-toggle v-model="isRange" label="Select Date Range" color="green-8" />
             </div>
 
+            <!-- Single Date Picker -->
             <div v-if="!isRange" class="col-12 col-md-auto">
               <q-input v-model="singleDate" label="Select Date" outlined dense clearable readonly>
                 <template v-slot:append>
@@ -45,6 +61,7 @@
               </q-input>
             </div>
 
+            <!-- From Date Picker -->
             <div v-else class="col-12 col-md-auto">
               <q-input v-model="fromDate" label="From Date" outlined dense clearable readonly>
                 <template v-slot:append>
@@ -67,6 +84,7 @@
               </q-input>
             </div>
 
+            <!-- To Date Picker -->
             <div v-if="isRange" class="col-12 col-md-auto">
               <q-input v-model="toDate" label="To Date" outlined dense clearable readonly>
                 <template v-slot:append>
@@ -89,6 +107,7 @@
               </q-input>
             </div>
 
+            <!-- Action Buttons -->
             <div class="col-12 col-md q-gutter-sm row justify-end">
               <q-btn
                 label="Filter"
@@ -113,7 +132,7 @@
     <q-card class="data-card">
       <q-card-section class="row items-center justify-between">
         <div class="text-h6">MAIFIP Data</div>
-        <div class="row q-gutter-sm" v-if="filteredData.length > 0">
+        <div class="row q-gutter-sm" v-if="displayedData.length > 0">
           <q-btn
             label="Generate PDF"
             color="red-8"
@@ -135,16 +154,15 @@
       <q-separator />
       <q-card-section class="q-pa-none">
         <q-table
-          :rows="filteredData"
+          :rows="displayedData"
           :columns="columns"
-          row-key="transaction_id"
+          row-key="row_id"
           :loading="loading"
-          :pagination="pagination"
+          v-model:pagination="pagination"
           @request="onRequest"
           binary-state-sort
           :rows-per-page-options="[10, 25, 50, 100, 0]"
           class="maifip-table"
-          :filter="searchText"
         >
           <template v-slot:top>
             <div class="full-width row justify-between items-center">
@@ -183,16 +201,31 @@
             </q-td>
           </template>
 
-          <template v-slot:body-cell-Gl_number="props">
+          <template v-slot:body-cell-gl_number="props">
             <q-td :props="props">
               <q-badge color="secondary" :label="props.value || 'N/A'" />
+            </q-td>
+          </template>
+
+          <template v-slot:body-cell-fund_source="props">
+            <q-td :props="props">
+              <q-badge
+                :color="
+                  props.value === 'MAIFIP-LGU'
+                    ? 'blue'
+                    : props.value === 'MAIFIP-Congressman'
+                      ? 'purple'
+                      : 'grey'
+                "
+                :label="props.value || 'N/A'"
+              />
             </q-td>
           </template>
 
           <template v-slot:body-cell-amount="props">
             <q-td :props="props" class="text-right">
               <q-chip color="green-1" text-color="green-10">
-                {{ formatCurrency(calculatePatientTotal(props.row.maifip_funds)) }}
+                {{ formatCurrency(props.value) }}
               </q-chip>
             </q-td>
           </template>
@@ -211,6 +244,7 @@
       </q-card-section>
     </q-card>
 
+    <!-- PDF Content (Hidden) -->
     <div id="pdfContent" style="display: none">
       <div class="pdf-container">
         <div class="header-container">
@@ -243,6 +277,7 @@
         <div class="office-heading">
           <h3>MAIFIP REPORT</h3>
           <p class="date-range">{{ getDateRangeText() }}</p>
+          <p class="fund-source-range">{{ getFundSourceText() }}</p>
         </div>
 
         <table class="data-table">
@@ -250,29 +285,28 @@
             <tr>
               <th>Date</th>
               <th>Patient Name</th>
-              <th>GL Control No</th>
+              <th>GL Number</th>
+              <th>Fund Source</th>
               <th>Amount</th>
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="(patient, index) in filteredData"
-              :key="`patient-${patient.transaction_id}-${index}`"
-            >
-              <td>{{ formatReportDate(patient.transaction_date) }}</td>
-              <td>{{ patient.patient_name || 'N/A' }}</td>
-              <td>{{ patient.Gl_number || 'N/A' }}</td>
-              <td>{{ formatCurrency(calculatePatientTotal(patient.maifip_funds)) }}</td>
+            <tr v-for="(row, index) in displayedData" :key="`pdf-${row.row_id}-${index}`">
+              <td>{{ formatReportDate(row.transaction_date) }}</td>
+              <td>{{ row.patient_name || 'N/A' }}</td>
+              <td>{{ row.gl_number || 'N/A' }}</td>
+              <td>{{ row.fund_source || 'N/A' }}</td>
+              <td>{{ formatCurrency(row.amount) }}</td>
             </tr>
-            <tr v-if="filteredData.length > 0" class="total-row">
-              <td colspan="3" style="text-align: right; font-weight: bold">Total Amount:</td>
+            <tr v-if="displayedData.length > 0" class="total-row">
+              <td colspan="4" style="text-align: right; font-weight: bold">Total Amount:</td>
               <td style="text-align: right; font-weight: bold">
                 {{ formatCurrency(totalAmount) }}
               </td>
             </tr>
             <tr v-else>
-              <td colspan="4" style="text-align: center; font-style: italic">
-                No data available for the selected date(s)
+              <td colspan="5" style="text-align: center; font-style: italic">
+                No data available for the selected filters
               </td>
             </tr>
           </tbody>
@@ -318,11 +352,21 @@ export default {
 
   data() {
     return {
+      // Fund Source Filter
+      fundSource: 'all',
+      fundSourceOptions: [
+        { label: 'All Sources', value: 'all' },
+        { label: 'MAIFIP-LGU', value: 'MAIFIP-LGU' },
+        { label: 'MAIFIP-Congressman', value: 'MAIFIP-Congressman' },
+      ],
+
+      // Date Filters
       isRange: false,
       singleDate: null,
       fromDate: null,
       toDate: null,
 
+      // Data Management
       allData: [],
       filteredData: [],
       searchText: '',
@@ -331,13 +375,15 @@ export default {
       loadingMessage: 'Processing...',
       loadingSubMessage: 'Please wait...',
 
+      // Pagination
       pagination: {
         sortBy: 'transaction_date',
         descending: true,
         page: 1,
-        rowsPerPage: 5,
+        rowsPerPage: 10,
       },
 
+      // Table Columns
       columns: [
         {
           name: 'transaction_date',
@@ -358,11 +404,20 @@ export default {
           style: 'min-width: 200px',
         },
         {
-          name: 'Gl_number',
+          name: 'gl_number',
           required: true,
-          label: 'GL Control No',
+          label: 'GL Number',
           align: 'center',
-          field: 'Gl_number',
+          field: 'gl_number',
+          sortable: true,
+          style: 'width: 150px',
+        },
+        {
+          name: 'fund_source',
+          required: true,
+          label: 'Fund Source',
+          align: 'center',
+          field: 'fund_source',
           sortable: true,
           style: 'width: 150px',
         },
@@ -371,7 +426,7 @@ export default {
           required: true,
           label: 'Amount',
           align: 'right',
-          field: (row) => this.calculatePatientTotal(row.maifip_funds),
+          field: 'amount',
           sortable: true,
           sort: (a, b) => parseFloat(a) - parseFloat(b),
           style: 'width: 120px',
@@ -381,9 +436,31 @@ export default {
   },
 
   computed: {
+    /**
+     * Display data with search filter applied
+     */
+    displayedData() {
+      let data = [...this.filteredData]
+
+      if (this.searchText && this.searchText.trim() !== '') {
+        const searchLower = this.searchText.toLowerCase().trim()
+        data = data.filter((row) => {
+          const patientMatch =
+            row.patient_name && row.patient_name.toLowerCase().includes(searchLower)
+          const glMatch = row.gl_number && row.gl_number.toLowerCase().includes(searchLower)
+          return patientMatch || glMatch
+        })
+      }
+
+      return data
+    },
+
+    /**
+     * Calculate total amount from displayed data
+     */
     totalAmount() {
-      return this.filteredData.reduce((total, patient) => {
-        return total + this.calculatePatientTotal(patient.maifip_funds)
+      return this.displayedData.reduce((total, row) => {
+        return total + (parseFloat(row.amount) || 0)
       }, 0)
     },
   },
@@ -393,6 +470,9 @@ export default {
   },
 
   methods: {
+    /**
+     * Date Option Validators
+     */
     fromDateOptions(date) {
       return this.toDate ? date <= this.toDate : true
     },
@@ -401,14 +481,18 @@ export default {
       return this.fromDate ? date >= this.fromDate : true
     },
 
+    /**
+     * Fetch all data from store
+     */
     async fetchAllData() {
       this.loading = true
       try {
         const result = await this.maifipStore.getDate()
 
         if (result.success && Array.isArray(result.data)) {
-          this.allData = result.data
+          this.allData = this.transformData(result.data)
           this.filteredData = [...this.allData]
+          console.log('Data loaded:', this.allData.length, 'records')
         } else {
           this.allData = []
           this.filteredData = []
@@ -424,6 +508,175 @@ export default {
       }
     },
 
+    /**
+     * Transform raw data into display format
+     * Each fund record becomes a separate row
+     */
+    transformData(data) {
+      const transformedRows = []
+      let rowCounter = 0
+
+      data.forEach((transaction) => {
+        // Process MAIFIP-LGU funds
+        if (Array.isArray(transaction.maifip_LGU) && transaction.maifip_LGU.length > 0) {
+          transaction.maifip_LGU.forEach((fund) => {
+            transformedRows.push({
+              row_id: `${transaction.transaction_id}-lgu-${rowCounter}`,
+              transaction_id: transaction.transaction_id,
+              transaction_date: transaction.transaction_date,
+              patient_name: transaction.patient_name,
+              gl_number: transaction.gl_lgu || 'N/A',
+              fund_source: 'MAIFIP-LGU',
+              amount: parseFloat(fund.fund_amount) || 0,
+              fund_id: fund.id,
+            })
+            rowCounter++
+          })
+        }
+
+        // Process MAIFIP-Congressman funds
+        if (
+          Array.isArray(transaction.maifip_Congressman) &&
+          transaction.maifip_Congressman.length > 0
+        ) {
+          transaction.maifip_Congressman.forEach((fund) => {
+            transformedRows.push({
+              row_id: `${transaction.transaction_id}-cong-${rowCounter}`,
+              transaction_id: transaction.transaction_id,
+              transaction_date: transaction.transaction_date,
+              patient_name: transaction.patient_name,
+              gl_number: transaction.gl_cong || 'N/A',
+              fund_source: 'MAIFIP-Congressman',
+              amount: parseFloat(fund.fund_amount) || 0,
+              fund_id: fund.id,
+            })
+            rowCounter++
+          })
+        }
+
+        // Handle records with no funds
+        if (
+          (!Array.isArray(transaction.maifip_LGU) || transaction.maifip_LGU.length === 0) &&
+          (!Array.isArray(transaction.maifip_Congressman) ||
+            transaction.maifip_Congressman.length === 0)
+        ) {
+          transformedRows.push({
+            row_id: `${transaction.transaction_id}-none-${rowCounter}`,
+            transaction_id: transaction.transaction_id,
+            transaction_date: transaction.transaction_date,
+            patient_name: transaction.patient_name,
+            gl_number: transaction.gl_lgu || transaction.gl_cong || 'N/A',
+            fund_source: 'No Fund',
+            amount: 0,
+            fund_id: null,
+          })
+          rowCounter++
+        }
+      })
+
+      return transformedRows
+    },
+
+    /**
+     * Parse date string to Date object
+     */
+    parseDate(dateString) {
+      if (!dateString) return null
+      try {
+        const date = new Date(dateString)
+        return date
+      } catch {
+        return null
+      }
+    },
+
+    /**
+     * Get date string without time (YYYY-MM-DD)
+     */
+    getDateOnly(date) {
+      if (!date) return null
+      const d = new Date(date)
+      const year = d.getFullYear()
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    },
+
+    /**
+     * Check if date falls within range
+     */
+    isDateInRange(transactionDate, fromDate, toDate) {
+      const txDate = this.getDateOnly(transactionDate)
+      const from = this.getDateOnly(fromDate)
+      const to = this.getDateOnly(toDate)
+
+      if (!txDate || !from || !to) return false
+
+      return txDate >= from && txDate <= to
+    },
+
+    /**
+     * Check if date matches single date
+     */
+    isDateMatch(transactionDate, singleDate) {
+      const txDate = this.getDateOnly(transactionDate)
+      const single = this.getDateOnly(singleDate)
+
+      if (!txDate || !single) return false
+
+      return txDate === single
+    },
+
+    /**
+     * Apply date filter to data
+     */
+    applyDateFilter(data) {
+      if (!this.isRange && !this.singleDate) {
+        return data
+      }
+
+      if (this.isRange && this.fromDate && this.toDate) {
+        return data.filter((row) =>
+          this.isDateInRange(row.transaction_date, this.fromDate, this.toDate),
+        )
+      }
+
+      if (!this.isRange && this.singleDate) {
+        return data.filter((row) => this.isDateMatch(row.transaction_date, this.singleDate))
+      }
+
+      return data
+    },
+
+    /**
+     * Apply fund source filter to data
+     */
+    applyFundSourceFilter(data) {
+      if (this.fundSource === 'all') {
+        return data
+      }
+
+      return data.filter((row) => row.fund_source === this.fundSource)
+    },
+
+    /**
+     * Apply all filters to data
+     */
+    applyAllFilters(data) {
+      let result = data
+
+      // Apply date filter
+      result = this.applyDateFilter(result)
+
+      // Apply fund source filter
+      result = this.applyFundSourceFilter(result)
+
+      return result
+    },
+
+    /**
+     * Apply filters and fetch data
+     */
     async onFilter() {
       if (!this.isFilterValid()) {
         this.showErrorNotification('Please select valid date(s) for filtering')
@@ -432,16 +685,24 @@ export default {
 
       this.loading = true
       try {
-        const payload = this.buildRequestPayload()
-        const result = await this.maifipStore.getReport(payload)
+        // Apply filters to all data (client-side filtering)
+        const filtered = this.applyAllFilters(this.allData)
 
-        if (result.success && Array.isArray(result.data)) {
-          this.filteredData = result.data
-          this.showSuccessNotification(`Found ${result.data.length} filtered records`)
+        this.filteredData = filtered
+        this.pagination.page = 1
+        this.searchText = ''
+
+        if (filtered.length > 0) {
+          this.showSuccessNotification(`Found ${filtered.length} filtered records`)
         } else {
-          this.filteredData = []
-          this.showErrorNotification('No data found for selected date range')
+          this.showErrorNotification('No data found for selected filters')
         }
+
+        console.log('Filtered data:', {
+          dateRange: this.isRange ? `${this.fromDate} to ${this.toDate}` : this.singleDate,
+          fundSource: this.fundSource,
+          resultCount: filtered.length,
+        })
       } catch (error) {
         console.error('Filter error:', error)
         this.filteredData = []
@@ -451,16 +712,24 @@ export default {
       }
     },
 
+    /**
+     * Clear all filters
+     */
     clearFilters() {
       this.isRange = false
       this.singleDate = null
       this.fromDate = null
       this.toDate = null
       this.searchText = ''
+      this.fundSource = 'all'
       this.filteredData = [...this.allData]
+      this.pagination.page = 1
       this.showSuccessNotification('Filters cleared')
     },
 
+    /**
+     * Validate filter inputs
+     */
     isFilterValid() {
       if (this.isRange) {
         return this.fromDate && this.toDate
@@ -468,25 +737,23 @@ export default {
       return this.singleDate
     },
 
-    buildRequestPayload() {
-      const payload = {}
-
-      if (this.isRange) {
-        if (this.fromDate) payload.fromDate = new Date(this.fromDate)
-        if (this.toDate) payload.toDate = new Date(this.toDate)
-      } else {
-        if (this.singleDate) payload.singleDate = new Date(this.singleDate)
-      }
-
-      return payload
-    },
-
+    /**
+     * Handle table request (pagination, sorting)
+     */
     onRequest(props) {
-      this.pagination = props.pagination
+      const { page, rowsPerPage, sortBy, descending } = props.pagination
+
+      this.pagination.page = page
+      this.pagination.rowsPerPage = rowsPerPage
+      this.pagination.sortBy = sortBy
+      this.pagination.descending = descending
     },
 
+    /**
+     * Generate report (PDF or Excel)
+     */
     async generateReport(type) {
-      if (this.filteredData.length === 0) {
+      if (this.displayedData.length === 0) {
         this.showErrorNotification('No data to generate report')
         return
       }
@@ -511,6 +778,9 @@ export default {
       }
     },
 
+    /**
+     * Generate PDF report
+     */
     async generatePDF() {
       let element = null
 
@@ -540,21 +810,26 @@ export default {
       }
     },
 
+    /**
+     * Generate Excel report
+     */
     async generateExcel() {
       try {
         console.log('Starting Excel generation...')
 
-        const excelData = this.filteredData.map((patient) => ({
-          Date: this.formatReportDateForExcel(patient.transaction_date),
-          'Patient Name': patient.patient_name || 'N/A',
-          'GL Control No': patient.Gl_number || 'N/A',
-          Amount: this.calculatePatientTotal(patient.maifip_funds),
+        const excelData = this.displayedData.map((row) => ({
+          Date: this.formatReportDateForExcel(row.transaction_date),
+          'Patient Name': row.patient_name || 'N/A',
+          'GL Number': row.gl_number || 'N/A',
+          'Fund Source': row.fund_source || 'N/A',
+          Amount: row.amount,
         }))
 
         excelData.push({
           Date: '',
           'Patient Name': '',
-          'GL Control No': 'Total Amount:',
+          'GL Number': '',
+          'Fund Source': 'Total Amount:',
           Amount: this.totalAmount,
         })
 
@@ -563,7 +838,7 @@ export default {
         const wb = XLSX.utils.book_new()
         const ws = XLSX.utils.json_to_sheet(excelData)
 
-        ws['!cols'] = [{ width: 15 }, { width: 30 }, { width: 20 }, { width: 15 }]
+        ws['!cols'] = [{ width: 15 }, { width: 30 }, { width: 15 }, { width: 18 }, { width: 15 }]
 
         XLSX.utils.book_append_sheet(wb, ws, 'MAIFIP Report')
 
@@ -581,21 +856,32 @@ export default {
       }
     },
 
+    /**
+     * Generate filename with timestamp and fund source
+     */
     generateFilename(extension) {
       const timestamp = new Date().toISOString().split('T')[0]
+      let fundSourceSuffix = ''
+
+      if (this.fundSource !== 'all') {
+        fundSourceSuffix = `-${this.fundSource.replace('-', '')}`
+      }
 
       if (!this.isRange && this.singleDate) {
         const formattedDate = this.singleDate.replace(/-/g, '')
-        return `MAIFIPReport-${formattedDate}.${extension}`
+        return `MAIFIPReport-${formattedDate}${fundSourceSuffix}.${extension}`
       }
       if (this.isRange && this.fromDate && this.toDate) {
         const fromFormatted = this.fromDate.replace(/-/g, '')
         const toFormatted = this.toDate.replace(/-/g, '')
-        return `MAIFIPReport-${fromFormatted}_to_${toFormatted}.${extension}`
+        return `MAIFIPReport-${fromFormatted}_to_${toFormatted}${fundSourceSuffix}.${extension}`
       }
-      return `MAIFIPReport-${timestamp.replace(/-/g, '')}.${extension}`
+      return `MAIFIPReport-${timestamp.replace(/-/g, '')}${fundSourceSuffix}.${extension}`
     },
 
+    /**
+     * Format date for display in reports
+     */
     formatReportDate(dateString) {
       if (!dateString) return 'N/A'
       try {
@@ -610,6 +896,9 @@ export default {
       }
     },
 
+    /**
+     * Format date for Excel export
+     */
     formatReportDateForExcel(dateString) {
       if (!dateString) return 'N/A'
       try {
@@ -624,6 +913,9 @@ export default {
       }
     },
 
+    /**
+     * Format date for display with full month name
+     */
     formatDisplayDate(dateString) {
       if (!dateString) return 'N/A'
       try {
@@ -638,6 +930,9 @@ export default {
       }
     },
 
+    /**
+     * Format amount as Philippine Peso currency
+     */
     formatCurrency(amount) {
       const numAmount = Number(amount)
       if (isNaN(numAmount)) return '₱0.00'
@@ -648,6 +943,9 @@ export default {
       }).format(numAmount)
     },
 
+    /**
+     * Get date range text for display
+     */
     getDateRangeText() {
       if (!this.isRange && this.singleDate) {
         return `Date: ${this.formatDisplayDate(this.singleDate)}`
@@ -655,22 +953,29 @@ export default {
       if (this.isRange && this.fromDate && this.toDate) {
         return `Date Range: ${this.formatDisplayDate(this.fromDate)} to ${this.formatDisplayDate(this.toDate)}`
       }
-      return `All Records (${this.filteredData.length} entries)`
+      return `All Records (${this.displayedData.length} entries)`
     },
 
-    calculatePatientTotal(maifipFunds) {
-      if (!Array.isArray(maifipFunds)) return 0
-
-      return maifipFunds.reduce((total, fund) => {
-        const amount = Number(fund?.fund_amount)
-        return total + (isNaN(amount) ? 0 : amount)
-      }, 0)
+    /**
+     * Get fund source text for display
+     */
+    getFundSourceText() {
+      if (this.fundSource === 'all') {
+        return 'Fund Source: All Sources'
+      }
+      return `Fund Source: ${this.fundSource}`
     },
 
+    /**
+     * Delay helper for async operations
+     */
     delay(ms) {
       return new Promise((resolve) => setTimeout(resolve, ms))
     },
 
+    /**
+     * Show success notification
+     */
     showSuccessNotification(message) {
       this.$q.notify({
         message,
@@ -681,6 +986,9 @@ export default {
       })
     },
 
+    /**
+     * Show error notification
+     */
     showErrorNotification(message) {
       this.$q.notify({
         message,
@@ -803,9 +1111,15 @@ export default {
   margin: 10px 0 5px 0;
 }
 
-.date-range {
+.office-heading .date-range {
   font-size: 10pt;
-  margin: 0;
+  margin: 5px 0;
+  font-weight: normal;
+}
+
+.office-heading .fund-source-range {
+  font-size: 10pt;
+  margin: 5px 0;
   font-weight: normal;
 }
 
@@ -832,21 +1146,26 @@ export default {
 
 .data-table td:nth-child(1) {
   text-align: center;
-  width: 15%;
+  width: 12%;
 }
 
 .data-table td:nth-child(2) {
-  width: 40%;
+  width: 28%;
 }
 
 .data-table td:nth-child(3) {
   text-align: center;
-  width: 20%;
+  width: 15%;
 }
 
 .data-table td:nth-child(4) {
+  text-align: center;
+  width: 18%;
+}
+
+.data-table td:nth-child(5) {
   text-align: right;
-  width: 25%;
+  width: 27%;
 }
 
 .total-row {
