@@ -180,6 +180,7 @@
                         dense
                         outlined
                         :rules="[(val) => !!val || 'Fund source is required']"
+                        readonly
                       />
                     </q-td>
                     <q-td key="amount" :props="props">
@@ -210,13 +211,13 @@
               </q-table>
 
               <div class="row justify-between q-mt-md">
-                <q-btn
+                <!-- <q-btn
                   flat
                   color="primary"
                   icon="add"
                   label="Add Fund Source"
                   @click="addAssistanceRow"
-                />
+                /> -->
                 <div class="text-h6 text-weight-bold">
                   Total: {{ formatAmount(totalAssistanceAmount) }}
                 </div>
@@ -556,7 +557,7 @@ const assistanceColumns = [
   },
 ]
 
-let nextAssistanceId = 2
+// let nextAssistanceId = 2
 
 try {
   currentUser.value = LocalStorage.getItem('user')
@@ -676,13 +677,13 @@ function cancelAssistance() {
   showAssistanceDialog.value = false
 }
 
-function addAssistanceRow() {
-  assistanceForm.value.assistanceItems.push({
-    fundSource: 'Select Funds Source',
-    amount: 0,
-    id: nextAssistanceId++,
-  })
-}
+// function addAssistanceRow() {
+//   assistanceForm.value.assistanceItems.push({
+//     fundSource: 'Select Funds Source',
+//     amount: 0,
+//     id: nextAssistanceId++,
+//   })
+// }
 
 function removeAssistanceRow(index) {
   if (index > 0) {

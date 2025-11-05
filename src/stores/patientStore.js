@@ -1069,6 +1069,21 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
+    async getMaxNumber() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get(`/guarantee/max/number`)
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        return null
+      } finally {
+        this.loading = false
+      }
+    },
+
     async addGL(transactionId, payload) {
       this.loading = true
       this.error = null

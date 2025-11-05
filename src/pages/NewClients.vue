@@ -25,7 +25,7 @@
                 outlined
                 dense
                 v-model="patientData.philhealth_id"
-                label="PhilHealth ID"
+                label="PhilHealth ID Number"
                 class="text-caption"
                 mask="##-#########-#"
               />
@@ -485,7 +485,7 @@
               <q-checkbox
                 v-model="patientData.is_solo"
                 :val="'Solo'"
-                label="Solo"
+                label="Solo Parent"
                 class="text-caption"
               />
             </div>

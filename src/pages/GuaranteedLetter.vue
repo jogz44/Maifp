@@ -11,9 +11,15 @@
           <q-btn flat round color="primary" icon="arrow_back" @click="handleBack" />
         </div>
         <div class="header-actions">
-          <q-btn color="primary" label="Submit" icon="save" class="q-mr-sm" @click="showConfirmDialog = true"
-            :loading="submitting" />
-          <q-btn color="secondary" label="Preview PDF" icon="picture_as_pdf" @click="handlePrint" />
+          <q-btn
+            color="primary"
+            label="Submit"
+            icon="save"
+            class="q-mr-sm"
+            @click="showConfirmDialog = true"
+            :loading="submitting"
+          />
+          <q-btn color="secondary" label="Print PDF" icon="picture_as_pdf" @click="handlePrint" />
         </div>
       </div>
 
@@ -29,30 +35,48 @@
             <p class="main-text">
               This is to certify that
               <span class="bold">
-                {{ gender === 'male' ? 'MR.' : 'MS.' }} {{ firstname }} {{ lastname }}
+                {{ gender === 'male' ? 'Mr.' : 'Ms.' }} {{ firstname }} {{ lastname }}
               </span>
               is a beneficiary of the
               <span class="bold">
-                Medical Assistance to Indigent and Financially Incapacitated Patients (MAIFIP) </span>. Pursuant to {{
-              gender === 'male' ? 'his' : 'her' }} request for assistance, the
-              amount of
-              <span class="bold">
-                {{ formatAmountInWords(total_billing) }} (₱{{ formatAmount(total_billing) }})
-              </span>
-              has been allocated and guaranteed to cover
+                Medical Assistance for Indigent and Incapacitated Patients (MAIFIP) </span
+              >. Pursuant to {{ gender === 'male' ? 'his' : 'her' }} request for assistance, the
+              following amounts have been allocated and guaranteed to cover
               {{ gender === 'male' ? 'his' : 'her' }} necessary medical expenses, subject to the
-              rules and guidelines of the program.
+              rules and guidelines of the program:
             </p>
-            <p class="issuance-text">
-              Issued this {{ formatDayWithSuffix(issueDate) }} day of {{ formatMonth(issueDate) }},
-              {{ formatYear(issueDate) }}
-              at the City Government Center, JV Ayala Avenue, Apokon, Tagum City, Davao del Norte.
-            </p>
+
+            <!-- Display Fund Sources and Amounts - Only MAIFIP -->
+            <div v-if="displayFunds.length > 0" class="funds-section">
+              <div v-for="fund in displayFunds" :key="fund.id" class="fund-item">
+                <p>
+                  <strong>{{ fund.fund_source }}:</strong> ₱{{ formatAmount(fund.fund_amount) }}
+                </p>
+              </div>
+              <div class="fund-total">
+                <p>Total: ₱{{ formatAmount(totalMAIFIPAmount) }}</p>
+              </div>
+            </div>
+
+            <!-- <p class="closing-text">
+              Issued this {{ getCurrentDate() }} at the City Government Center, JV Ayala Avenue,
+              Apokon, Tagum City, Davao del Norte.
+            </p> -->
+
+            <!-- Signature Section -->
             <div class="signature-container">
-              <div class="signature-section">
+              <!-- LGU Signatory -->
+              <div v-if="hasLGUFund" class="signature-section">
                 <div class="signature-name">REY T. UY</div>
                 <div class="signature-line"></div>
                 <div class="signature-title">CITY MAYOR</div>
+              </div>
+
+              <!-- Congressman Signatory -->
+              <div v-if="hasCongressmanFund" class="signature-section">
+                <div class="signature-name">CLIFORD M. MILLAN</div>
+                <div class="signature-line"></div>
+                <div class="signature-title">CONGRESSMAN</div>
               </div>
             </div>
           </div>
@@ -116,7 +140,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { usePatientStore } from 'src/stores/patientStore'
 import { useRouter } from 'vue-router'
 import { useQuasar } from 'quasar'
@@ -132,7 +156,6 @@ const router = useRouter()
 const loading = ref(true)
 const submitting = ref(false)
 const showConfirmDialog = ref(false)
-
 const showErrorDialog = ref(false)
 const errorMessage = ref([])
 
@@ -151,10 +174,63 @@ const medication_total = ref(0)
 const total_billing = ref(0)
 const laboratories = ref([])
 const issueDate = ref(new Date())
+const assistance = ref(null)
 
 const officeName = 'CITY HEALTH OFFICE'
 const footerPhone = '(084) 217-3710'
 const footerEmail = 'tagumcho@gmail.com'
+
+/**
+ * Get display funds from assistance data
+ * Only show funds with fund_source containing "MAIFIP-LGU" or "MAIFIP-Congressman"
+ */
+const displayFunds = computed(() => {
+  if (!assistance.value || !assistance.value.funds) {
+    return []
+  }
+
+  return assistance.value.funds
+    .filter((fund) => {
+      const source = fund.fund_source ? fund.fund_source.toUpperCase() : ''
+      return source.includes('MAIFIP-LGU') || source.includes('MAIFIP-CONGRESSMAN')
+    })
+    .map((fund) => ({
+      id: fund.id,
+      fund_source: fund.fund_source,
+      fund_amount: fund.fund_amount,
+    }))
+})
+
+/**
+ * Calculate total MAIFIP amount
+ */
+const totalMAIFIPAmount = computed(() => {
+  return displayFunds.value.reduce((total, fund) => {
+    return total + parseFloat(fund.fund_amount)
+  }, 0)
+})
+
+/**
+ * Check if LGU fund exists
+ */
+const hasLGUFund = computed(() => {
+  return displayFunds.value.some((f) => f.fund_source.toUpperCase().includes('MAIFIP-LGU'))
+})
+
+/**
+ * Check if Congressman fund exists
+ */
+const hasCongressmanFund = computed(() => {
+  return displayFunds.value.some((f) => f.fund_source.toUpperCase().includes('MAIFIP-CONGRESSMAN'))
+})
+
+/**
+ * Get current date in proper format
+ */
+// function getCurrentDate() {
+//   const options = { year: 'numeric', month: 'long', day: 'numeric' }
+//   return new Date().toLocaleDateString('en-PH', options)
+// }
 
 onMounted(async () => {
   if (!store.transaction_id) {
@@ -185,7 +261,10 @@ onMounted(async () => {
     medication_total.value = data.medication_total
     total_billing.value = data.total_billing
     laboratories.value = data.laboratories || []
+    assistance.value = data.assistance || null
     issueDate.value = new Date()
+
+    console.log('✅ Displayed MAIFIP Funds:', displayFunds.value)
   } catch {
     errorMessage.value = ['Failed to load billing data']
     showErrorDialog.value = true
@@ -206,10 +285,7 @@ async function handleSubmit() {
       consultation_amount: consultation_amount.value,
     }
 
-    // Await API call
     const response = await store.addGL(payload)
-
-    // Some APIs return { data: {...} }, some return directly {...}
     const result = response?.data ?? response
 
     if (result) {
@@ -220,7 +296,6 @@ async function handleSubmit() {
       })
       setTimeout(() => router.push('/billing'), 1500)
     } else {
-      // ✅ Always display the actual message if present
       errorMessage.value = [
         result?.message || 'Not enough funds. Please add more funds before creating this billing.',
       ]
@@ -233,7 +308,7 @@ async function handleSubmit() {
     if (error.response?.data) {
       const data = error.response.data
       if (data.message) {
-        msg = data.message // ✅ Catch backend message
+        msg = data.message
       } else if (data.errors) {
         msg = Array.isArray(data.errors) ? data.errors[0] : JSON.stringify(data.errors)
       }
@@ -273,120 +348,8 @@ async function handlePrint() {
 }
 
 // --- Format Helpers ---
-function formatDayWithSuffix(date) {
-  const day = date.getDate()
-  if (day > 3 && day < 21) return day + 'th'
-  switch (day % 10) {
-    case 1:
-      return day + 'st'
-    case 2:
-      return day + 'nd'
-    case 3:
-      return day + 'rd'
-    default:
-      return day + 'th'
-  }
-}
-function formatMonth(date) {
-  return date.toLocaleString('en-US', { month: 'long' })
-}
-function formatYear(date) {
-  return date.getFullYear()
-}
 function formatAmount(amount) {
   return parseFloat(amount).toLocaleString('en-PH', { minimumFractionDigits: 2 })
-}
-function formatAmountInWords(amount) {
-  const num = parseFloat(amount)
-  if (isNaN(num)) return 'ZERO PESOS'
-
-  const wholePart = Math.floor(num)
-  const decimalPart = Math.round((num - wholePart) * 100)
-
-  const ones = ['', 'ONE', 'TWO', 'THREE', 'FOUR', 'FIVE', 'SIX', 'SEVEN', 'EIGHT', 'NINE']
-  const teens = [
-    'TEN',
-    'ELEVEN',
-    'TWELVE',
-    'THIRTEEN',
-    'FOURTEEN',
-    'FIFTEEN',
-    'SIXTEEN',
-    'SEVENTEEN',
-    'EIGHTEEN',
-    'NINETEEN',
-  ]
-  const tens = [
-    '',
-    '',
-    'TWENTY',
-    'THIRTY',
-    'FORTY',
-    'FIFTY',
-    'SIXTY',
-    'SEVENTY',
-    'EIGHTY',
-    'NINETY',
-  ]
-
-  const convertLessThanThousand = (n) => {
-    if (n === 0) return ''
-
-    let result = ''
-    const hundreds = Math.floor(n / 100)
-    const remainder = n % 100
-
-    if (hundreds > 0) {
-      result += ones[hundreds] + ' HUNDRED'
-      if (remainder > 0) result += ' '
-    }
-
-    if (remainder >= 20) {
-      const tensDigit = Math.floor(remainder / 10)
-      const onesDigit = remainder % 10
-      result += tens[tensDigit]
-      if (onesDigit > 0) result += '-' + ones[onesDigit]
-    } else if (remainder >= 10) {
-      result += teens[remainder - 10]
-    } else if (remainder > 0) {
-      result += ones[remainder]
-    }
-
-    return result
-  }
-
-  let result = ''
-  if (wholePart === 0) {
-    result = 'ZERO'
-  } else {
-    const billions = Math.floor(wholePart / 1000000000)
-    if (billions > 0) {
-      result += convertLessThanThousand(billions) + ' BILLION '
-    }
-
-    const millions = Math.floor((wholePart % 1000000000) / 1000000)
-    if (millions > 0) {
-      result += convertLessThanThousand(millions) + ' MILLION '
-    }
-
-    const thousands = Math.floor((wholePart % 1000000) / 1000)
-    if (thousands > 0) {
-      result += convertLessThanThousand(thousands) + ' THOUSAND '
-    }
-
-    const remainder = wholePart % 1000
-    if (remainder > 0) {
-      result += convertLessThanThousand(remainder)
-    }
-  }
-
-  result += ' PESOS'
-
-  if (decimalPart > 0) {
-    result += ' AND ' + convertLessThanThousand(decimalPart) + ' CENTAVOS'
-  }
-
-  return result.trim()
 }
 </script>
 
@@ -433,9 +396,31 @@ function formatAmountInWords(amount) {
   margin-bottom: 15px;
   line-height: 1.8;
 }
-.issuance-text {
-  margin-top: 15px;
-  margin-bottom: 60px;
+.funds-section {
+  margin: 20px 0;
+}
+.fund-item {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+.fund-item p {
+  margin: 0;
+  line-height: 1.6;
+  font-size: 14px;
+}
+.fund-total {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #ccc;
+  padding-left: 20px;
+}
+.fund-total p {
+  margin: 0;
+  font-weight: bold;
+  font-size: 14px;
+}
+.closing-text {
+  margin: 20px 0;
   line-height: 1.8;
 }
 .bold {
@@ -445,10 +430,12 @@ function formatAmountInWords(amount) {
   width: 100%;
   display: flex;
   justify-content: flex-end;
-  margin-top: 10px;
+  margin-top: 40px;
+  gap: 40px;
+  padding-right: 20px;
 }
 .signature-section {
-  width: 3in;
+  width: 2.5in;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -457,17 +444,24 @@ function formatAmountInWords(amount) {
 .signature-line {
   width: 100%;
   border-bottom: 1px solid black;
-  margin-bottom: 5px;
+  margin-bottom: 8px;
 }
 .signature-name {
   font-weight: bold;
   text-align: center;
   text-transform: uppercase;
+  font-size: 11px;
+  order: 2;
 }
 .signature-title {
   text-align: center;
+  font-size: 10px;
+  text-transform: uppercase;
+  order: 3;
 }
-
+.signature-line {
+  order: 1;
+}
 .footer-spacer {
   flex-grow: 1;
   min-height: 20px;

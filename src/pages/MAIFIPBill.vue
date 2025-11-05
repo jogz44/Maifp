@@ -17,19 +17,30 @@
           <q-btn flat round color="primary" icon="arrow_back" @click="$router.back()" />
         </div>
         <div class="header-actions">
-          <!-- Show MAIFIP button only if no MAIFIP assistance exists -->
+          <!-- Show MAIFIP button only if grand total > 0 -->
           <q-btn
-            v-if="!hasMAIFIPAssistance"
+            v-if="grandTotalAfterExistingAssistance > 0"
             color="orange-9"
             label="MAIFIP"
             icon="volunteer_activism"
             class="q-mr-sm"
             :loading="processing"
             :disable="processing"
-            @click="showAssistanceDialog = true"
+            @click="openAssistanceDialog"
           />
 
-          <!-- Show Submit button only if MAIFIP assistance exists -->
+          <!-- Show Letter button if MAIFIP assistance exists -->
+          <!-- <q-btn
+            v-if="hasMAIFIPAssistance"
+            color="primary"
+            label="Letter"
+            icon="description"
+            class="q-mr-sm"
+            @click="showGL"
+          /> -->
+
+          <q-btn color="secondary" label="Print PDF" icon="picture_as_pdf" @click="handlePrint" />
+
           <q-btn
             v-if="hasMAIFIPAssistance"
             color="primary"
@@ -39,8 +50,6 @@
             @click="showConfirmDialog = true"
             :loading="submitting"
           />
-
-          <q-btn color="secondary" label="Print PDF" icon="picture_as_pdf" @click="handlePrint" />
         </div>
       </div>
 
@@ -55,7 +64,7 @@
             <div class="text-body1">Are you sure you want to fund this statement of account?</div>
             <div class="q-mt-md text-body2 text-grey-7">
               <strong>Patient:</strong> {{ patientFullName }}<br />
-              <strong>Amount:</strong> {{ formatAmount(finalAmountDue) }}
+              <strong>Amount:</strong> {{ formatAmount(grandTotalAfterExistingAssistance) }}
             </div>
           </q-card-section>
           <q-card-actions align="right" class="text-primary">
@@ -63,15 +72,16 @@
               flat
               label="Cancel"
               @click="showConfirmDialog = false"
-              :disable="submitting"
               color="dark"
+              :disable="submitting"
             />
             <q-btn
               flat
               label="Confirm"
               @click="handleSubmit"
-              :loading="submitting"
               color="green-9"
+              :loading="submitting"
+              :disable="submitting"
             />
           </q-card-actions>
         </q-card>
@@ -97,60 +107,142 @@
 
       <!-- Assistance Application Dialog -->
       <q-dialog v-model="showAssistanceDialog" persistent>
-        <q-card style="min-width: 500px">
+        <q-card style="min-width: 750px">
           <q-card-section class="row items-center">
             <q-avatar icon="volunteer_activism" color="orange-9" text-color="white" />
-            <span class="q-ml-sm text-h6">Apply Financial Assistance</span>
+            <span class="q-ml-sm text-h6">Apply MAIFIP</span>
+            <q-space />
+            <q-linear-progress
+              v-if="fetchingGLNumber"
+              indeterminate
+              color="orange-9"
+              class="q-mt-none"
+              style="width: 200px"
+            />
           </q-card-section>
           <q-card-section>
-            <div class="assistance-form-container">
-              <div class="row q-gutter-md">
-                <div class="col-4">
-                  <q-input
-                    v-model="assistanceForm.controlNumber"
-                    label="Control Number"
-                    outlined
-                    dense
-                    :rules="[(val) => !!val || 'Control number is required']"
-                  />
-                </div>
-                <div class="col-4">
-                  <q-input label="MAIFIP" outlined dense readonly />
-                </div>
-                <div class="col">
-                  <q-input
-                    v-model.number="assistanceForm.amount"
-                    label="MAIFIP Amount"
-                    type="number"
-                    outlined
-                    dense
-                    prefix="₱"
-                    :rules="assistanceAmountRules"
-                    min="0"
-                  />
+            <div class="assistance-table-container">
+              <q-table
+                :rows="assistanceForm.assistanceItems"
+                :columns="assistanceColumns"
+                row-key="id"
+                flat
+                bordered
+                hide-pagination
+                :rows-per-page-options="[0]"
+                class="assistance-table"
+              >
+                <template v-slot:body="props">
+                  <q-tr :props="props">
+                    <q-td key="fundSource" :props="props">
+                      <q-select
+                        v-model="props.row.fundSource"
+                        :options="getAvailableFundSources(props.rowIndex)"
+                        dense
+                        outlined
+                        :rules="[(val) => !!val || 'Fund source is required']"
+                        @update:model-value="onFundSourceChange"
+                      />
+                    </q-td>
+                    <q-td key="glNumber" :props="props">
+                      <q-input
+                        v-model="props.row.glNumber"
+                        label="GL Number"
+                        dense
+                        outlined
+                        readonly
+                        :rules="[(val) => !!val || 'GL number is required']"
+                      />
+                    </q-td>
+                    <q-td key="amount" :props="props">
+                      <q-input
+                        v-model.number="props.row.amount"
+                        type="number"
+                        dense
+                        outlined
+                        prefix="₱"
+                        :rules="[
+                          (val) => val >= 0 || 'Amount cannot be negative',
+                          (val) => val > 0 || 'Amount must be greater than 0',
+                          (val) =>
+                            totalNewAssistanceAmount - props.row.amount + (Number(val) || 0) <=
+                              grandTotalAfterExistingAssistance ||
+                            'Total assistance exceeds remaining amount',
+                        ]"
+                        min="0"
+                        step="0.01"
+                      />
+                    </q-td>
+                    <q-td key="actions" :props="props" class="text-center">
+                      <q-btn
+                        v-if="props.rowIndex > 0"
+                        flat
+                        round
+                        color="negative"
+                        icon="delete"
+                        size="sm"
+                        @click="removeAssistanceRow(props.rowIndex)"
+                      />
+                      <span v-else class="text-grey-5">Fixed</span>
+                    </q-td>
+                  </q-tr>
+                </template>
+              </q-table>
+
+              <div class="row justify-between q-mt-md items-center">
+                <q-btn
+                  flat
+                  color="primary"
+                  icon="add"
+                  label="Add Fund Source"
+                  @click="addAssistanceRow"
+                  :disable="
+                    assistanceForm.assistanceItems.length >= 2 || calculateRemainingBalance() === 0
+                  "
+                />
+                <div class="text-h6 text-weight-bold">
+                  Total: {{ formatAmount(totalNewAssistanceAmount) }}
                 </div>
               </div>
             </div>
 
+            <div class="q-mt-md">
+              <q-input
+                v-model="assistanceForm.remarks"
+                label="Remarks (Optional)"
+                outlined
+                dense
+                type="textarea"
+                rows="3"
+              />
+            </div>
+
             <div class="billing-summary q-pa-md bg-grey-1 rounded-borders q-mt-md">
-              <div class="row justify-between">
-                <span>Original Total:</span>
-                <span class="text-weight-bold">{{ formatAmount(finalAmountDue) }}</span>
+              <div class="row justify-between q-mb-sm">
+                <span>Grand Total (After Existing Assistance):</span>
+                <span class="text-weight-bold">{{
+                  formatAmount(grandTotalAfterExistingAssistance)
+                }}</span>
               </div>
-              <div class="row justify-between">
-                <span>MAIFIP Assistance:</span>
+              <div class="row justify-between q-mb-md">
+                <span>Total New Assistance:</span>
                 <span class="text-weight-bold text-orange-9"
-                  >-{{ formatAmount(assistanceForm.amount || 0) }}</span
+                  >-{{ formatAmount(totalNewAssistanceAmount) }}</span
                 >
               </div>
               <q-separator class="q-my-sm" />
-              <div class="row justify-between text-h6">
+              <div class="row justify-between text-h6 q-mb-sm">
                 <span class="text-weight-bold">Final Amount Due:</span>
                 <span class="text-weight-bold text-primary">{{
-                  formatAmount(
-                    Math.max(0, parseAmount(finalAmountDue) - (assistanceForm.amount || 0)),
-                  )
+                  formatAmount(calculateRemainingBalance())
                 }}</span>
+              </div>
+              <div
+                v-if="totalNewAssistanceAmount > grandTotalAfterExistingAssistance"
+                class="text-negative q-mt-sm"
+              >
+                <q-icon name="warning" size="sm" />
+                Warning: Total assistance exceeds the remaining amount!
               </div>
             </div>
           </q-card-section>
@@ -160,15 +252,15 @@
               label="Cancel"
               color="grey"
               @click="cancelAssistance"
-              :disable="processing"
+              :disable="processing || fetchingGLNumber"
             />
             <q-btn
               flat
               label="Apply Assistance"
               color="orange-9"
-              @click="applyMAIFIP"
+              @click="applyAssistance"
               :loading="processing"
-              :disable="processing || !isAssistanceFormValid"
+              :disable="processing || fetchingGLNumber || !isAssistanceFormValid"
             />
           </q-card-actions>
         </q-card>
@@ -330,11 +422,11 @@
                     </td>
                   </tr>
                 </template>
-                <!-- Grand Total -->
+                <!-- Grand Total (After Existing Assistance) -->
                 <tr class="grand-total-row">
                   <td colspan="4" class="text-right"><strong>Grand Total</strong></td>
                   <td class="text-right">
-                    <strong>{{ formatAmount(finalAmountDue) }}</strong>
+                    <strong>{{ formatAmount(grandTotalAfterExistingAssistance) }}</strong>
                   </td>
                 </tr>
               </tbody>
@@ -361,13 +453,16 @@ import { useRouter } from 'vue-router'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
-// Initialize stores and utilities
+// ==================== CONSTANTS ====================
+const MAIFIP_FUND_SOURCES = ['MAIFIP-LGU', 'MAIFIP-Congressman']
+
+// ==================== STORE & UTILITIES ====================
 const store = usePatientStore()
 const assistanceStore = useAssistanceStore()
 const $q = useQuasar()
 const router = useRouter()
 
-// Reactive variables
+// ==================== REACTIVE STATE ====================
 const loading = ref(true)
 const error = ref(null)
 const processing = ref(false)
@@ -377,8 +472,10 @@ const showAssistanceDialog = ref(false)
 const showErrorDialog = ref(false)
 const errorMessage = ref([])
 const currentUser = ref(null)
+const maxGLNumber = ref('00000')
+const fetchingGLNumber = ref(false)
 
-// Updated billing data structure to match new JSON format
+// ==================== BILLING DATA ====================
 const billingData = ref({
   patient_id: null,
   transaction_id: null,
@@ -423,19 +520,62 @@ const billingData = ref({
     address: '',
   },
   assistance: null,
-  funds: [], // For compatibility
+  funds: [],
 })
 
-// Assistance funds array that safely handles all possible data structures
+// ==================== ASSISTANCE FORM ====================
+const assistanceForm = ref({
+  assistanceItems: [
+    {
+      id: 1,
+      fundSource: 'MAIFIP-LGU',
+      glNumber: '',
+      amount: 0,
+    },
+  ],
+  remarks: '',
+})
+
+// ==================== TABLE COLUMNS ====================
+const assistanceColumns = [
+  {
+    name: 'fundSource',
+    label: 'Fund Source',
+    field: 'fundSource',
+    align: 'left',
+  },
+  {
+    name: 'glNumber',
+    label: 'GL Number',
+    field: 'glNumber',
+    align: 'left',
+  },
+  {
+    name: 'amount',
+    label: 'Amount (₱)',
+    field: 'amount',
+    align: 'right',
+  },
+  {
+    name: 'actions',
+    label: 'Actions',
+    field: 'actions',
+    align: 'center',
+  },
+]
+
+// ==================== COMPUTED PROPERTIES ====================
+
+/**
+ * Extract all assistance funds from multiple possible sources
+ */
 const assistanceFunds = computed(() => {
   const funds = []
 
-  // Check billingData.funds first (for compatibility)
-  if (Array.isArray(billingData.value.funds)) {
+  if (Array.isArray(billingData.value.funds) && billingData.value.funds.length > 0) {
     funds.push(...billingData.value.funds)
   }
 
-  // Check billingData.assistance.funds (from API response)
   if (billingData.value.assistance && Array.isArray(billingData.value.assistance.funds)) {
     funds.push(...billingData.value.assistance.funds)
   }
@@ -443,55 +583,52 @@ const assistanceFunds = computed(() => {
   return funds
 })
 
+/**
+ * Check if there are any existing assistance records
+ */
 const hasExistingAssistance = computed(() => {
   return assistanceFunds.value.length > 0
 })
 
+/**
+ * Check if MAIFIP-LGU or MAIFIP-Congressman assistance exists
+ */
 const hasMAIFIPAssistance = computed(() => {
-  return assistanceFunds.value.some(
-    (fund) => fund.fund_source && fund.fund_source.toUpperCase().includes('MAIFIP'),
-  )
+  return assistanceFunds.value.some((fund) => {
+    const source = fund.fund_source?.toUpperCase() || ''
+    return source.includes('MAIFIP-LGU') || source.includes('MAIFIP-CONGRESSMAN')
+  })
 })
 
+/**
+ * Calculate total existing assistance
+ */
 const totalExistingAssistance = computed(() => {
-  if (!hasExistingAssistance.value) return 0
   return assistanceFunds.value.reduce((total, fund) => {
     return total + parseAmount(fund.fund_amount)
   }, 0)
 })
 
-const finalAmountDue = computed(() => {
-  const originalAmount = parseAmount(billingData.value.final_billing)
-  const assistanceAmount = totalExistingAssistance.value
-  return Math.max(0, originalAmount - assistanceAmount)
+/**
+ * Get Grand Total After Existing Assistance
+ */
+const grandTotalAfterExistingAssistance = computed(() => {
+  const subtotal = parseAmount(billingData.value.final_billing)
+  return Math.max(0, subtotal - totalExistingAssistance.value)
 })
 
-// Assistance form
-const assistanceForm = ref({
-  controlNumber: '',
-  fund_source: 'MAIFIP',
-  amount: 0,
+/**
+ * Calculate total amount from all NEW assistance items in the form
+ */
+const totalNewAssistanceAmount = computed(() => {
+  return assistanceForm.value.assistanceItems.reduce((total, item) => {
+    return total + parseAmount(item.amount)
+  }, 0)
 })
 
-// Watch for changes in finalAmountDue to update assistance form amount
-watch(
-  finalAmountDue,
-  (newFinalAmountDue) => {
-    if (!hasMAIFIPAssistance.value) {
-      assistanceForm.value.amount = newFinalAmountDue
-    }
-  },
-  { immediate: true },
-)
-
-// Initialize current user
-try {
-  currentUser.value = LocalStorage.getItem('user')
-} catch (err) {
-  console.error('Error retrieving user data:', err)
-}
-
-// Computed properties
+/**
+ * Get preparer name from current user
+ */
 const preparerName = computed(() => {
   if (!currentUser.value) return 'Staff Member'
   const firstName = currentUser.value.first_name || ''
@@ -503,31 +640,47 @@ const preparerName = computed(() => {
   return fullName.trim() || 'Staff Member'
 })
 
+/**
+ * Get patient full name
+ */
 const patientFullName = computed(() => {
   const first = billingData.value.firstname || ''
   const last = billingData.value.lastname || ''
   return `${first} ${last}`.trim()
 })
 
-const assistanceAmountRules = [
-  (val) => val >= 0 || 'Assistance amount cannot be negative',
-  (val) => val > 0 || 'Assistance amount must be greater than 0',
-  (val) =>
-    Math.round(val * 100) <= Math.round(finalAmountDue.value * 100) || 'Exceeds remaining amount',
-]
-
+/**
+ * Check if assistance form is valid
+ */
 const isAssistanceFormValid = computed(() => {
-  const hasControlNumber = !!assistanceForm.value.controlNumber?.trim()
-  const amount = Number(assistanceForm.value.amount)
-  const finalAmount = Number(finalAmountDue.value)
-  const hasValidAmount = amount > 0
-  const amountNotExceeded = Math.round(amount * 100) <= Math.round(finalAmount * 100)
-  return hasControlNumber && hasValidAmount && amountNotExceeded
+  const allHaveFundSource = assistanceForm.value.assistanceItems.every((item) => !!item.fundSource)
+  const allHaveGLNumber = assistanceForm.value.assistanceItems.every(
+    (item) => !!item.glNumber?.trim(),
+  )
+  const allHaveAmount = assistanceForm.value.assistanceItems.every((item) => item.amount > 0)
+  const totalNotExceeded = totalNewAssistanceAmount.value <= grandTotalAfterExistingAssistance.value
+  const noDuplicates =
+    new Set(assistanceForm.value.assistanceItems.map((item) => item.fundSource)).size ===
+    assistanceForm.value.assistanceItems.length
+
+  return allHaveFundSource && allHaveGLNumber && allHaveAmount && totalNotExceeded && noDuplicates
 })
 
+/**
+ * Get transaction ID
+ */
 const transactionId = computed(() => store.transaction_id || billingData.value.transaction_id)
 
-// Lifecycle
+// ==================== INITIALIZATION ====================
+
+try {
+  currentUser.value = LocalStorage.getItem('user')
+} catch (err) {
+  console.error('Error retrieving user data:', err)
+}
+
+// ==================== LIFECYCLE HOOKS ====================
+
 onMounted(async () => {
   if (!store.transaction_id) {
     error.value = 'No transaction selected. Please select a patient from the billing list.'
@@ -539,26 +692,21 @@ onMounted(async () => {
   try {
     const data = await store.getBillingDetails(store.transaction_id)
     if (data) {
-      // Map the new JSON structure directly
       billingData.value = {
         ...data,
-        // Ensure arrays exist
-        radiologies_details: data.radiologies_details || null,
-        examination_details: data.examination_details || null,
-        mammogram_details: data.mammogram_details || null,
-        ultrasound_details: data.ultrasound_details || null,
-        medication: data.medication || null,
-        funds: null, // Initialize as empty array for compatibility
-        // Ensure address is properly structured
+        radiologies_details: data.radiologies_details || [],
+        examination_details: data.examination_details || [],
+        mammogram_details: data.mammogram_details || [],
+        ultrasound_details: data.ultrasound_details || [],
+        medication: data.medication || [],
+        funds: [],
         address: data.address || { street: '', purok: '', barangay: '' },
-        // Ensure representative exists
         representative: data.representative || {
           id: null,
           rep_name: '',
           relationship: '',
           address: '',
         },
-        // Keep assistance as is from API
         assistance: data.assistance || null,
       }
     } else {
@@ -572,7 +720,24 @@ onMounted(async () => {
   }
 })
 
-// Utility functions
+// ==================== WATCHERS ====================
+
+watch(
+  grandTotalAfterExistingAssistance,
+  (newAmount) => {
+    if (
+      newAmount > 0 &&
+      assistanceForm.value.assistanceItems[0] &&
+      assistanceForm.value.assistanceItems[0].amount === 0
+    ) {
+      assistanceForm.value.assistanceItems[0].amount = newAmount
+    }
+  },
+  { immediate: true },
+)
+
+// ==================== UTILITY FUNCTIONS ====================
+
 function parseAmount(amount) {
   if (typeof amount === 'number') return amount
   if (!amount) return 0
@@ -581,7 +746,7 @@ function parseAmount(amount) {
 
 function formatAmount(amount) {
   const num = parseAmount(amount)
-  return `₱${num.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`
+  return `₱${num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
 function formatDate(dateString) {
@@ -590,7 +755,6 @@ function formatDate(dateString) {
   return date.toLocaleDateString('en-PH', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-// New function to handle address formatting
 function formatAddress(address) {
   if (!address) return 'N/A'
   if (typeof address === 'string') return address
@@ -603,17 +767,232 @@ function formatAddress(address) {
   return parts.length > 0 ? parts.join(', ') : 'N/A'
 }
 
-// Assistance functions
+function calculateRemainingBalance() {
+  const grandTotal = grandTotalAfterExistingAssistance.value
+  const newAssistance = totalNewAssistanceAmount.value
+  return Math.max(0, grandTotal - newAssistance)
+}
+
+function incrementGLNumber(glNumber) {
+  const num = parseInt(glNumber, 10) + 1
+  return String(num).padStart(glNumber.length, '0')
+}
+
+async function fetchGLNumbers() {
+  if (fetchingGLNumber.value) return
+
+  fetchingGLNumber.value = true
+  try {
+    console.log('🔄 Fetching max GL number...')
+
+    const response = await store.getMaxNumber()
+
+    console.log('✅ Response received:', response)
+
+    if (response && response.max_gl_number) {
+      maxGLNumber.value = response.max_gl_number
+      console.log('✅ Max GL Number set to:', maxGLNumber.value)
+
+      assistanceForm.value.assistanceItems.forEach((item, index) => {
+        if (!item.glNumber) {
+          const nextNum = parseInt(maxGLNumber.value, 10) + index
+          const nextGLNum = String(nextNum).padStart(maxGLNumber.value.length, '0')
+          item.glNumber = nextGLNum
+          console.log(`✅ Row ${index} GL Number set to: ${nextGLNum}`)
+        }
+      })
+
+      $q.notify({
+        type: 'positive',
+        message: 'GL numbers loaded successfully!',
+        position: 'top',
+      })
+    } else {
+      throw new Error('No max_gl_number in response')
+    }
+  } catch (err) {
+    console.error('Error details:', {
+      message: err.message,
+      response: err.response?.data,
+      status: err.response?.status,
+    })
+
+    $q.notify({
+      type: 'negative',
+      message: `Failed to load GL numbers: ${err.message}`,
+      position: 'top',
+    })
+  } finally {
+    fetchingGLNumber.value = false
+  }
+}
+
+async function openAssistanceDialog() {
+  showAssistanceDialog.value = true
+  setTimeout(() => {
+    fetchGLNumbers()
+  }, 300)
+}
+
+function getAvailableFundSources(rowIndex) {
+  const selectedSources = assistanceForm.value.assistanceItems
+    .filter(
+      (_, index) => index !== rowIndex && assistanceForm.value.assistanceItems[index].fundSource,
+    )
+    .map((item) => item.fundSource)
+
+  return MAIFIP_FUND_SOURCES.filter((source) => !selectedSources.includes(source))
+}
+
+function onFundSourceChange() {
+  // Triggers reactivity for computed properties
+}
+
+// ==================== ASSISTANCE TABLE FUNCTIONS ====================
+
+function addAssistanceRow() {
+  if (assistanceForm.value.assistanceItems.length >= 2) {
+    $q.notify({
+      type: 'warning',
+      message: 'Maximum 2 fund sources allowed (MAIFIP-LGU and MAIFIP-Congressman)',
+      position: 'top',
+    })
+    return
+  }
+
+  const newId = Math.max(...assistanceForm.value.assistanceItems.map((item) => item.id), 0) + 1
+
+  let newGLNumber = maxGLNumber.value
+  if (assistanceForm.value.assistanceItems.length > 0) {
+    const lastItem =
+      assistanceForm.value.assistanceItems[assistanceForm.value.assistanceItems.length - 1]
+    if (lastItem.glNumber) {
+      newGLNumber = incrementGLNumber(lastItem.glNumber)
+    }
+  }
+
+  assistanceForm.value.assistanceItems.push({
+    id: newId,
+    fundSource: null,
+    glNumber: newGLNumber,
+    amount: 0,
+  })
+}
+
+function removeAssistanceRow(rowIndex) {
+  if (rowIndex === 0) {
+    $q.notify({
+      type: 'warning',
+      message: 'Cannot remove the first row',
+      position: 'top',
+    })
+    return
+  }
+
+  assistanceForm.value.assistanceItems.splice(rowIndex, 1)
+}
+
 function cancelAssistance() {
   assistanceForm.value = {
-    controlNumber: '',
-    fund_source: 'MAIFIP',
-    amount: finalAmountDue.value,
+    assistanceItems: [
+      {
+        id: 1,
+        fundSource: 'MAIFIP-LGU',
+        glNumber: '',
+        amount: 0,
+      },
+    ],
+    remarks: '',
   }
+  maxGLNumber.value = '00000'
+  fetchingGLNumber.value = false
   showAssistanceDialog.value = false
 }
 
-async function applyMAIFIP() {
+/**
+ * Build payload with gl_lgu and gl_cong as strings
+ */
+function buildAssistancePayload() {
+  let glLgu = ''
+  let glCong = ''
+  const funds = []
+
+  // Build GL numbers and funds array from assistance items
+  assistanceForm.value.assistanceItems.forEach((item) => {
+    if (item.fundSource === 'MAIFIP-LGU') {
+      glLgu = item.glNumber.trim()
+      funds.push({
+        fund_source: item.fundSource,
+        fund_amount: parseFloat(item.amount),
+      })
+    } else if (item.fundSource === 'MAIFIP-Congressman') {
+      glCong = item.glNumber.trim()
+      funds.push({
+        fund_source: item.fundSource,
+        fund_amount: parseFloat(item.amount),
+      })
+    }
+  })
+
+  const basePayload = {
+    transaction_id: billingData.value.transaction_id,
+    gl_lgu: glLgu,
+    gl_cong: glCong,
+    remarks: assistanceForm.value.remarks,
+    funds: funds,
+
+    // Required billing fields
+    consultation_amount: parseFloat(billingData.value.consultation_amount) || 0,
+    total_billing: parseFloat(billingData.value.total_billing) || 0,
+    discount: parseFloat(billingData.value.discount) || 0,
+    final_billing: parseFloat(billingData.value.final_billing) || 0,
+    radiology_total: parseFloat(billingData.value.radiology_total) || 0,
+    examination_total: parseFloat(billingData.value.examination_total) || 0,
+    ultrasound_total: parseFloat(billingData.value.ultrasound_total) || 0,
+    mammogram_total: parseFloat(billingData.value.mammogram_total) || 0,
+    medication_total: parseFloat(billingData.value.medication_total) || 0,
+
+    // Required details arrays
+    ultrasound_details: billingData.value.ultrasound_details || [],
+    mammogram_details: billingData.value.mammogram_details || [],
+    radiology_details: billingData.value.radiologies_details || [],
+    examination_details: billingData.value.examination_details || [],
+    medication: billingData.value.medication || [],
+
+    // Patient information
+    patient_id: billingData.value.patient_id,
+    firstname: billingData.value.firstname || '',
+    lastname: billingData.value.lastname || '',
+    middlename: billingData.value.middlename || '',
+    birthdate: billingData.value.birthdate || '',
+    age: billingData.value.age || 0,
+    gender: billingData.value.gender || '',
+    category: billingData.value.category || '',
+    is_pwd: billingData.value.is_pwd || 0,
+    is_solo: billingData.value.is_solo || 0,
+    contact_number: billingData.value.contact_number || '',
+    maifip: billingData.value.maifip || 0,
+    transaction_status: billingData.value.transaction_status || '',
+    philhealth: billingData.value.philhealth || 0,
+    address: billingData.value.address || {
+      street: '',
+      purok: '',
+      barangay: '',
+    },
+    transaction_date: billingData.value.transaction_date || '',
+    transaction_type: billingData.value.transaction_type || '',
+    representative: billingData.value.representative || {
+      id: null,
+      rep_name: '',
+      relationship: '',
+      address: '',
+    },
+  }
+
+  return basePayload
+}
+
+async function applyAssistance() {
   if (!isAssistanceFormValid.value) {
     $q.notify({
       type: 'negative',
@@ -634,63 +1013,11 @@ async function applyMAIFIP() {
 
   processing.value = true
   try {
-    // Prepare complete payload with all required fields
-    const payload = {
-      transaction_id: billingData.value.transaction_id,
-      fund_source: 'MAIFIP',
-      fund_amount: parseFloat(assistanceForm.value.amount),
-      gl_number: assistanceForm.value.controlNumber.trim(),
+    const payload = buildAssistancePayload()
 
-      // Required billing fields
-      consultation_amount: parseFloat(billingData.value.consultation_amount) || 0,
-      total_billing: parseFloat(billingData.value.total_billing) || 0,
-      discount: parseFloat(billingData.value.discount) || 0,
-      final_billing: parseFloat(billingData.value.final_billing) || 0,
-      radiology_total: parseFloat(billingData.value.radiology_total) || 0,
-      examination_total: parseFloat(billingData.value.examination_total) || 0,
-      ultrasound_total: parseFloat(billingData.value.ultrasound_total) || 0,
-      mammogram_total: parseFloat(billingData.value.mammogram_total) || 0,
+    console.log('📤 Sending payload:', JSON.stringify(payload, null, 2))
 
-      // Required details arrays
-      ultrasound_details: billingData.value.ultrasound_details || null,
-      mammogram_details: billingData.value.mammogram_details || null,
-      radiology_details: billingData.value.radiologies_details || null, // Note: using radiologies_details from API
-      examination_details: billingData.value.examination_details || null,
-
-      // Additional fields that might be needed
-      medication: billingData.value.medication || null,
-      patient_id: billingData.value.patient_id,
-      firstname: billingData.value.firstname || '',
-      lastname: billingData.value.lastname || '',
-      middlename: billingData.value.middlename || '',
-      birthdate: billingData.value.birthdate || '',
-      age: billingData.value.age || 0,
-      gender: billingData.value.gender || '',
-      category: billingData.value.category || '',
-      is_pwd: billingData.value.is_pwd || 0,
-      is_solo: billingData.value.is_solo || 0,
-      contact_number: billingData.value.contact_number || '',
-      maifip: billingData.value.maifip || 0,
-      transaction_status: billingData.value.transaction_status || '',
-      philhealth: billingData.value.philhealth || 0,
-      address: billingData.value.address || {
-        street: '',
-        purok: '',
-        barangay: '',
-      },
-      transaction_date: billingData.value.transaction_date || '',
-      transaction_type: billingData.value.transaction_type || '',
-      medication_total: billingData.value.medication_total || 0,
-      representative: billingData.value.representative || {
-        id: null,
-        rep_name: '',
-        relationship: '',
-        address: '',
-      },
-    }
-
-    console.log('MAIFIP Payload:', payload) // For debugging
-
+    // Send all assistance items in one request
     const result = await assistanceStore.applyMAIFIP(transactionId.value, payload)
 
     const isSuccess =
@@ -700,34 +1027,42 @@ async function applyMAIFIP() {
       (result && !result.error)
 
     if (isSuccess) {
-      // Safely add the new fund to assistance
-      const newFund = {
-        id: result.assistance?.id || Date.now(),
-        fund_source: 'MAIFIP',
-        fund_amount: assistanceForm.value.amount.toString(),
-        control_number: assistanceForm.value.controlNumber,
-      }
+      // Add all funds from the response
+      const funds = result.assistance?.funds || []
 
-      // Ensure assistance object exists and has funds array
-      if (!billingData.value.assistance) {
-        billingData.value.assistance = { funds: [] }
-      } else if (!billingData.value.assistance.funds) {
-        billingData.value.assistance.funds = []
-      }
+      if (funds.length > 0) {
+        if (!billingData.value.assistance) {
+          billingData.value.assistance = { funds: [] }
+        } else if (!billingData.value.assistance.funds) {
+          billingData.value.assistance.funds = []
+        }
 
-      // Add the new fund
-      billingData.value.assistance.funds.push(newFund)
+        funds.forEach((fund) => {
+          billingData.value.assistance.funds.push({
+            id: fund.id || Date.now(),
+            fund_source: fund.fund_source,
+            fund_amount: fund.fund_amount,
+            control_number: fund.control_number || fund.gl_number,
+          })
+        })
+      }
 
       showAssistanceDialog.value = false
       assistanceForm.value = {
-        controlNumber: '',
-        fund_source: 'MAIFIP',
-        amount: 0,
+        assistanceItems: [
+          {
+            id: 1,
+            fundSource: 'MAIFIP-LGU',
+            glNumber: '',
+            amount: 0,
+          },
+        ],
+        remarks: '',
       }
 
       $q.notify({
         type: 'positive',
-        message: 'MAIFIP assistance has been applied successfully!',
+        message: 'Financial assistance has been applied successfully!',
         position: 'top',
       })
     } else {
@@ -737,7 +1072,6 @@ async function applyMAIFIP() {
     console.error('Error applying assistance:', error)
     let errorMessage = 'Failed to apply financial assistance. Please try again.'
 
-    // Handle validation errors
     if (error.response?.data?.errors) {
       const errors = error.response.data.errors
       const errorMessages = []
@@ -753,8 +1087,6 @@ async function applyMAIFIP() {
       errorMessage = errorMessages.length > 0 ? errorMessages.join(' ') : errorMessage
     } else if (error.response?.data?.message) {
       errorMessage = error.response.data.message
-    } else if (error.message.includes('No Assistance record found')) {
-      errorMessage = 'Transaction not found. Please refresh the page and try again.'
     } else if (error.message) {
       errorMessage = error.message
     }
@@ -763,69 +1095,79 @@ async function applyMAIFIP() {
       type: 'negative',
       message: errorMessage,
       position: 'top',
-      timeout: 5000, // Show error longer for validation messages
+      timeout: 5000,
     })
   } finally {
     processing.value = false
   }
 }
 
+/**
+ * Handle transaction submission - mark as Funded
+ */
 async function handleSubmit() {
   if (!transactionId.value) {
-    $q.notify({
-      type: 'negative',
-      message: 'Transaction ID not found. Please try again.',
-      position: 'top',
-    })
+    $q.notify({ type: 'negative', message: 'Transaction ID not found', position: 'top' })
     return
   }
 
   submitting.value = true
   try {
-    const payload = {
-      status: 'Funded',
-    }
+    const result = await store.updateTransactionStatus(transactionId.value, 'Funded')
 
-    const response = await store.addGL(transactionId.value, payload)
-    const result = response?.data ?? response
-
-    if (result && !result.error) {
+    if (result) {
       $q.notify({
         type: 'positive',
-        message: 'Transaction funded successfully!',
+        message: 'Transaction marked as funded successfully!',
         position: 'top',
       })
-
       showConfirmDialog.value = false
-      setTimeout(() => {
-        router.push('/gl')
-      }, 1500)
+      setTimeout(() => router.push('/billing'), 1500)
     } else {
-      const errorMsg = result?.message || result?.error || 'Failed to fund transaction.'
-      errorMessage.value = [errorMsg]
-      showErrorDialog.value = true
+      throw new Error('Failed to update transaction status')
     }
-  } catch (error) {
-    console.error('Submit Error:', error)
+  } catch (err) {
+    console.error('Error marking transaction as funded:', err)
 
-    let msg = 'An error occurred while funding the transaction.'
-    if (error.response?.data?.message) {
-      msg = error.response.data.message
-    } else if (error.response?.data?.error) {
-      msg = error.response.data.error
-    } else if (error.message) {
-      msg = error.message
+    let errorMsg = 'Failed to mark transaction as funded. Please try again.'
+    if (err.response?.data?.message) {
+      errorMsg = err.response.data.message
+    } else if (err.message) {
+      errorMsg = err.message
     }
 
-    errorMessage.value = [msg]
-    showErrorDialog.value = true
+    $q.notify({
+      type: 'negative',
+      message: errorMsg,
+      position: 'top',
+      timeout: 5000,
+    })
   } finally {
     submitting.value = false
-    showConfirmDialog.value = false
   }
 }
 
-// Print function
+/**
+ * Navigate to GL Letter page
+ */
+// function showGL() {
+//   console.log('Navigating with IDs:', {
+//     patientId: billingData.value.patient_id,
+//     transactionId: billingData.value.transaction_id,
+//   })
+
+//   store.patient_id = billingData.value.patient_id
+//   store.transaction_id = billingData.value.transaction_id
+
+//   router.push({
+//     path: '/gl/letter',
+//     query: {
+//       patientId: billingData.value.patient_id,
+//       transactionId: billingData.value.transaction_id,
+//     },
+//   })
+// }
+
 async function handlePrint() {
   const element = document.querySelector('.certification-report-container')
   if (!element) {
@@ -928,12 +1270,26 @@ async function handlePrint() {
   margin-bottom: 20px;
 }
 
-.assistance-form-container {
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.assistance-table-container {
   margin-bottom: 15px;
+}
+
+.assistance-table {
+  margin-bottom: 10px;
+}
+
+.assistance-table :deep(.q-table__card) {
+  box-shadow: none;
 }
 
 .fund-source-display {
   border-left: 4px solid #ff9800;
+  padding-left: 15px;
 }
 
 .billing-summary {
@@ -1083,6 +1439,10 @@ async function handlePrint() {
   font-weight: bold;
   text-align: center;
   letter-spacing: 0.5px;
+}
+
+.med-row td {
+  background-color: #f7f7f7;
 }
 
 .total-row {
