@@ -194,7 +194,7 @@
                   <td class="logo-cell" width="25%">
                     <div class="logo-container">
                       <img src="/Doh.svg" alt="DOH" class="logo" />
-                      <img src="/BP.png" alt="BP" class="logo" />
+                      <img src="../assets/BP.png" alt="BP" class="logo" />
                     </div>
                   </td>
                   <td class="header-text" width="50%">
@@ -205,8 +205,8 @@
                   </td>
                   <td class="logo-cell" width="25%">
                     <div class="logo-container right">
-                      <img src="/CHO-logo.png" alt="CHO Logo" class="logo" />
-                      <img src="/logo.png" alt="City of Tagum Logo" class="logo" />
+                      <img src="../assets/CHO-logo.png" alt="CHO Logo" class="logo" />
+                      <img src="../assets/logo.png" alt="City of Tagum Logo" class="logo" />
                     </div>
                   </td>
                 </tr>

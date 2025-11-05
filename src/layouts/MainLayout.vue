@@ -5,7 +5,7 @@
       <q-toolbar>
         <q-btn flat dense round @click="toggleLeftDrawer()" aria-label="Menu" icon="menu" />
         <q-btn flat no-caps no-wrap class="q-ml-xs">
-          <img src="/CHO-logo.png" alt="CHO Logo" width="28" />
+          <img src="../assets/CHO-logo.png" alt="CHO Logo" width="28" />
           <q-toolbar-title shrink class="text-weight-bold"> CHAMP </q-toolbar-title>
         </q-btn>
 

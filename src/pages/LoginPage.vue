@@ -161,7 +161,7 @@ export default {
           style="border-top-left-radius: 24px; border-bottom-left-radius: 24px"
         >
           <q-avatar size="160px" class="q-mb-md bg-white">
-            <img src="/CHO-logo.png" alt="City Health Logo" />
+            <img src="../assets/CHO-logo.png" alt="City Health Logo" />
           </q-avatar>
 
           <div class="text-h5 text-weight-bold text-green q-mb-sm">CHAMP</div>
@@ -177,14 +177,14 @@ export default {
           <q-separator dark inset style="width: 60%" class="q-mb-lg" />
           <div class="flex flex-between q-gutter-lg">
             <q-avatar size="100px" class="q-mb-sm">
-              <img src="/logo.png" alt="LGU Logo" />
+              <img src="../assets/logo.png" alt="LGU Logo" />
             </q-avatar>
             <div
               class="q-mt-md q-pa-sm bg-white flex flex-center"
               style="border-radius: 12px; width: 120px"
             >
               <img
-                src="/BP.png"
+                src="../assets/BP.png"
                 alt="Tagum Logo"
                 style="width: 100%; height: auto; object-fit: contain"
               />
@@ -268,13 +268,13 @@ export default {
         <div class="mobile-header bg-white q-pa-md">
           <div class="flex items-center justify-center q-gutter-sm q-mb-sm q-mt-sm">
             <q-avatar size="40px">
-              <img src="/logo.png" alt="LGU Tagum Logo" />
+              <img src="../assets/logo.png" alt="LGU Tagum Logo" />
             </q-avatar>
             <q-avatar size="40px" class="bg-white">
-              <img src="/CHO-logo.png" alt="City Health Logo" />
+              <img src="../assets/CHO-logo.png" alt="City Health Logo" />
             </q-avatar>
             <q-avatar square size="40px" class="bg-white">
-              <img src="/BP.png" alt="Bagong Pilipinas Logo" />
+              <img src="../assets/BP.png" alt="Bagong Pilipinas Logo" />
             </q-avatar>
           </div>
           <div class="text-h6 text-weight-bold text-green text-center q-mb-xs">CHAMP</div>
@@ -345,7 +345,7 @@ export default {
             />
 
             <div class="text-caption text-white text-center q-mt-md">
-              Powered by CICTMO - BPM Division
+              Powered by CICTMO - BPM Section
             </div>
 
             <div class="text-caption text-white text-center q-mt-sm">

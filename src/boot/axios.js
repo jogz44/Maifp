@@ -6,7 +6,7 @@ const api = axios.create({
   // baseURL: 'http://10.0.1.23:89/api',
   // baseURL: 'http://10.0.1.35:8000/api',
   // baseURL: process.env.API_URL, //office
-  baseURL: 'http://10.0.1.23:3003/api', //Home
+  baseURL: 'https://tagumcity.gov.ph/champ_backend/public/api', //Home
 
   withCredentials: true,
 })
