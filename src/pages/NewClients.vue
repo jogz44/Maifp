@@ -697,6 +697,25 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <!-- MAIFIP Confirmation Dialog -->
+    <q-dialog v-model="showMAIFIPDialog" persistent>
+      <q-card style="min-width: 400px">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6">MAIFIP Confirmation</div>
+          <q-space />
+        </q-card-section>
+
+        <q-card-section>
+          <div class="text-subtitle1">Do you want this patient to proceed in MAIFIP?</div>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="No" color="negative" @click="confirmMAIFIP('pending')" />
+          <q-btn unelevated label="Yes" color="positive" @click="confirmMAIFIP('assessment')" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -736,14 +755,16 @@ export default defineComponent({
       perm_street: '',
       perm_city: 'Tagum City',
       perm_province: 'Davao del Norte',
+      // Status field for MAIFIP
+      status: '',
     })
     const hasRepresentative = ref(false)
     const sameAsPatientAddress = ref(true)
-
     const sameAsPermanentAddress = ref(true)
 
     // UI state
     const showError = ref(false)
+    const showMAIFIPDialog = ref(false)
     const isChild = ref(false)
     const isAdult = ref(false)
     const isSenior = ref(false)
@@ -961,6 +982,8 @@ export default defineComponent({
         perm_street: '',
         perm_city: 'Tagum City',
         perm_province: 'Davao del Norte',
+        // Reset status
+        status: '',
       }
       patientData.value.transaction_date = getCurrentDate()
       patientData.value.city = 'Tagum City'
@@ -974,6 +997,31 @@ export default defineComponent({
       isChild.value = false
       isAdult.value = false
       isSenior.value = false
+    }
+
+    const confirmMAIFIP = async (status) => {
+      showMAIFIPDialog.value = false
+
+      // Set the status based on user choice
+      patientData.value.status = status
+
+      // Format data for submission
+      const formattedData = formatDataForSubmission()
+
+      try {
+        await patientStore.newPatient(formattedData)
+        $q.notify({
+          type: 'positive',
+          message: 'Patient registration successful!',
+          position: 'top',
+          timeout: 1200,
+        })
+        clearInputs()
+
+        router.push('/customers')
+      } catch {
+        showError.value = true
+      }
     }
 
     const submitPatientForm = async () => {
@@ -1000,23 +1048,8 @@ export default defineComponent({
         updateRepAddressFromPatient()
       }
 
-      // Format data for submission
-      const formattedData = formatDataForSubmission()
-
-      try {
-        await patientStore.newPatient(formattedData)
-        $q.notify({
-          type: 'positive',
-          message: 'Patient registration successful!',
-          position: 'top',
-          timeout: 1200,
-        })
-        clearInputs()
-
-        router.push('/customers')
-      } catch {
-        showError.value = true
-      }
+      // Show MAIFIP confirmation dialog
+      showMAIFIPDialog.value = true
     }
 
     // Format data before submission
@@ -1100,6 +1133,7 @@ export default defineComponent({
       patientForm,
       patientData,
       showError,
+      showMAIFIPDialog,
       errorMessage,
       isChild,
       isAdult,
@@ -1117,6 +1151,7 @@ export default defineComponent({
       calculateBMI,
       clearInputs,
       submitPatientForm,
+      confirmMAIFIP,
       handleSameAddressChange,
       handleSamePermAddressChange,
       updateRepAddressFromPatient,
