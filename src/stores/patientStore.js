@@ -887,6 +887,7 @@ export const usePatientStore = defineStore('patient', {
           transaction_date: transactionData.transaction_date,
           transaction_type: transactionData.transaction_type,
           transaction_mode: transactionData.transaction_mode,
+          status: transactionData.status || '',
           purpose: transactionData.purpose || '',
 
           // Vital signs fields

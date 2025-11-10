@@ -53,17 +53,13 @@
                   {{ props.row.barangay }}
                 </q-td>
 
-                <!-- <q-td key="status" style="font-size: 11px" align="left">
-                  {{ props.row.transaction[0]?.transaction_type || 'N/A' }}
-                </q-td> -->
-
+                <!-- Actions Column with conditional routing -->
                 <q-td key="actions" style="font-size: 11px" align="center">
                   <q-btn
                     flat
                     color="primary"
-                    @click="showClient(props.row.id)"
+                    @click="showClient(props.row.id, props.row.transaction_status)"
                     icon="description"
-                    to="/assessment/profile"
                   />
                 </q-td>
               </q-tr>
@@ -87,6 +83,7 @@
     </q-dialog>
   </q-page>
 </template>
+
 <script>
 import { usePatientStore } from '../stores/patientStore'
 export default {
@@ -129,7 +126,6 @@ export default {
           headerClasses: 'bg-grey-7 text-white',
           headerStyle: 'font-size: 1.2 em',
         },
-
         {
           name: 'birthdate',
           label: 'Birthdate',
@@ -139,7 +135,6 @@ export default {
           headerClasses: 'bg-grey-7 text-white',
           headerStyle: 'font-size: 1.2 em',
         },
-
         {
           name: 'age',
           label: 'Age',
@@ -149,7 +144,6 @@ export default {
           headerClasses: 'bg-grey-7 text-white',
           headerStyle: 'font-size: 1.2 em',
         },
-
         {
           name: 'contact_number',
           label: 'Contact Number',
@@ -168,17 +162,6 @@ export default {
           headerClasses: 'bg-grey-7 text-white',
           headerStyle: 'font-size: 1.2 em',
         },
-
-        // {
-        //   name: 'transaction_type',
-        //   label: 'Transaction Type',
-        //   field: (row) => row.transaction[0]?.transaction_type || 'N/A',
-        //   sortable: true,
-        //   align: 'left',
-        //   headerClasses: 'bg-grey-7 text-white',
-        //   headerStyle: 'font-size: .9em',
-        // },
-
         {
           name: 'Actions',
           label: 'Actions',
@@ -220,6 +203,7 @@ export default {
       },
     }
   },
+
   methods: {
     async getPatients() {
       try {
@@ -235,10 +219,16 @@ export default {
       this.DeleteClient = true
     },
 
-    showClient(id) {
+    showClient(id, transaction_status) {
       this.Patients.isEdit = true
       this.Patients.isSave = false
       this.Patients.patient_id = id
+
+      if (transaction_status === 'Evaluation') {
+        this.$router.push('/fromphilhealth/profile')
+      } else {
+        this.$router.push('/assessment/profile')
+      }
     },
 
     async remove_client() {

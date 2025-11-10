@@ -109,6 +109,11 @@ const routes = [
         component: () => import('pages/AssessmentProfile.vue'),
         meta: { requiresAuth: true },
       },
+      {
+        path: '/philhealth/report',
+        component: () => import('pages/AssistancePhilHealthPage.vue'),
+        meta: { requiresAuth: true },
+      },
 
       //guaranteed letter
       {
