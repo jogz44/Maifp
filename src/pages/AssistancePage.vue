@@ -87,7 +87,10 @@
 
           <q-card-actions align="right">
             <q-btn
-              v-if="patient.maifip === 0 && patient.philhealth === 1"
+              v-if="
+                (patient.maifip === 0 && patient.philhealth === 0) ||
+                (patient.maifip === 0 && patient.philhealth === 1)
+              "
               flat
               label="Send to MAIFIP"
               color="blue"
@@ -96,7 +99,10 @@
               :disable="completing"
             />
             <q-btn
-              v-if="patient.maifip === 0 && patient.philhealth === 1"
+              v-if="
+                (patient.maifip === 0 && patient.philhealth === 0) ||
+                (patient.maifip === 0 && patient.philhealth === 1)
+              "
               flat
               label="Proceed with Cash"
               color="blue"
