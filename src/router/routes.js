@@ -256,6 +256,12 @@ const routes = [
         component: () => import('pages/RegisteredUsersList.vue'),
         meta: { requiresAuth: true },
       },
+       //lib services
+       {
+        path: '/services',
+        component: () => import('pages/ServicesLibrary.vue'),
+        meta: { requiresAuth: true },
+      },
     ],
   },
   {
