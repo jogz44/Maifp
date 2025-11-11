@@ -135,6 +135,13 @@
           </q-item>
         </q-expansion-item>
 
+        <q-item clickable v-ripple to="/customers/consultationLog">
+          <div class="row items-center">
+            <q-icon name="sym_o_overview" size="24px" class="q-mr-md" />
+            <span class="text-sm" style="padding-left: 16px">Consultation Log</span>
+          </div>
+        </q-item>
+
         <q-item clickable v-ripple to="/customers/laboratory">
           <div class="row items-center">
             <q-icon name="science" size="24px" class="q-mr-md" />

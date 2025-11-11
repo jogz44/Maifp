@@ -764,6 +764,22 @@ export const usePatientStore = defineStore('patient', {
       }
     },
 
+    // Get patient consultation log
+    async getConsultationList() {
+      this.loading = true
+      this.error = null
+
+      try {
+        const response = await api.get(`/patients/consultation/list`)
+        return response.data
+      } catch (error) {
+        this.handleApiError(error)
+        return []
+      } finally {
+        this.loading = false
+      }
+    },
+    
     // Get transaction details
     async getTransactionDetails(id) {
       this.loading = true
