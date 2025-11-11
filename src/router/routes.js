@@ -100,6 +100,22 @@ const routes = [
         component: () => import('src/pages/PatientDetails.vue'),
         meta: { requiresAuth: true },
       },
+      //CO=onsultation Log
+      {
+        path: '/customers/consultationLog',
+        component: () => import('src/pages/ConsultationLog.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/customers/viewPatientLog',
+        component: () => import('src/pages/ViewPatientLog.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/customers/viewPatientDetails',
+        component: () => import('src/pages/ViewPatientDetails.vue'),
+        meta: { requiresAuth: true },
+      },
 
       //laboratory
       {

@@ -5,116 +5,14 @@
         <!-- Header with back button and title -->
         <q-card-section>
           <div class="row items-center q-mb-md">
-            <!-- Back Button -->
             <div class="col-auto">
               <q-btn icon="arrow_back" flat round dense @click="goBack" />
             </div>
-
-            <!-- Title -->
             <div class="col">
               <div class="text-h6 text-green-9 q-ml-md">Transaction Details</div>
             </div>
-
-            <!-- Toast + Info Button (Right Corner) -->
-            <div class="col-auto flex items-center">
-              <!-- Floating toast -->
-              <transition name="fade-slide">
-                <div
-                  v-if="showDoctorToast"
-                  class="q-pa-sm text-white text-caption shadow-4 absolute-top-right"
-                  style="
-                    margin-top: 15px;
-                    margin-right: 48px; /* push it left of the info button */
-                    border-radius: 10px;
-                    background: rgba(33, 150, 243, 0.75);
-                    backdrop-filter: blur(6px);
-                    white-space: nowrap;
-                  "
-                >
-                  Consultation fee loaded
-                </div>
-              </transition>
-              <!-- Info button -->
-              <q-btn icon="info" color="primary" round dense flat @click="openDoctorDialog" />
-            </div>
           </div>
         </q-card-section>
-
-        <!-- Doctor Fee Dialog -->
-        <q-dialog v-model="doctorDialog" persistent>
-          <q-card style="min-width: 600px">
-            <q-card-section>
-              <div class="text-h6">Consultation Fee</div>
-            </q-card-section>
-
-            <q-card-section>
-              <q-table
-                :rows="patientStore.doctors"
-                :columns="doctorColumns"
-                row-key="id"
-                flat
-                dense
-              >
-                <!-- Doctor Fee Column -->
-                <template v-slot:body-cell-doctor_amount="props">
-                  <q-td :props="props">
-                    <q-input
-                      v-model="props.row.doctor_amount"
-                      type="number"
-                      outlined
-                      dense
-                      :disable="!props.row.editMode"
-                    >
-                      <template v-slot:prepend>
-                        <q-td>₱</q-td>
-                      </template>
-                    </q-input>
-                  </q-td>
-                </template>
-
-                <!-- Actions Column -->
-                <template v-slot:body-cell-actions="props">
-                  <q-td :props="props">
-                    <div v-if="!props.row.editMode">
-                      <q-btn
-                        flat
-                        color="primary"
-                        label="Edit"
-                        size="sm"
-                        @click="props.row.editMode = true"
-                      />
-                    </div>
-
-                    <div v-else>
-                      <q-btn
-                        flat
-                        color="positive"
-                        label="Save"
-                        size="sm"
-                        :loading="props.row._isSaving"
-                        :disable="props.row._isSaving"
-                        @click="debouncedSaveDoctorFee(props.row)"
-                      />
-                      <q-btn
-                        flat
-                        color="negative"
-                        label="Cancel"
-                        size="sm"
-                        :disable="props.row._isSaving"
-                        @click="cancelEdit(props.row)"
-                      />
-                    </div>
-                  </q-td>
-                </template>
-
-              </q-table>
-            </q-card-section>
-
-            <q-card-actions align="right">
-              <q-btn flat label="Close" color="grey" v-close-popup />
-            </q-card-actions>
-          </q-card>
-        </q-dialog>
 
         <q-separator />
 
@@ -353,13 +251,34 @@
           </div>
         </q-card-section>
 
+        <!-- LABORATORY SERVICES TABLE -->
+        <q-card-section v-if="mergedLabResults.length">
+          <div class="text-subtitle2 q-mb-sm" v-if="!loading">Laboratory Services</div>
+          <q-table
+            v-if="!loading"
+            :rows="mergedLabResults"
+            :columns="mergedColumns"
+            row-key="unique_id"
+            flat
+            bordered
+            dense
+            :table-header-class="'bg-grey-3 text-black'"
+          />
+        </q-card-section>
+
         <!-- Buttons BELOW the card -->
         <div class="q-mt-md flex justify-end q-gutter-sm" v-if="isLatest">
-          <q-btn
+        <!-- <q-btn
+              color="primary"
+              label="Require Medication"
+              icon="medication"
+              @click="onRequireMedication"
+            /> -->
+          <!-- <q-btn
             color="blue"
             label="Process Lab"
             icon="biotech"
-            @click="showProcessLabConfirm = true"
+            @click="handleProcessLab"
             :loading="isProcessingLab"
             :disable="isProcessingLab || isHandlingPrescription"
           />
@@ -370,10 +289,10 @@
             @click="confirmPrescription"
             :loading="isHandlingPrescription"
             :disable="isProcessingLab || isHandlingPrescription"
-          />
+          /> -->
         </div>
 
-        <!-- Confirmation Dialog DONE/PRESCRIPTION-->
+        <!-- Confirmation Dialog -->
         <q-dialog v-model="showPrescriptionConfirm" persistent>
           <q-card style="min-width: 450px; position: relative">
             <q-btn
@@ -412,47 +331,6 @@
             </q-card-actions>
           </q-card>
         </q-dialog>
-
-        <!-- NEW PROCESS LAB CONFIRM DIALOG -->
-        <q-dialog v-model="showProcessLabConfirm" persistent>
-          <q-card style="min-width: 450px; position: relative">
-            <!-- Close Button -->
-            <q-btn
-              dense
-              flat
-              round
-              icon="close"
-              color="grey"
-              class="close-btn"
-              @click="showProcessLabConfirm = false"
-              :disable="isProcessingLab"
-            />
-
-            <q-card-section class="row items-center q-pt-xl q-pb-md">
-              <q-icon name="biotech" color="primary" size="30px" class="q-mr-sm" />
-              <div class="text-h6">Proceed sending patient to Laboratory?</div>
-            </q-card-section>
-
-            <q-card-actions align="right" class="q-pt-none">
-              <q-btn
-                flat
-                label="Cancel"
-                color="negative"
-                @click="showProcessLabConfirm = false"
-                :disable="isProcessingLab"
-              />
-              <q-btn
-                flat
-                label="Proceed"
-                color="primary"
-                @click="confirmProcessLab"
-                :loading="isProcessingLab"
-                :disable="isProcessingLab"
-              />
-            </q-card-actions>
-          </q-card>
-        </q-dialog>
-
       </q-card>
     </div>
   </q-page>
@@ -473,22 +351,10 @@ export default {
       patient: {},
       vitalSigns: {},
       loading: true,
-      showDoctorToast: false,
-      doctorDialog: false,
-      doctorColumns: [
-        {
-          name: 'doctor_amount',
-          label: 'Consultation Fee',
-          field: 'doctor_amount',
-          align: 'center',
-        },
-        { name: 'actions', label: 'Actions', field: 'actions', align: 'center' },
-      ],
 
       showPrescriptionConfirm: false,
       isProcessingLab: false,
       isHandlingPrescription: false,
-      showProcessLabConfirm: false,
 
       // Separate edit modes for transaction and vital signs
       isTransactionEditMode: false,
@@ -497,6 +363,22 @@ export default {
       // Backup data for cancellation
       originalTransactionData: null,
       originalVitalSigns: null,
+
+      mergedLabResults: [],
+
+      mergedColumns: [
+        { name: 'id', label: 'Item No.', field: 'id', align: 'center' },
+        { name: 'category', label: 'Category', field: 'category', align: 'left' },
+        { name: 'description', label: 'Description', field: 'description', align: 'left' },
+        {
+          name: 'selling_price',
+          label: 'Selling Price / Rate',
+          field: 'selling_price',
+          align: 'right',
+        },
+        { name: 'service_fee', label: 'Service Fee', field: 'service_fee', align: 'right' },
+        { name: 'total_amount', label: 'Total Amount', field: 'total_amount', align: 'right' },
+      ],
     }
   },
 
@@ -507,9 +389,15 @@ export default {
   },
 
   mounted() {
+    // Get patientId and transactionId from route query parameters
     this.patientId = this.$route.query.patientId
     this.transactionId = this.$route.query.transactionId
 
+    console.log(
+      `Mounted TransactionDetails. Patient ID: ${this.patientId}, Transaction ID: ${this.transactionId}`,
+    )
+
+    // Load data once we have the required IDs
     if (this.transactionId) {
       this.loadTransactionData()
     } else {
@@ -521,66 +409,13 @@ export default {
       })
       this.loading = false
     }
-
-    // Trigger toast beside Info button
-    if (this.$route.query.showDoctorToast) {
-      this.showDoctorToast = true
-      setTimeout(() => {
-        this.showDoctorToast = false
-      }, 3000)
-    }
   },
 
   methods: {
-    async openDoctorDialog() {
-      try {
-        await this.patientStore.fetchDoctors()
-        this.doctorDialog = true
-      } catch {
-        this.$q.notify({
-          type: 'negative',
-          message: 'Failed to load doctor data',
-        })
-      }
-    },
-
-    async saveDoctorFee(row) {
-      if (row._isSaving) return // prevent double click
-      row._isSaving = true
-
-      try {
-        const payload = { doctor_amount: row.doctor_amount }
-        await this.patientStore.updateDoctorFee(row.id, payload)
-
-        row.editMode = false
-        this.$q.notify({
-          type: 'positive',
-          message: 'Consultation fee updated!',
-        })
-      } catch {
-        this.$q.notify({
-          type: 'negative',
-          message: 'Failed to update fee',
-        })
-      } finally {
-        row._isSaving = false
-      }
-    },
-
-    cancelEdit(row) {
-      row.editMode = false
-    },
-
     // debounce wrapper to prevent rapid clicks
     debouncedSaveDoctorFee: debounce(function (row) {
       this.saveDoctorFee(row)
     }, 500),
-
-    // processLab dialog
-    async confirmProcessLab() {
-      this.showProcessLabConfirm = false
-        await this.safeAction(this.processLab, 'isProcessingLab')
-    },
 
     //  Confirmation Dialog for "Done"
     confirmPrescription() {
@@ -632,7 +467,7 @@ export default {
           type: 'positive',
           message: 'Consultation status proceeds to Medication',
         })
-        this.$router.push({ path: '/customers/newConsultation' })
+        this.$router.push({ path: '/customers/returnConsultation' })
       } catch (error) {
         this.$q.notify({
           type: 'negative',
@@ -661,7 +496,7 @@ export default {
           message: 'Patient sent to Laboratory successfully!',
         })
         await patientStore.fetchLaboratoryPatients()
-        this.$router.push({ path: '/customers/newConsultation' })
+        this.$router.push({ path: '/customers/returnConsultation' })
       } catch (error) {
         this.$q.notify({
           type: 'negative',
@@ -689,7 +524,7 @@ export default {
           type: 'positive',
           message: 'Consultation status Done',
         })
-        this.$router.push({ path: '/customers/newConsultation' })
+        this.$router.push({ path: '/customers/returnConsultation' })
       } catch (error) {
         this.$q.notify({
           type: 'negative',
@@ -700,69 +535,77 @@ export default {
 
     async loadTransactionData() {
       this.loading = true
-      console.log(`Loading transaction data for ID: ${this.transactionId}`)
-
       try {
-        // Use getTransactionDetails from patientStore
-        const transactionData = await this.patientStore.getTransactionDetails(this.transactionId)
+        // fetch transaction
+        this.transaction = await this.patientStore.getTransactionDetails(this.transactionId)
+        this.vitalSigns = this.transaction.vital || {}
 
-        if (transactionData) {
-          console.log('Transaction data loaded:', transactionData)
+        // fetch lab details
+        const labData = await this.patientStore.fetchLaboratoryDetails(this.transactionId)
 
-          // Merge consultation status if it exists
-          if (transactionData.consultation && transactionData.consultation.status) {
-            transactionData.status = transactionData.consultation.status
+        // normalize and merge into one array
+        let counter = 1
+
+        const examinations = (labData.examination || []).map((item) => ({
+          id: counter++, // auto-increment
+          category: 'Examination',
+          description: item.item_description,
+          selling_price: item.selling_price,
+          service_fee: item.service_fee,
+          total_amount: item.total_amount,
+          unique_id: `exam-${counter}`,
+        }))
+
+        const radiologies = (labData.radiologies || []).map((item) => ({
+          id: counter++, // continue increment
+          category: 'Radiology',
+          description: item.item_description,
+          selling_price: item.selling_price,
+          service_fee: item.service_fee,
+          total_amount: item.total_amount,
+          unique_id: `rad-${counter}`,
+        }))
+
+        const ultrasounds = (labData.ultrasound || []).map((item) => ({
+          id: counter++, // continue increment
+          category: 'Ultrasound',
+          description: item.body_parts,
+          selling_price: item.rate,
+          service_fee: item.service_fee,
+          total_amount: item.total_amount,
+          unique_id: `ultra-${counter}`,
+        }))
+
+        const mammograms = (labData.mammogram || []).map((item) => ({
+          id: counter++, // continue increment
+          category: 'Mammogram',
+          description: item.procedure,
+          selling_price: item.rate,
+          service_fee: item.service_fee,
+          total_amount: item.total_amount,
+          unique_id: `mammo-${counter}`,
+        }))
+
+        this.mergedLabResults = [...examinations, ...radiologies, ...ultrasounds, ...mammograms]
+
+        console.log('Merged Lab Results:', this.mergedLabResults)
+
+        // fetch patient for latest check
+        const patientData = await this.patientStore.getPatient(this.patientId)
+        if (patientData) {
+          this.patient = patientData
+          if (patientData.transaction && Array.isArray(patientData.transaction)) {
+            const sorted = [...patientData.transaction].sort(
+              (a, b) =>
+                new Date(b.transaction_date || b.created_at) -
+                new Date(a.transaction_date || a.created_at),
+            )
+            const latest = sorted[0]
+            this.isLatest = Number(latest.id) === Number(this.transactionId)
           }
-
-          this.transaction = transactionData
-
-          // Extract vital signs data from the vital property
-          this.vitalSigns = transactionData.vital || {}
-          console.log('Vital signs data:', this.vitalSigns)
-
-          // Load patient data if not already loaded and if patientId is available
-          if (this.patientId && (!this.patient || !this.patient.id)) {
-            console.log(`Loading patient data for ID: ${this.patientId}`)
-            const patientData = await this.patientStore.getPatient(this.patientId)
-            if (patientData) {
-              console.log('Patient data loaded:', patientData)
-              this.patient = patientData
-
-              // Check if the current transaction is the latest for this patient
-              if (patientData.transaction && Array.isArray(patientData.transaction)) {
-                const sorted = [...patientData.transaction].sort(
-                  (a, b) =>
-                    new Date(b.transaction_date || b.created_at) -
-                    new Date(a.transaction_date || a.created_at),
-                )
-                const latest = sorted[0]
-                this.isLatest = Number(latest.id) === Number(this.transactionId)
-
-                console.log(
-                  `Latest transaction ID: ${latest.id}, Current ID: ${this.transactionId}, isLatest: ${this.isLatest}`,
-                )
-              }
-            } else {
-              console.error('Failed to load patient data')
-            }
-          }
-        } else {
-          console.error('No transaction data returned from store')
-          this.$q.notify({
-            type: 'negative',
-            message: 'Failed to load transaction data',
-            position: 'top',
-            timeout: 2000,
-          })
         }
       } catch (error) {
         console.error('Error loading transaction data:', error)
-        this.$q.notify({
-          type: 'negative',
-          message: `Error loading transaction data: ${error.message}`,
-          position: 'top',
-          timeout: 2000,
-        })
       } finally {
         this.loading = false
       }
@@ -822,24 +665,6 @@ export default {
   .q-btn {
     display: none !important;
   }
-}
-
-/* Transition classes */
-.fade-slide-enter-active,
-.fade-slide-leave-active {
-  transition: all 0.4s ease;
-}
-
-.fade-slide-enter-from,
-.fade-slide-leave-to {
-  opacity: 0;
-  transform: translateX(20px); /* slides in/out horizontally */
-}
-
-.fade-slide-enter-to,
-.fade-slide-leave-from {
-  opacity: 0.2;
-  transform: translateX(0);
 }
 
 .close-btn {

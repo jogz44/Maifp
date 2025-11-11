@@ -736,25 +736,88 @@
 
         <!-- ACTION BUTTONS -->
         <div class="q-mt-md flex justify-end q-gutter-sm" v-if="isLatest">
+          <!-- Return -->
           <q-btn
             v-if="transaction.transaction_type === 'Consultation'"
             color="blue"
             label="Return"
             icon="ios_share"
-            @click="handleMarkReturn"
+            @click="showReturnConfirm = true"
             :loading="isReturning"
             :disable="isReturning || isMarkingDone"
           />
+
+          <!-- Done -->
           <q-btn
             v-if="transaction.transaction_type === 'Laboratory'"
             color="green"
             label="Done"
             icon="check_circle"
-            @click="handleMarkDone"
+            @click="showDoneConfirm = true"
             :loading="isMarkingDone"
             :disable="isReturning || isMarkingDone"
           />
         </div>
+
+        <!-- Return Confirmation Dialog -->
+        <q-dialog v-model="showReturnConfirm" persistent>
+          <q-card style="min-width: 450px; position: relative">
+
+            <!-- Close Button -->
+            <q-btn
+              dense flat round icon="close" color="grey"
+              style="position: absolute; top: 8px; right: 8px; z-index: 10"
+              @click="showReturnConfirm = false"
+              :disable="isReturning"
+            />
+
+            <q-card-section class="row items-center q-pt-xl q-pb-md">
+              <q-icon name="arrow_circle_up" color="primary" size="30px" class="q-mr-sm" />
+              <div class="text-h6">Return patient to consultation?</div>
+            </q-card-section>
+
+            <q-card-actions align="right">
+              <q-btn flat label="Cancel" color="negative"
+                @click="showReturnConfirm = false"
+                :disable="isReturning"/>
+              <q-btn flat label="Return" color="primary"
+                @click="confirmReturn"
+                :loading="isReturning"
+                :disable="isReturning"/>
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
+
+
+        <!-- Done Confirmation Dialog -->
+        <q-dialog v-model="showDoneConfirm" persistent>
+          <q-card style="min-width: 450px; position: relative">
+
+            <!-- Close Button -->
+            <q-btn
+              dense flat round icon="close" color="grey"
+              style="position: absolute; top: 8px; right: 8px; z-index: 10"
+              @click="showDoneConfirm = false"
+              :disable="isMarkingDone"
+            />
+
+            <q-card-section class="row items-center q-pt-xl q-pb-md">
+              <q-icon name="task_alt" color="primary" size="30px" class="q-mr-sm" />
+              <div class="text-h6">Mark laboratory as done?</div>
+            </q-card-section>
+
+            <q-card-actions align="right">
+              <q-btn flat label="Cancel" color="negative"
+                @click="showDoneConfirm = false"
+                :disable="isMarkingDone"/>
+              <q-btn flat label="Done" color="primary"
+                @click="confirmDone"
+                :loading="isMarkingDone"
+                :disable="isMarkingDone"/>
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
+
       </q-card>
     </div>
   </q-page>
@@ -782,6 +845,8 @@ export default {
       isSaving: false, // for spinner/loading state
       saveTimeout: null, // for debounce
       deletingId: null,
+      showReturnConfirm: false,
+      showDoneConfirm: false,
 
       // UI states
       isTransactionEditMode: false,
@@ -1624,6 +1689,16 @@ export default {
       await this.safeAction(this.markDone, 'isMarkingDone')
     },
 
+    async confirmReturn() {
+      this.showReturnConfirm = false
+      await this.safeAction(this.markReturn, 'isReturning')
+    },
+
+    async confirmDone() {
+      this.showDoneConfirm = false
+      await this.safeAction(this.markDone, 'isMarkingDone')
+    },
+
     // Centralized async safe-action handler
     async safeAction(actionFn, flagName) {
       if (this[flagName]) return
@@ -1888,5 +1963,12 @@ export default {
 .fade-slide-leave-from {
   opacity: 0.2;
   transform: translateX(0);
+}
+
+.close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
 }
 </style>

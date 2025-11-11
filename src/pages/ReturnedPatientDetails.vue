@@ -268,17 +268,11 @@
 
         <!-- Buttons BELOW the card -->
         <div class="q-mt-md flex justify-end q-gutter-sm" v-if="isLatest">
-        <!-- <q-btn
-              color="primary"
-              label="Require Medication"
-              icon="medication"
-              @click="onRequireMedication"
-            /> -->
           <q-btn
             color="blue"
-            label="Process Lab"
+            label="Continue Lab"
             icon="biotech"
-            @click="handleProcessLab"
+            @click="showProcessLabConfirm = true"
             :loading="isProcessingLab"
             :disable="isProcessingLab || isHandlingPrescription"
           />
@@ -331,6 +325,46 @@
             </q-card-actions>
           </q-card>
         </q-dialog>
+
+        <!-- NEW PROCESS LAB CONFIRM DIALOG -->
+        <q-dialog v-model="showProcessLabConfirm" persistent>
+          <q-card style="min-width: 450px; position: relative">
+            <!-- Close Button -->
+            <q-btn
+              dense
+              flat
+              round
+              icon="close"
+              color="grey"
+              class="close-btn"
+              @click="showProcessLabConfirm = false"
+              :disable="isProcessingLab"
+            />
+
+            <q-card-section class="row items-center q-pt-xl q-pb-md">
+              <q-icon name="biotech" color="primary" size="30px" class="q-mr-sm" />
+              <div class="text-h6">Proceed sending patient back to Laboratory?</div>
+            </q-card-section>
+
+            <q-card-actions align="right" class="q-pt-none">
+              <q-btn
+                flat
+                label="Cancel"
+                color="negative"
+                @click="showProcessLabConfirm = false"
+                :disable="isProcessingLab"
+              />
+              <q-btn
+                flat
+                label="Proceed"
+                color="primary"
+                @click="confirmProcessLab"
+                :loading="isProcessingLab"
+                :disable="isProcessingLab"
+              />
+            </q-card-actions>
+          </q-card>
+        </q-dialog>
       </q-card>
     </div>
   </q-page>
@@ -355,6 +389,7 @@ export default {
       showPrescriptionConfirm: false,
       isProcessingLab: false,
       isHandlingPrescription: false,
+      showProcessLabConfirm: false,
 
       // Separate edit modes for transaction and vital signs
       isTransactionEditMode: false,
@@ -416,6 +451,12 @@ export default {
     debouncedSaveDoctorFee: debounce(function (row) {
       this.saveDoctorFee(row)
     }, 500),
+
+    //process lab dialog
+    async confirmProcessLab() {
+      this.showProcessLabConfirm = false
+      await this.safeAction(this.processLab, 'isProcessingLab')
+    },
 
     //  Confirmation Dialog for "Done"
     confirmPrescription() {
