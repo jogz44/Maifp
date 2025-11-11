@@ -176,7 +176,7 @@ const routes = [
       },
       {
         path: '/philhealth/report',
-        component: () => import('pages/AssistancePhilHealthPage.vue'),
+        component: () => import('pages/AssistancePhilhealthPage.vue'),
         meta: { requiresAuth: true },
       },
 

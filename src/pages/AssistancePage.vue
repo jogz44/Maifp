@@ -88,8 +88,8 @@
           <q-card-actions align="right">
             <q-btn
               v-if="
-                (patient.maifip === 0 && patient.philhealth === 0) ||
-                (patient.maifip === 0 && patient.philhealth === 1)
+                (patient.maifip == 0 && patient.philhealth == 0) ||
+                (patient.maifip == 0 && patient.philhealth == 1)
               "
               flat
               label="Send to MAIFIP"
@@ -100,8 +100,8 @@
             />
             <q-btn
               v-if="
-                (patient.maifip === 0 && patient.philhealth === 0) ||
-                (patient.maifip === 0 && patient.philhealth === 1)
+                (patient.maifip == 0 && patient.philhealth == 0) ||
+                (patient.maifip == 0 && patient.philhealth == 1)
               "
               flat
               label="Proceed with Cash"
@@ -111,7 +111,10 @@
               :disable="completing"
             />
             <q-btn
-              v-if="patient.maifip === 1 && patient.philhealth === 0"
+              v-if="
+                (patient.maifip == 1 && patient.philhealth == 0) ||
+                (patient.maifip == 1 && patient.philhealth == 1)
+              "
               flat
               label="Yes, Proceed to GL"
               color="green-9"

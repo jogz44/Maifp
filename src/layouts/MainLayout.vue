@@ -182,9 +182,9 @@
           </q-item>
         </q-expansion-item>
 
- 
 
-        <q-item clickable v-ripple to="/customers/consultationLog">
+
+        <q-item v-if="canAccessConsultation" clickable v-ripple to="/customers/consultationLog">
           <div class="row items-center">
             <q-icon name="sym_o_overview" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Consultation Log</span>
