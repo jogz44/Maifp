@@ -78,6 +78,7 @@ export const usePatientStore = defineStore('patient', {
       transaction_type: '',
       transaction_mode: 'Walk-in',
       purpose: '',
+      status: '',
 
       // Vital signs default values (now part of single form)
       height: null,
@@ -1510,6 +1511,7 @@ export const usePatientStore = defineStore('patient', {
           transaction_date: transactionData.transaction_date,
           transaction_type: transactionData.transaction_type,
           transaction_mode: transactionData.transaction_mode,
+          status: transactionData.status || '',
           purpose: transactionData.purpose || '',
 
           // Vital signs fields

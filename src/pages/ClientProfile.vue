@@ -392,7 +392,7 @@
                                   ? 'blue'
                                   : props.row.status === 'unqualified'
                                     ? 'red'
-                                    : props.row.status === 'assessment'
+                                    : props.row.status === 'Assessment'
                                       ? 'orange'
                                       : 'grey'
                           "
@@ -419,7 +419,7 @@
       </div>
     </div>
 
-    <!-- New Transaction Modal (unchanged) -->
+    <!-- New Transaction Modal -->
     <q-dialog v-model="showNewTransactionModal" persistent>
       <q-card style="width: 900px; max-width: 90vw; min-height: 600px">
         <q-card-section class="row items-center q-pb-none">
@@ -748,6 +748,30 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <!-- MAIFIP Confirmation Dialog -->
+    <q-dialog v-model="showMAIFIPConfirmation" persistent>
+      <q-card style="min-width: 400px">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6">MAIFIP Confirmation</div>
+          <q-space />
+        </q-card-section>
+
+        <q-card-section>
+          <div class="text-subtitle1">Do you want this patient to proceed in MAIFIP?</div>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="No" color="negative" @click="confirmMAIFIPChoice('pending')" />
+          <q-btn
+            unelevated
+            label="Yes"
+            color="positive"
+            @click="confirmMAIFIPChoice('assessment')"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
   </q-page>
 </template>
 
@@ -771,7 +795,7 @@ export default {
       patientId: null,
       isEditMode: false,
       originalPatientData: null,
-      showMoreDetails: false, // Add this new reactive property
+      showMoreDetails: false,
       patient: {
         id: null,
         philhealth_id: null,
@@ -799,11 +823,14 @@ export default {
       hasRepresentativeInfo: false,
       sameAsPatientAddress: false,
       showNewTransactionModal: false,
+      showMAIFIPConfirmation: false,
       creatingTransaction: false,
+      pendingTransactionPayload: null,
       newTransaction: {
         transaction_date: '',
         transaction_mode: 'Walk-in',
         transaction_type: '',
+        status: '',
         purpose: '',
         patient_id: null,
         height: '',
@@ -890,6 +917,7 @@ export default {
         this.newTransaction.patient_id = this.patient.id
         this.newTransaction.rep_city = 'Tagum City'
         this.newTransaction.rep_province = 'Davao del Norte'
+        this.newTransaction.status = ''
         this.sameAsPatientAddress = false
       }
     },
@@ -1073,10 +1101,12 @@ export default {
         rep_barangay: '',
         rep_city: 'Tagum City',
         rep_province: 'Davao del Norte',
+        status: '',
       }
 
       this.hasRepresentativeInfo = false
       this.sameAsPatientAddress = false
+      this.pendingTransactionPayload = null
     },
 
     updateNewTransactionBMI() {
@@ -1162,14 +1192,14 @@ export default {
           }
         }
 
-        this.creatingTransaction = true
-
+        // Build the payload
         const payload = {
           patient_id: this.patient.id,
           user_id: this.getUserId(),
           transaction_date: this.newTransaction.transaction_date,
           transaction_type: this.newTransaction.transaction_type,
           transaction_mode: this.newTransaction.transaction_mode || 'Walk-in',
+          status: this.newTransaction.status || '',
           purpose: this.newTransaction.purpose || '',
           height: this.newTransaction.height || '',
           weight: this.newTransaction.weight || '',
@@ -1214,8 +1244,44 @@ export default {
           }
         }
 
-        console.log('Creating transaction with data:', payload)
-        const createdTransaction = await this.patientStore.createNewTransaction(payload)
+        // Store the payload and show MAIFIP confirmation dialog
+        this.pendingTransactionPayload = payload
+        this.showNewTransactionModal = false
+        this.showMAIFIPConfirmation = true
+      } catch (error) {
+        console.error('Error validating transaction:', error)
+        this.$q.notify({
+          type: 'negative',
+          message: `Error: ${error.message || 'Unknown error'}`,
+          position: 'top',
+          timeout: 2000,
+        })
+      }
+    },
+
+    async confirmMAIFIPChoice(status) {
+      try {
+        this.showMAIFIPConfirmation = false
+
+        if (!this.pendingTransactionPayload) {
+          this.$q.notify({
+            type: 'negative',
+            message: 'Transaction data not found',
+            position: 'top',
+            timeout: 2000,
+          })
+          return
+        }
+
+        // Add status to payload
+        this.pendingTransactionPayload.status = status
+
+        console.log('Creating transaction with data:', this.pendingTransactionPayload)
+
+        this.creatingTransaction = true
+        const createdTransaction = await this.patientStore.createNewTransaction(
+          this.pendingTransactionPayload,
+        )
 
         if (createdTransaction) {
           this.$q.notify({
@@ -1225,7 +1291,6 @@ export default {
             timeout: 2000,
           })
           await this.loadPatientData()
-          this.showNewTransactionModal = false
           this.resetNewTransaction()
         }
       } catch (error) {

@@ -74,7 +74,12 @@ export default {
     return {
       steps: [
         { name: 'Assessment', patients: [], route: '/assessment' },
-        { name: 'P-Assessment', patients: [], route: '/fromphilhealth' },
+        { name: 'New Consultation', patients: [], route: '/customers/newconsultation' },
+        { name: 'Laboratory', patients: [], route: '/customers/laboratory' },
+        { name: 'Reconsultation', patients: [], route: '/customers/returnconsultation' },
+        { name: 'Medicine', patients: [], route: '#' },
+        { name: 'PhilHealth', patients: [], route: '/philhealth' },
+        { name: 'Billing', patients: [], route: '/billing' },
         { name: 'GL', patients: [], route: '/gl' },
       ],
       intervalId: null,
@@ -98,7 +103,12 @@ export default {
     async loadStepPatients() {
       const results = await Promise.allSettled([
         this.patientStore.fetchPatientsAssessment(),
-        this.patientStore.fetchPatientsfromPhilHealth(),
+        this.patientStore.fetchPatientsNew(),
+        this.patientStore.fetchPatientsLaboratory(),
+        this.patientStore.fetchPatientsReturned(),
+        this.patientStore.fetchPatientsMedicine(),
+        this.patientStore.fetchPatientsPhilHealth(),
+        this.patientStore.fetchPatientsBilling(),
         this.patientStore.fetchPatientsGL(),
       ])
 

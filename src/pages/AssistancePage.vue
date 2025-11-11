@@ -17,7 +17,8 @@
           <q-btn flat round color="primary" icon="arrow_back" @click="$router.back()" />
         </div>
         <div class="header-actions">
-          <q-btn
+          <!-- Apply Assistance Button - COMMENTED OUT -->
+          <!-- <q-btn
             v-if="!hasExistingAssistance"
             color="orange-9"
             label="Apply Assistance"
@@ -26,7 +27,8 @@
             :loading="processing"
             :disable="processing"
             @click="showAssistanceDialog = true"
-          />
+          /> -->
+
           <q-btn
             class="q-mr-sm"
             color="secondary"
@@ -85,11 +87,26 @@
 
           <q-card-actions align="right">
             <q-btn
-              v-if="patient.maifip === 0 && patient.philhealth === 1"
+              v-if="
+                (patient.maifip === 0 && patient.philhealth === 0) ||
+                (patient.maifip === 0 && patient.philhealth === 1)
+              "
               flat
               label="Send to MAIFIP"
               color="blue"
               @click="fromPhilHealth"
+              :loading="completing"
+              :disable="completing"
+            />
+            <q-btn
+              v-if="
+                (patient.maifip === 0 && patient.philhealth === 0) ||
+                (patient.maifip === 0 && patient.philhealth === 1)
+              "
+              flat
+              label="Proceed with Cash"
+              color="blue"
+              @click="proceedWithCash"
               :loading="completing"
               :disable="completing"
             />
@@ -152,8 +169,8 @@
         </q-card>
       </q-dialog>
 
-      <!-- Assistance Application Dialog -->
-      <q-dialog v-model="showAssistanceDialog" persistent>
+      <!-- Assistance Application Dialog - COMMENTED OUT -->
+      <!-- <q-dialog v-model="showAssistanceDialog" persistent>
         <q-card style="min-width: 500px">
           <q-card-section class="row items-center">
             <q-avatar icon="volunteer_activism" color="orange-9" text-color="white" />
@@ -211,13 +228,6 @@
               </q-table>
 
               <div class="row justify-between q-mt-md">
-                <!-- <q-btn
-                  flat
-                  color="primary"
-                  icon="add"
-                  label="Add Fund Source"
-                  @click="addAssistanceRow"
-                /> -->
                 <div class="text-h6 text-weight-bold">
                   Total: {{ formatAmount(totalAssistanceAmount) }}
                 </div>
@@ -282,7 +292,7 @@
             />
           </q-card-actions>
         </q-card>
-      </q-dialog>
+      </q-dialog> -->
 
       <div class="certification-report-container">
         <div class="report-content">
@@ -365,14 +375,6 @@
                   <td class="text-left"></td>
                   <td class="text-right">{{ formatAmount(patient.consultation_amount) }}</td>
                 </tr>
-                <!-- Laboratories
-                <tr v-for="lab in patient.laboratories_details" :key="'lab-' + lab.id">
-                  <td>{{ lab.laboratory_type }}</td>
-                  <td class="text-left"></td>
-                  <td class="text-left"></td>
-                  <td class="text-left"></td>
-                  <td class="text-right">{{ formatAmount(lab.total_amount) }}</td>
-                </tr> -->
                 <!-- Radiology -->
                 <tr v-for="rad in patient.radiologies_details" :key="'rad-' + rad.id">
                   <td>{{ rad.item_description }}</td>
@@ -473,22 +475,22 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { usePatientStore } from 'src/stores/patientStore'
-import { useAssistanceStore } from 'src/stores/assistanceStore'
+// import { useAssistanceStore } from 'src/stores/assistanceStore'
 import { useQuasar, LocalStorage } from 'quasar'
 import html2canvas from 'html2canvas'
 import jsPDF from 'jspdf'
 
 const router = useRouter()
 const store = usePatientStore()
-const assistanceStore = useAssistanceStore()
+// const assistanceStore = useAssistanceStore()
 const $q = useQuasar()
 const currentUser = ref(null)
 
 const loading = ref(true)
 const error = ref(null)
 const completing = ref(false)
-const processing = ref(false)
-const showAssistanceDialog = ref(false)
+// const processing = ref(false)
+// const showAssistanceDialog = ref(false) // COMMENTED OUT
 const showGLConfirmDialog = ref(false)
 const showCompleteConfirmDialog = ref(false)
 
@@ -512,7 +514,6 @@ const patient = ref({
   examination_details: [],
   mammogram_details: [],
   ultrasound_details: [],
-  // laboratories_details: [],
   medication: [],
   total_billing: 0,
   discount: 0,
@@ -520,44 +521,43 @@ const patient = ref({
   assistance: null,
 })
 
-const assistanceForm = ref({
-  assistanceItems: [{ fundSource: 'PHIC - Case Rate', amount: 0, id: 1 }],
-  remarks: '',
-})
+// COMMENTED OUT - Assistance form data
+// const assistanceForm = ref({
+//   assistanceItems: [{ fundSource: 'PHIC - Case Rate', amount: 0, id: 1 }],
+//   remarks: '',
+// })
 
-const fundSourceOptions = [
-  'PHIC - Case Rate',
-  'PCSO - MAP',
-  'DSWD - AICS',
-  'QFS',
-  'Other Fund Source',
-]
+// const fundSourceOptions = [
+//   'PHIC - Case Rate',
+//   'PCSO - MAP',
+//   'DSWD - AICS',
+//   'QFS',
+//   'Other Fund Source',
+// ]
 
-const assistanceColumns = [
-  {
-    name: 'fundSource',
-    label: 'Fund Source',
-    field: 'fundSource',
-    align: 'left',
-    style: 'width: 50%',
-  },
-  {
-    name: 'amount',
-    label: 'Assistance Amount (₱)',
-    field: 'amount',
-    align: 'left',
-    style: 'width: 35%',
-  },
-  {
-    name: 'actions',
-    label: 'Actions',
-    field: 'actions',
-    align: 'center',
-    style: 'width: 15%',
-  },
-]
-
-// let nextAssistanceId = 2
+// const assistanceColumns = [
+//   {
+//     name: 'fundSource',
+//     label: 'Fund Source',
+//     field: 'fundSource',
+//     align: 'left',
+//     style: 'width: 50%',
+//   },
+//   {
+//     name: 'amount',
+//     label: 'Assistance Amount (₱)',
+//     field: 'amount',
+//     align: 'left',
+//     style: 'width: 35%',
+//   },
+//   {
+//     name: 'actions',
+//     label: 'Actions',
+//     field: 'actions',
+//     align: 'center',
+//     style: 'width: 15%',
+//   },
+// ]
 
 try {
   currentUser.value = LocalStorage.getItem('user')
@@ -600,28 +600,29 @@ const finalAmountDue = computed(() => {
   return Math.max(0, originalAmount - assistanceAmount)
 })
 
-const totalAssistanceAmount = computed(() => {
-  return assistanceForm.value.assistanceItems.reduce((total, item) => {
-    return total + parseAmount(item.amount)
-  }, 0)
-})
+// COMMENTED OUT - Assistance validation computeds
+// const totalAssistanceAmount = computed(() => {
+//   return assistanceForm.value.assistanceItems.reduce((total, item) => {
+//     return total + parseAmount(item.amount)
+//   }, 0)
+// })
 
-const assistanceAmountRules = [
-  (val) => val >= 0 || 'Assistance amount cannot be negative',
-  () =>
-    totalAssistanceAmount.value <= parseAmount(patient.value.final_billing) ||
-    'Total assistance amount cannot exceed the total bill',
-]
+// const assistanceAmountRules = [
+//   (val) => val >= 0 || 'Assistance amount cannot be negative',
+//   () =>
+//     totalAssistanceAmount.value <= parseAmount(patient.value.final_billing) ||
+//     'Total assistance amount cannot exceed the total bill',
+// ]
 
-const isAssistanceFormValid = computed(() => {
-  const hasValidItems = assistanceForm.value.assistanceItems.some(
-    (item) => item.fundSource && parseAmount(item.amount) > 0,
-  )
-  const totalNotExceeded = totalAssistanceAmount.value <= parseAmount(patient.value.final_billing)
-  const totalGreaterThanZero = totalAssistanceAmount.value > 0
+// const isAssistanceFormValid = computed(() => {
+//   const hasValidItems = assistanceForm.value.assistanceItems.some(
+//     (item) => item.fundSource && parseAmount(item.amount) > 0,
+//   )
+//   const totalNotExceeded = totalAssistanceAmount.value <= parseAmount(patient.value.final_billing)
+//   const totalGreaterThanZero = totalAssistanceAmount.value > 0
 
-  return hasValidItems && totalNotExceeded && totalGreaterThanZero
-})
+//   return hasValidItems && totalNotExceeded && totalGreaterThanZero
+// })
 
 onMounted(async () => {
   if (!store.transaction_id) {
@@ -669,132 +670,120 @@ function closeCompleteConfirmDialog() {
   showCompleteConfirmDialog.value = false
 }
 
-function cancelAssistance() {
-  assistanceForm.value = {
-    assistanceItems: [{ fundSource: 'Select Funds Source', amount: 0, id: 1 }],
-    remarks: '',
-  }
-  showAssistanceDialog.value = false
-}
-
-// function addAssistanceRow() {
-//   assistanceForm.value.assistanceItems.push({
-//     fundSource: 'Select Funds Source',
-//     amount: 0,
-//     id: nextAssistanceId++,
-//   })
+// COMMENTED OUT - Assistance related functions
+// function cancelAssistance() {
+//   assistanceForm.value = {
+//     assistanceItems: [{ fundSource: 'Select Funds Source', amount: 0, id: 1 }],
+//     remarks: '',
+//   }
+//   showAssistanceDialog.value = false
 // }
 
-function removeAssistanceRow(index) {
-  if (index > 0) {
-    assistanceForm.value.assistanceItems.splice(index, 1)
-  }
-}
+// function removeAssistanceRow(index) {
+//   if (index > 0) {
+//     assistanceForm.value.assistanceItems.splice(index, 1)
+//   }
+// }
 
-async function applyAssistance() {
-  if (!isAssistanceFormValid.value) {
-    $q.notify({
-      type: 'negative',
-      message: 'Please fill in all required fields correctly',
-      position: 'top',
-    })
-    return
-  }
+// async function applyAssistance() {
+//   if (!isAssistanceFormValid.value) {
+//     $q.notify({
+//       type: 'negative',
+//       message: 'Please fill in all required fields correctly',
+//       position: 'top',
+//     })
+//     return
+//   }
 
-  processing.value = true
-  try {
-    const validAssistanceItems = assistanceForm.value.assistanceItems
-      .filter((item) => item.fundSource && parseAmount(item.amount) > 0)
-      .map((item) => ({
-        fund_source: item.fundSource,
-        fund_amount: parseAmount(item.amount),
-        id: item.id,
-      }))
+//   processing.value = true
+//   try {
+//     const validAssistanceItems = assistanceForm.value.assistanceItems
+//       .filter((item) => item.fundSource && parseAmount(item.amount) > 0)
+//       .map((item) => ({
+//         fund_source: item.fundSource,
+//         fund_amount: parseAmount(item.amount),
+//         id: item.id,
+//       }))
 
-    const payload = {
-      patient_id: patient.value.patient_id,
-      transaction_id: patient.value.transaction_id,
-      laboratories_details: patient.value.laboratories_details,
-      radiology_details: patient.value.radiologies_details,
-      examination_details: patient.value.examination_details,
-      mammogram_details: patient.value.mammogram_details,
-      ultrasound_details: patient.value.ultrasound_details,
-      medication: patient.value.medication,
-      consultation_amount: parseAmount(patient.value.consultation_amount),
-      // laboratory_total: patient.value.laboratories_details.reduce(
-      //   (total, lab) => total + parseAmount(lab.amount),
-      //   0,
-      // ),
-      radiology_total: patient.value.radiologies_details.reduce(
-        (total, rad) => total + parseAmount(rad.total_amount),
-        0,
-      ),
-      examination_total: patient.value.examination_details.reduce(
-        (total, exam) => total + parseAmount(exam.total_amount),
-        0,
-      ),
-      mammogram_total: patient.value.mammogram_details.reduce(
-        (total, mammo) => total + parseAmount(mammo.total_amount),
-        0,
-      ),
-      ultrasound_total: patient.value.ultrasound_details.reduce(
-        (total, ultra) => total + parseAmount(ultra.total_amount),
-        0,
-      ),
-      medication_total: patient.value.medication.reduce(
-        (total, med) => total + parseAmount(med.total),
-        0,
-      ),
-      total_billing: parseAmount(patient.value.total_billing),
-      discount: parseAmount(patient.value.discount),
-      final_billing: parseAmount(patient.value.final_billing),
-      assistances: validAssistanceItems,
-      total_assistance: totalAssistanceAmount.value,
-      // status: 'Complete',
-    }
+//     const payload = {
+//       patient_id: patient.value.patient_id,
+//       transaction_id: patient.value.transaction_id,
+//       laboratories_details: patient.value.laboratories_details,
+//       radiology_details: patient.value.radiologies_details,
+//       examination_details: patient.value.examination_details,
+//       mammogram_details: patient.value.mammogram_details,
+//       ultrasound_details: patient.value.ultrasound_details,
+//       medication: patient.value.medication,
+//       consultation_amount: parseAmount(patient.value.consultation_amount),
+//       radiology_total: patient.value.radiologies_details.reduce(
+//         (total, rad) => total + parseAmount(rad.total_amount),
+//         0,
+//       ),
+//       examination_total: patient.value.examination_details.reduce(
+//         (total, exam) => total + parseAmount(exam.total_amount),
+//         0,
+//       ),
+//       mammogram_total: patient.value.mammogram_details.reduce(
+//         (total, mammo) => total + parseAmount(mammo.total_amount),
+//         0,
+//       ),
+//       ultrasound_total: patient.value.ultrasound_details.reduce(
+//         (total, ultra) => total + parseAmount(ultra.total_amount),
+//         0,
+//       ),
+//       medication_total: patient.value.medication.reduce(
+//         (total, med) => total + parseAmount(med.total),
+//         0,
+//       ),
+//       total_billing: parseAmount(patient.value.total_billing),
+//       discount: parseAmount(patient.value.discount),
+//       final_billing: parseAmount(patient.value.final_billing),
+//       assistances: validAssistanceItems,
+//       total_assistance: totalAssistanceAmount.value,
+//     }
 
-    const result = await assistanceStore.applyAssistance(payload)
+//     const result = await assistanceStore.applyAssistance(payload)
 
-    const isSuccess =
-      result?.message?.includes('Successfully') || result?.assistance || (result && !result.error)
+//     const isSuccess =
+//       result?.message?.includes('Successfully') || result?.assistance || (result && !result.error)
 
-    if (isSuccess) {
-      patient.value.assistance = {
-        id: result.assistance?.id || Date.now(),
-        funds: validAssistanceItems.map((item) => ({
-          fund_source: item.fund_source,
-          fund_amount: item.fund_amount.toString(),
-        })),
-      }
+//     if (isSuccess) {
+//       patient.value.assistance = {
+//         id: result.assistance?.id || Date.now(),
+//         funds: validAssistanceItems.map((item) => ({
+//           fund_source: item.fund_source,
+//           fund_amount: item.fund_amount.toString(),
+//         })),
+//       }
 
-      // Close dialog and reset form
-      showAssistanceDialog.value = false
-      assistanceForm.value = {
-        assistanceItems: [{ fundSource: 'Select Funds Source', amount: null, id: 1 }],
-        remarks: '',
-      }
+//       // Close dialog and reset form
+//       showAssistanceDialog.value = false
+//       assistanceForm.value = {
+//         assistanceItems: [{ fundSource: 'Select Funds Source', amount: null, id: 1 }],
+//         remarks: '',
+//       }
 
-      $q.notify({
-        type: 'positive',
-        message: `Financial assistance has been applied successfully!`,
-        position: 'top',
-      })
-    } else {
-      throw new Error(result?.error || result?.message || 'Failed to apply assistance')
-    }
-  } catch (error) {
-    console.error('Error applying assistance:', error)
-    $q.notify({
-      type: 'negative',
-      message: error.message || 'Failed to apply financial assistance. Please try again.',
-      position: 'top',
-    })
-  } finally {
-    processing.value = false
-  }
-}
+//       $q.notify({
+//         type: 'positive',
+//         message: `Financial assistance has been applied successfully!`,
+//         position: 'top',
+//       })
+//     } else {
+//       throw new Error(result?.error || result?.message || 'Failed to apply assistance')
+//     }
+//   } catch (error) {
+//     console.error('Error applying assistance:', error)
+//     $q.notify({
+//       type: 'negative',
+//       message: error.message || 'Failed to apply financial assistance. Please try again.',
+//       position: 'top',
+//     })
+//   } finally {
+//     processing.value = false
+//   }
+// }
 
-// GL Transaction (when grand total is 0)
+// GL Transaction
 async function completeTransaction() {
   if (!store.transaction_id) {
     $q.notify({ type: 'negative', message: 'Transaction ID not found', position: 'top' })
@@ -825,7 +814,7 @@ async function completeTransaction() {
   }
 }
 
-// Mark as Funded (when grand total is greater than 0)
+// Mark as Funded
 async function markAsFunded() {
   if (!store.transaction_id) {
     $q.notify({ type: 'negative', message: 'Transaction ID not found', position: 'top' })
@@ -864,10 +853,8 @@ async function fromPhilHealth() {
   }
   completing.value = true
   try {
-    // Update the local patient maifip value first
     patient.value.maifip = 1
 
-    // Call the store method to update transaction evaluation with maifip = 1
     const result = await store.updateTransactionEvaluation(store.transaction_id, 'evaluation', {
       maifip: 1,
     })
@@ -887,6 +874,38 @@ async function fromPhilHealth() {
     $q.notify({
       type: 'negative',
       message: 'Failed to send transaction to PhilHealth evaluation. Please try again.',
+      position: 'top',
+    })
+  } finally {
+    completing.value = false
+    showGLConfirmDialog.value = false
+  }
+}
+
+// Proceed with Cash - NEW FUNCTION
+async function proceedWithCash() {
+  if (!store.transaction_id) {
+    $q.notify({ type: 'negative', message: 'Transaction ID not found', position: 'top' })
+    return
+  }
+  completing.value = true
+  try {
+    const result = await store.updateTransactionStatus(store.transaction_id, 'Paid')
+    if (result) {
+      $q.notify({
+        type: 'positive',
+        message: 'Transaction marked as paid successfully!',
+        position: 'top',
+      })
+      setTimeout(() => router.push('/billing'), 1500)
+    } else {
+      throw new Error('Failed to update transaction status')
+    }
+  } catch (error) {
+    console.error('Error in proceedWithCash:', error)
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to mark transaction as paid. Please try again.',
       position: 'top',
     })
   } finally {

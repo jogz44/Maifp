@@ -337,7 +337,7 @@
 
                       <q-td key="status" style="font-size: 11px" align="center">
                         <div
-                          v-if="props.row.status !== 'evaluation'"
+                          v-if="props.row.status !== 'Evaluation'"
                           class="text-caption q-mt-xs"
                           :class="{
                             'text-green': props.row.status === 'complete',
@@ -354,7 +354,7 @@
                           {{ props.row.status || 'unqualified' }}
                         </div>
 
-                        <div v-if="props.row.status === 'evaluation'" class="q-mt-xs">
+                        <div v-if="props.row.status === 'Evaluation'" class="q-mt-xs">
                           <q-toggle
                             :model-value="false"
                             color="green"
