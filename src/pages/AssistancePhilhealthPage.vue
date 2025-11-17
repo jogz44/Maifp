@@ -36,7 +36,6 @@
           />
 
           <q-btn
-            v-if="finalAmountDue > 0"
             color="green-9"
             label="Bill"
             icon="save"
@@ -46,6 +45,7 @@
             @click="showGLConfirmDialog = true"
           />
 
+          <!--
           <q-btn
             v-if="finalAmountDue === 0"
             color="blue-9"
@@ -56,6 +56,7 @@
             :disable="completing"
             @click="showCompleteConfirmDialog = true"
           />
+          -->
         </div>
       </div>
 
@@ -100,10 +101,9 @@
         </q-card>
       </q-dialog>
 
-      <!-- Complete Transaction Confirmation Dialog -->
+      <!--
       <q-dialog v-model="showCompleteConfirmDialog" persistent>
         <q-card style="min-width: 400px; position: relative">
-          <!-- Close (X) Button -->
           <q-btn
             dense
             flat
@@ -145,6 +145,7 @@
           </q-card-actions>
         </q-card>
       </q-dialog>
+      -->
 
       <!-- Assistance Application Dialog -->
       <q-dialog v-model="showAssistanceDialog" persistent>
@@ -484,7 +485,8 @@ const completing = ref(false)
 const processing = ref(false)
 const showAssistanceDialog = ref(false)
 const showGLConfirmDialog = ref(false)
-const showCompleteConfirmDialog = ref(false)
+// COMMENTED OUT: showCompleteConfirmDialog ref
+// const showCompleteConfirmDialog = ref(false)
 
 const patient = ref({
   id: null,
@@ -657,9 +659,11 @@ function closeGLConfirmDialog() {
   showGLConfirmDialog.value = false
 }
 
+/*
 function closeCompleteConfirmDialog() {
   showCompleteConfirmDialog.value = false
 }
+*/
 
 function cancelAssistance() {
   assistanceForm.value = {
@@ -804,7 +808,7 @@ async function proceedToBilling() {
   }
 }
 
-// Mark as Funded (when grand total is greater than 0)
+/*
 async function markAsFunded() {
   if (!store.transaction_id) {
     $q.notify({ type: 'negative', message: 'Transaction ID not found', position: 'top' })
@@ -834,6 +838,7 @@ async function markAsFunded() {
     showCompleteConfirmDialog.value = false
   }
 }
+*/
 
 async function handlePrint() {
   const element = document.querySelector('.certification-report-container')
