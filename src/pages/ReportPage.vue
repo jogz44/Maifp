@@ -509,6 +509,24 @@ export default {
     },
 
     /**
+     * Clean patient name by removing N/A patterns (case-insensitive)
+     */
+    cleanPatientName(name) {
+      if (!name || name === 'N/A') return 'N/A'
+
+      // Remove "NA" or "N/A" (case-insensitive) from the name
+      // Handles patterns like: "Tom NA Tom", "John N/A John", "na", "N/A", etc.
+      return (
+        name
+          .replace(/\s+n\s*\/?\s*a\s+/gi, ' ') // Remove " NA " or " N/A " in the middle
+          .replace(/^n\s*\/?\s*a\s+/gi, '') // Remove "NA " or "N/A " at the start
+          .replace(/\s+n\s*\/?\s*a$/gi, '') // Remove " NA" or " N/A" at the end
+          .replace(/\s+/g, ' ') // Clean up multiple spaces
+          .trim() || 'N/A'
+      ) // Return 'N/A' if empty after cleaning
+    },
+
+    /**
      * Transform raw data into display format
      * Each fund record becomes a separate row
      */
@@ -517,6 +535,9 @@ export default {
       let rowCounter = 0
 
       data.forEach((transaction) => {
+        // Clean the patient name once
+        const cleanedPatientName = this.cleanPatientName(transaction.patient_name)
+
         // Process MAIFIP-LGU funds
         if (Array.isArray(transaction.maifip_LGU) && transaction.maifip_LGU.length > 0) {
           transaction.maifip_LGU.forEach((fund) => {
@@ -524,7 +545,7 @@ export default {
               row_id: `${transaction.transaction_id}-lgu-${rowCounter}`,
               transaction_id: transaction.transaction_id,
               transaction_date: transaction.transaction_date,
-              patient_name: transaction.patient_name,
+              patient_name: cleanedPatientName,
               gl_number: transaction.gl_lgu || 'N/A',
               fund_source: 'MAIFIP-LGU',
               amount: parseFloat(fund.fund_amount) || 0,
@@ -544,7 +565,7 @@ export default {
               row_id: `${transaction.transaction_id}-cong-${rowCounter}`,
               transaction_id: transaction.transaction_id,
               transaction_date: transaction.transaction_date,
-              patient_name: transaction.patient_name,
+              patient_name: cleanedPatientName,
               gl_number: transaction.gl_cong || 'N/A',
               fund_source: 'MAIFIP-Congressman',
               amount: parseFloat(fund.fund_amount) || 0,
@@ -564,7 +585,7 @@ export default {
             row_id: `${transaction.transaction_id}-none-${rowCounter}`,
             transaction_id: transaction.transaction_id,
             transaction_date: transaction.transaction_date,
-            patient_name: transaction.patient_name,
+            patient_name: cleanedPatientName,
             gl_number: transaction.gl_lgu || transaction.gl_cong || 'N/A',
             fund_source: 'No Fund',
             amount: 0,
