@@ -149,10 +149,12 @@ export default {
           payload.role_id = payload.role_id.value
         }
 
+        const userId = this.userStore.selected_id || this.GetUserID()
+
         console.log('Updating user with payload:', payload)
 
         try {
-          await this.userStore.updateUser(this.userStore.selected_id, payload)
+          await this.userStore.updateUser(userId, payload)
           this.resetForm()
           this.$router.go(-1)
         } catch (error) {
