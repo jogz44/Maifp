@@ -25,7 +25,21 @@
             @click="$router.push('/users/new')"
           />
         </div>
-        <q-table :rows="filteredRows" :columns="columns" row-key="id" flat bordered>
+        <q-table
+          :rows="filteredRows"
+          :columns="columns"
+          :loading="isLoading"
+          row-key="id"
+          flat
+          bordered
+        >
+          <template v-slot:loading>
+            <q-inner-loading showing color="green-9">
+              <q-spinner-gears size="50px" color="green-9" />
+              <div class="q-mt-md text-green-9">Loading users...</div>
+            </q-inner-loading>
+          </template>
+
           <template #body="props">
             <q-tr :v-bind="props">
               <!-- <q-td key="id" style="font-size: 11px" align="left">
@@ -148,6 +162,7 @@
 </template>
 
 <script>
+import { computed } from 'vue'
 import { useUserStore } from 'src/stores/userStore'
 import { useUserCredentialstore } from 'src/stores/userCredentialStore'
 export default {
@@ -155,10 +170,12 @@ export default {
   setup() {
     const userStore = useUserStore()
     const UserCredentialstore = useUserCredentialstore()
+    const isLoading = computed(() => userStore.loading)
     // You can use the Composition API here if needed
     return {
       userStore,
       UserCredentialstore,
+      isLoading,
       // Define any reactive properties or methods
       columns: [
         // { name: 'id', label: 'ID', align: 'left', field: 'id' },

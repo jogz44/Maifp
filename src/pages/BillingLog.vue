@@ -33,6 +33,7 @@
             bordered
             :rows="filteredRows"
             :columns="columns"
+            :loading="isLoading"
             row-key="id"
             binary-state-sort
             no-data-label="No data available"
@@ -42,6 +43,12 @@
             :rows-per-page-options="[0]"
             style="height: 600px"
           >
+            <template v-slot:loading>
+              <q-inner-loading showing color="green-9">
+                <q-spinner-gears size="50px" color="green-9" />
+                <div class="q-mt-md text-green-9">Loading patients...</div>
+              </q-inner-loading>
+            </template>
             <template #body="props">
               <q-tr :props="props">
                 <q-td key="fullName" style="font-size: 11px">{{ props.row.fullName }}</q-td>
@@ -74,6 +81,7 @@ import { usePatientStore } from '../stores/patientStore'
 
 const Patients = usePatientStore()
 const search = ref('')
+const isLoading = computed(() => Patients.isLoading)
 // const selectedDate = ref(new Date().toISOString().substring(0, 10))
 const selectedDate = ref('')
 const columns = [

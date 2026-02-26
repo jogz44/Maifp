@@ -33,6 +33,7 @@
             bordered
             :rows="filteredRows"
             :columns="columns"
+            :loading="isLoading"
             row-key="id"
             binary-state-sort
             no-data-label="No data available"
@@ -42,6 +43,12 @@
             :rows-per-page-options="[0]"
             style="height: 600px"
           >
+            <template v-slot:loading>
+              <q-inner-loading showing color="green-9">
+                <q-spinner-gears size="50px" color="green-9" />
+                <div class="q-mt-md text-green-9">Loading patients...</div>
+              </q-inner-loading>
+            </template>
             <template v-slot:top-right>
               <q-btn color="green-9" label="New Patient" to="/customer" icon="add" flat />
             </template>
@@ -78,6 +85,7 @@ import { ref, computed, onMounted } from 'vue'
 import { usePatientStore } from '../stores/patientStore'
 
 const Patients = usePatientStore()
+const isLoading = computed(() => Patients.loading)
 const search = ref('')
 // const selectedDate = ref(new Date().toISOString().substring(0, 10))
 const selectedDate = ref('')

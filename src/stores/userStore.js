@@ -8,10 +8,12 @@ export const useUserStore = defineStore('users', {
     users: [],
     selected_id: null,
     authenticatedUser: 0,
+    loading: false,
   }),
 
   actions: {
     async getUsers() {
+      this.loading = true
       try {
         const response = await api.get('/system/users')
         this.users = response.data.users
@@ -22,10 +24,13 @@ export const useUserStore = defineStore('users', {
           position: 'center',
           timeout: 5000,
         })
+      } finally {
+        this.loading = false
       }
     },
 
     async getUser(id) {
+      this.loading = true
       try {
         const response = await api.get('/system/user/profile/' + id)
         this.user = response.data.user[0]
@@ -37,10 +42,13 @@ export const useUserStore = defineStore('users', {
           position: 'center',
           timeout: 5000,
         })
+      } finally {
+        this.loading = false
       }
     },
 
     async newUser(payload) {
+      this.loading = true
       try {
         payload.status = 'Active'
         const response = await api.post('/system/user/new', payload)
@@ -61,10 +69,13 @@ export const useUserStore = defineStore('users', {
           position: 'center',
           timeout: 5000,
         })
+      } finally {
+        this.loading = false
       }
     },
 
     async updateUser(id, payload) {
+      this.loading = true
       try {
         console.log(payload)
         // Add password_confirmation if password is being updated
@@ -96,10 +107,13 @@ export const useUserStore = defineStore('users', {
           position: 'center',
           timeout: 5000,
         })
+      } finally {
+        this.loading = false
       }
     },
 
     async removeUser(id) {
+      this.loading = true
       try {
         const response = await api.post('/system/user/profile-remove/' + id)
         // console.log(response.data.success)
@@ -118,9 +132,13 @@ export const useUserStore = defineStore('users', {
           position: 'center',
           timeout: 5000,
         })
+      } finally {
+        this.loading = false
       }
     },
+
     async deactivateUser(id) {
+      this.loading = true
       try {
         const response = await api.put('/system/user/profile-deactivate/' + id)
         // console.log(response.data.success)
@@ -139,10 +157,13 @@ export const useUserStore = defineStore('users', {
           position: 'center',
           timeout: 5000,
         })
+      } finally {
+        this.loading = false
       }
     },
 
     async activateUser(id) {
+      this.loading = true
       try {
         const response = await api.put('/system/user/profile-activate/' + id)
         // console.log(response.data.success)
@@ -161,9 +182,13 @@ export const useUserStore = defineStore('users', {
           position: 'center',
           timeout: 5000,
         })
+      } finally {
+        this.loading = false
       }
     },
+
     async loginUser(payload) {
+      this.loading = true
       try {
         const response = await api.post('/user/login', payload)
         console.log(response.data)
@@ -184,10 +209,13 @@ export const useUserStore = defineStore('users', {
           success: false,
           error: error.response?.data?.message || error.message || 'Login failed',
         }
+      } finally {
+        this.loading = false
       }
     },
   },
 })
+
 if (import.meta.hot) {
   import.meta.hot.accept(acceptHMRUpdate(useUserStore, import.meta.hot))
 }
