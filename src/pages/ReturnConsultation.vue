@@ -12,24 +12,27 @@
 
         <q-card-section>
           <q-table
-            v-if="!loading"
             flat
             bordered
             :filter="search"
+            :filter-method="customFilter"
             :rows="rows"
             :columns="columns"
             row-key="id"
             binary-state-sort
             no-data-label="No data available"
-            title="Patient Logs"
+            title="RE-CONSULTATION"
             title-class="text-bold text-subtitle1 text-green-9"
             square
             :rows-per-page-options="[0]"
             style="height: 600px"
+            :loading="loading"
           >
-            <!-- <template v-slot:top-right>
-              <q-btn color="green-9" label="New Patient" to="/customer" icon="add" flat />
-            </template> -->
+            <template #loading>
+              <q-inner-loading showing>
+                <q-spinner size="50px" color="primary" />
+              </q-inner-loading>
+            </template>
 
             <template #body="props">
               <q-tr v-bind="props">
@@ -53,7 +56,6 @@
                 </q-td>
               </q-tr>
             </template>
-
           </q-table>
         </q-card-section>
       </q-card>
@@ -159,8 +161,7 @@ export default {
       Selected_ID: 0,
       DeleteClient: false,
       search: '',
-      rows: [
-      ],
+      rows: [],
 
       loading: false,
 
@@ -191,7 +192,7 @@ export default {
       this.loading = true
       try {
         const patients = await this.Patients.fetchReturnedPatients()
-        this.rows = Array.isArray(patients) ? patients.map(p => ({ ...p })) : []
+        this.rows = Array.isArray(patients) ? patients.map((p) => ({ ...p })) : []
         console.log('Fetched qualified patients:', this.rows)
       } catch (error) {
         console.error('Error fetching qualified patients:', error)
@@ -206,6 +207,32 @@ export default {
       this.Patients.isSave = false
       this.Patients.patient_id = id
     },
+
+    customFilter(rows, terms) {
+      if (!terms) return rows
+
+      const searchTerms = terms
+        .toLowerCase()
+        .split(' ')
+        .filter(word => word.trim() !== '')
+
+      return rows.filter(row => {
+        // Combine all searchable fields into one string
+        const rowString = `
+          ${row.lastname}
+          ${row.firstname}
+          ${row.middlename}
+          ${row.ext}
+          ${row.birthdate}
+          ${row.age}
+          ${row.contact_number}
+          ${row.barangay}
+        `.toLowerCase()
+
+        // Every word typed must exist somewhere in the row
+        return searchTerms.every(word => rowString.includes(word))
+      })
+    }
   },
 
   computed: {

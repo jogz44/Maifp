@@ -11,37 +11,41 @@
         </q-card-section>
 
         <q-card-section>
-          <!-- SpinnerTail while loading -->
-          <div v-if="loading" class="q-my-sm  flex justify-center">
-            <q-spinner color="primary" size="2em" />
-          </div>
-
           <!-- Table shown only after loading -->
           <q-table
-            v-else
             flat
             bordered
             :filter="search"
+            :filter-method="customFilter"
             :rows="rows"
             :columns="columns"
             row-key="id"
             binary-state-sort
             no-data-label="No data available"
-            title="Patient Logs"
+            title="CONSULTATION PATIENT LOG"
             title-class="text-bold text-subtitle1 text-green-9"
             square
             :rows-per-page-options="[0]"
             style="height: 600px"
+            :loading="loading"
           >
+            <template #loading>
+              <q-inner-loading showing>
+                <q-spinner size="50px" color="primary" />
+              </q-inner-loading>
+            </template>
+
             <template #body="props">
               <q-tr v-bind="props">
                 <q-td key="fullname">
                   {{
                     `${props.row.firstname || ''} ${
-                      props.row.middlename && props.row.middlename !== 'NA' ? props.row.middlename + ' ' : ''
+                      props.row.middlename && props.row.middlename !== 'NA'
+                        ? props.row.middlename + ' '
+                        : ''
                     }${props.row.lastname || ''}${
                       props.row.ext && props.row.ext !== 'NA' ? ' ' + props.row.ext : ''
-                    }`.toUpperCase()
+                    }`
                   }}
                 </q-td>
                 <q-td key="birthdate">{{ props.row.birthdate }}</q-td>
@@ -80,7 +84,7 @@ export default {
         {
           name: 'fullname',
           label: 'Fullname',
-          field: row => {
+          field: (row) => {
             const mid = row.middlename ? `${row.middlename[0]}. ` : ''
             const ext = row.ext && row.ext !== 'NA' ? ` ${row.ext}` : ''
             return `${row.firstname} ${mid}${row.lastname}${ext}`.toUpperCase()
@@ -89,13 +93,53 @@ export default {
           align: 'left',
           headerClasses: 'bg-grey-7 text-white',
         },
-        { name: 'birthdate', label: 'Birthdate', field: 'birthdate', align: 'left', sortable: true, headerClasses: 'bg-grey-7 text-white' },
-        { name: 'age', label: 'Age', field: 'age', align: 'left', sortable: true, headerClasses: 'bg-grey-7 text-white' },
-        { name: 'barangay', label: 'Barangay', field: 'barangay', align: 'left', sortable: true, headerClasses: 'bg-grey-7 text-white' },
-        { name: 'contact_number', label: 'Contact No.', field: 'contact_number', align: 'left', sortable: true, headerClasses: 'bg-grey-7 text-white' },
-        { name: 'status', label: 'Status', field: row => row.transaction?.[0]?.status ?? 'not started', align: 'left', sortable: true, headerClasses: 'bg-grey-7 text-white' },
-        { name: 'actions', label: 'Actions', align: 'center', headerClasses: 'bg-grey-7 text-white' },
-      ]
+        {
+          name: 'birthdate',
+          label: 'Birthdate',
+          field: 'birthdate',
+          align: 'left',
+          sortable: true,
+          headerClasses: 'bg-grey-7 text-white',
+        },
+        {
+          name: 'age',
+          label: 'Age',
+          field: 'age',
+          align: 'left',
+          sortable: true,
+          headerClasses: 'bg-grey-7 text-white',
+        },
+        {
+          name: 'barangay',
+          label: 'Barangay',
+          field: 'barangay',
+          align: 'left',
+          sortable: true,
+          headerClasses: 'bg-grey-7 text-white',
+        },
+        {
+          name: 'contact_number',
+          label: 'Contact No.',
+          field: 'contact_number',
+          align: 'left',
+          sortable: true,
+          headerClasses: 'bg-grey-7 text-white',
+        },
+        {
+          name: 'status',
+          label: 'Status',
+          field: (row) => row.transaction?.[0]?.status ?? 'not started',
+          align: 'left',
+          sortable: true,
+          headerClasses: 'bg-grey-7 text-white',
+        },
+        {
+          name: 'actions',
+          label: 'Actions',
+          align: 'center',
+          headerClasses: 'bg-grey-7 text-white',
+        },
+      ],
     }
   },
 
@@ -115,43 +159,69 @@ export default {
 
   methods: {
     async getPatients() {
-    this.loading = true
-    try {
-      const consultations = await this.Patients.getConsultationList()
-      const detailedPatients = await Promise.all(
-        consultations.map(async c => {
-          try {
-            const fullData = await this.Patients.getPatient(c.id)
-            return { ...c, transaction: fullData?.transaction || [] }
-          } catch {
-            return { ...c, transaction: [] }
-          }
-        })
-      )
+      this.loading = true
+      try {
+        const consultations = await this.Patients.getConsultationList()
+        const detailedPatients = await Promise.all(
+          consultations.map(async (c) => {
+            try {
+              const fullData = await this.Patients.getPatient(c.id)
+              return { ...c, transaction: fullData?.transaction || [] }
+            } catch {
+              return { ...c, transaction: [] }
+            }
+          }),
+        )
 
-      this.rows = detailedPatients
+        this.rows = detailedPatients
 
-      // ✅ Added: clean console log to see actual data
-      console.log(
-        "Patient data with status:",
-        detailedPatients.map(p => ({
-          id: p.id,
-          fullname: `${p.firstname} ${p.middlename || ''} ${p.lastname} ${p.ext || ''}`.trim(),
-          status: p.transaction?.[0]?.status ?? 'not started'
-        }))
-      )
-    } catch (error) {
-      console.error('Error fetching patient logs:', error)
-      this.rows = []
-    } finally {
-      this.loading = false
-    }
-  },
+        // Added: clean console log to see actual data
+        console.log(
+          'Patient data with status:',
+          detailedPatients.map((p) => ({
+            id: p.id,
+            fullname: `${p.firstname} ${p.middlename || ''} ${p.lastname} ${p.ext || ''}`.trim(),
+            status: p.transaction?.[0]?.status ?? 'not started',
+          })),
+        )
+      } catch (error) {
+        console.error('Error fetching patient logs:', error)
+        this.rows = []
+      } finally {
+        this.loading = false
+      }
+    },
 
     showClient(id) {
       this.Patients.isEdit = true
       this.Patients.isSave = false
       this.Patients.patient_id = id
+    },
+
+    customFilter(rows, terms) {
+      if (!terms) return rows
+
+      const searchTerms = terms
+        .toLowerCase()
+        .split(' ')
+        .filter(word => word.trim() !== '')
+
+      return rows.filter(row => {
+        // Combine all searchable fields into one string
+        const rowString = `
+          ${row.lastname}
+          ${row.firstname}
+          ${row.middlename}
+          ${row.ext}
+          ${row.birthdate}
+          ${row.age}
+          ${row.contact_number}
+          ${row.barangay}
+        `.toLowerCase()
+
+        // Every word typed must exist somewhere in the row
+        return searchTerms.every(word => rowString.includes(word))
+      })
     },
   },
 
