@@ -16,6 +16,7 @@
             flat
             bordered
             :filter="search"
+            :filter-method="customFilter"
             :rows="rows"
             :columns="columns"
             row-key="id"
@@ -44,7 +45,7 @@
                         : ''
                     }${props.row.lastname || ''}${
                       props.row.ext && props.row.ext !== 'NA' ? ' ' + props.row.ext : ''
-                    }`.toUpperCase()
+                    }`
                   }}
                 </q-td>
                 <q-td key="birthdate">{{ props.row.birthdate }}</q-td>
@@ -174,7 +175,7 @@ export default {
 
         this.rows = detailedPatients
 
-        // ✅ Added: clean console log to see actual data
+        // Added: clean console log to see actual data
         console.log(
           'Patient data with status:',
           detailedPatients.map((p) => ({
@@ -195,6 +196,32 @@ export default {
       this.Patients.isEdit = true
       this.Patients.isSave = false
       this.Patients.patient_id = id
+    },
+
+    customFilter(rows, terms) {
+      if (!terms) return rows
+
+      const searchTerms = terms
+        .toLowerCase()
+        .split(' ')
+        .filter(word => word.trim() !== '')
+
+      return rows.filter(row => {
+        // Combine all searchable fields into one string
+        const rowString = `
+          ${row.lastname}
+          ${row.firstname}
+          ${row.middlename}
+          ${row.ext}
+          ${row.birthdate}
+          ${row.age}
+          ${row.contact_number}
+          ${row.barangay}
+        `.toLowerCase()
+
+        // Every word typed must exist somewhere in the row
+        return searchTerms.every(word => rowString.includes(word))
+      })
     },
   },
 

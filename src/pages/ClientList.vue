@@ -15,6 +15,7 @@
             flat
             bordered
             :filter="search"
+            :filter-method="customFilter"
             :rows="rows"
             :columns="columns"
             row-key="id"
@@ -211,6 +212,32 @@ export default {
       this.Patients.isEdit = true
       this.Patients.isSave = false
       this.Patients.patient_id = id
+    },
+
+    customFilter(rows, terms) {
+      if (!terms) return rows
+
+      const searchTerms = terms
+        .toLowerCase()
+        .split(' ')
+        .filter(word => word.trim() !== '')
+
+      return rows.filter(row => {
+        // Combine all searchable fields into one string
+        const rowString = `
+          ${row.lastname}
+          ${row.firstname}
+          ${row.middlename}
+          ${row.ext}
+          ${row.birthdate}
+          ${row.age}
+          ${row.contact_number}
+          ${row.barangay}
+        `.toLowerCase()
+
+        // Every word typed must exist somewhere in the row
+        return searchTerms.every(word => rowString.includes(word))
+      })
     },
   },
 
