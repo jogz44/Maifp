@@ -41,7 +41,7 @@
           <q-card class="h-100 cursor-pointer" hover>
             <!-- Header -->
             <q-card-section class="bg-green-9 text-white flex justify-between items-center">
-              <div class="text-h7">For {{ step.name }}</div>
+              <div class="text-h7">{{ step.name }}</div>
               <q-badge rounded :color="step.patients.length > 0 ? 'red-9' : 'grey'" class="q-ml-sm">
                 {{ step.patients.length }}
               </q-badge>

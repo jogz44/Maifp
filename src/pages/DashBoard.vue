@@ -49,7 +49,7 @@
           <q-card class="h-100 cursor-pointer" hover>
             <!-- Header -->
             <q-card-section class="bg-green-9 text-white flex justify-between items-center">
-              <div class="text-h7">For {{ step.name }}</div>
+              <div class="text-h7">{{ step.name }}</div>
               <q-badge rounded :color="step.patients.length > 0 ? 'red-9' : 'grey'" class="q-ml-sm">
                 {{ step.patients.length }}
               </q-badge>
@@ -97,23 +97,10 @@ export default {
   data() {
     return {
       steps: [
-        { name: 'Assessment', patients: [], route: '/assessment', loading: false },
-        {
-          name: 'New Consultation',
-          patients: [],
-          route: '/customers/newconsultation',
-          loading: false,
-        },
-        { name: 'Laboratory', patients: [], route: '/customers/laboratory', loading: false },
-        {
-          name: 'Reconsultation',
-          patients: [],
-          route: '/customers/returnconsultation',
-          loading: false,
-        },
-        { name: 'Medicine', patients: [], route: '#', loading: false },
+        { name: 'Services', patients: [], route: '#', loading: false },
         { name: 'PhilHealth', patients: [], route: '/philhealth', loading: false },
         { name: 'Billing', patients: [], route: '/billing', loading: false },
+        { name: 'MAIFIP', patients: [], route: '/assessment', loading: false },
         { name: 'GL', patients: [], route: '/gl', loading: false },
       ],
       intervalId: null,
@@ -123,11 +110,40 @@ export default {
     }
   },
 
+  // data() {
+  //   return {
+  //     steps: [
+  //       { name: 'Assessment', patients: [], route: '/assessment', loading: false },
+  //       {
+  //         name: 'New Consultation',
+  //         patients: [],
+  //         route: '/customers/newconsultation',
+  //         loading: false,
+  //       },
+  //       { name: 'Laboratory', patients: [], route: '/customers/laboratory', loading: false },
+  //       {
+  //         name: 'Reconsultation',
+  //         patients: [],
+  //         route: '/customers/returnconsultation',
+  //         loading: false,
+  //       },
+  //       { name: 'Medicine', patients: [], route: '#', loading: false },
+  //       { name: 'PhilHealth', patients: [], route: '/philhealth', loading: false },
+  //       { name: 'Billing', patients: [], route: '/billing', loading: false },
+  //       { name: 'GL', patients: [], route: '/gl', loading: false },
+  //     ],
+  //     intervalId: null,
+  //     fundStore: null,
+  //     patientStore: null,
+  //     fundLoading: false,
+  //   }
+  // },
+
   created() {
     this.fundStore = useFundsStore()
     this.patientStore = usePatientStore()
     this.loadAllData()
-    this.intervalId = setInterval(this.loadAllData, 10000)
+    this.intervalId = setInterval(this.loadAllData, 100000000)
   },
 
   beforeUnmount() {
@@ -140,15 +156,23 @@ export default {
       this.steps.forEach((step) => (step.loading = true))
 
       const fetchMethods = [
-        this.patientStore.fetchPatientsAssessment(),
-        this.patientStore.fetchPatientsNew(),
         this.patientStore.fetchPatientsLaboratory(),
-        this.patientStore.fetchPatientsReturned(),
-        this.patientStore.fetchPatientsMedicine(),
         this.patientStore.fetchPatientsPhilHealth(),
         this.patientStore.fetchPatientsBilling(),
+        this.patientStore.fetchPatientsAssessment(),
         this.patientStore.fetchPatientsGL(),
       ]
+
+      // const fetchMethods = [
+      //   this.patientStore.fetchPatientsAssessment(),
+      //   this.patientStore.fetchPatientsNew(),
+      //   this.patientStore.fetchPatientsLaboratory(),
+      //   this.patientStore.fetchPatientsReturned(),
+      //   this.patientStore.fetchPatientsMedicine(),
+      //   this.patientStore.fetchPatientsPhilHealth(),
+      //   this.patientStore.fetchPatientsBilling(),
+      //   this.patientStore.fetchPatientsGL(),
+      // ]
 
       const results = await Promise.allSettled(fetchMethods)
 
