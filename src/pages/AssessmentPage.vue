@@ -18,6 +18,7 @@
             :filter-method="customFilter"
             :rows="rows"
             :columns="columns"
+            :loading="isLoading"
             row-key="id"
             binary-state-sort
             no-data-label="No data available"
@@ -27,6 +28,12 @@
             :rows-per-page-options="[0]"
             style="height: 600px"
           >
+            <template v-slot:loading>
+              <q-inner-loading showing color="green-9">
+                <q-spinner-gears size="50px" color="green-9" />
+                <div class="q-mt-md text-green-9">Loading patients...</div>
+              </q-inner-loading>
+            </template>
             <template #body="props">
               <q-tr :v-bind="props">
                 <q-td key="lastname" style="font-size: 11px" align="left">
@@ -86,10 +93,16 @@
 </template>
 
 <script>
+import { computed } from 'vue'
 import { usePatientStore } from '../stores/patientStore'
+
 export default {
   setup() {
+    const Patients = usePatientStore()
+    const isLoading = computed(() => Patients.isLoading)
+
     return {
+      isLoading,
       columns: [
         {
           name: 'lastname',

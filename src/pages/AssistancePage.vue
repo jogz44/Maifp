@@ -1089,6 +1089,10 @@ async function handlePrint() {
   justify-content: flex-end;
 }
 
+.preparer-name {
+  text-transform: uppercase;
+}
+
 .logo {
   width: 60px;
   height: auto;

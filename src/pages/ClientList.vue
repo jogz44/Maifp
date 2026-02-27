@@ -37,6 +37,7 @@
             :columns="columns"
             row-key="id"
             binary-state-sort
+            :loading="isLoading"
             no-data-label="No data available"
             title="Patient Logs"
             title-class="text-bold text-subtitle1 text-green-9"
@@ -46,6 +47,13 @@
           >
             <template v-slot:top-right>
               <q-btn color="green-9" label="New Patient" to="/customer" icon="add" flat />
+            </template>
+
+            <template v-slot:loading>
+              <q-inner-loading showing color="green-9">
+                <q-spinner-gears size="50px" color="green-9" />
+                <div class="q-mt-md text-green-9">Loading patients...</div>
+              </q-inner-loading>
             </template>
 
             <template #body="props">
@@ -89,6 +97,7 @@ export default {
     const search = ref('')
     const selectedDate = ref('')
     const rows = ref([])
+    const isLoading = computed(() => Patients.isLoading)
 
     // Columns configuration
     const columns = [
@@ -206,6 +215,7 @@ export default {
       rows,
       columns,
       filteredRows,
+      isLoading,
       showClient,
     }
   },

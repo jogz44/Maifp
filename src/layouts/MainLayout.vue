@@ -90,24 +90,6 @@
             </q-item-section>
           </q-item>
 
-          <!-- <q-item clickable v-ripple to="/fromphilhealth">
-            <q-item-section class="q-ml-sm">
-              <q-item-label class="text-caption">
-                <q-icon name="diversity_3" class="q-ml-md q-mr-lg" size="24px" />
-                P-Assessment
-              </q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-badge
-                v-if="badgeStore.p_assessment > 0"
-                :label="badgeStore.p_assessment"
-                color="red-9"
-                rounded
-                class="q-ml-sm"
-              />
-            </q-item-section>
-          </q-item> -->
-
           <q-item clickable v-ripple to="/gl">
             <q-item-section class="q-ml-sm">
               <q-item-label class="text-caption">
@@ -125,15 +107,6 @@
               />
             </q-item-section>
           </q-item>
-
-          <!-- <q-item clickable v-ripple to="/fundings">
-            <q-item-section class="q-ml-sm">
-              <q-item-label class="text-caption">
-                <q-icon name="wallet" class="q-ml-md q-mr-lg" size="24px" />
-                Fundings
-              </q-item-label>
-            </q-item-section>
-          </q-item> -->
         </q-expansion-item>
 
         <!-- CONSULTATION MENU - Available to admin and doctor -->
@@ -334,7 +307,6 @@ export default {
       leftDrawerOpen: false,
       expanded: true,
       expandedConsultation: false,
-      badgeInterval: null,
       userRole: null,
       appVersion: packageInfo.version,
       rolePermissions: {
@@ -429,6 +401,9 @@ export default {
 
     async logout() {
       try {
+        // Disconnect WebSocket
+        this.badgeStore.destroyWebSocket()
+
         await this.ausSrvc.logout()
         this.$router.push('/')
       } catch (error) {
@@ -461,18 +436,16 @@ export default {
       this.ausSrvc.initializeAuth()
       this.GetUserID()
       this.setUserRole()
-      await this.badgeStore.fetchBadges()
 
-      this.badgeInterval = setInterval(async () => {
-        await this.badgeStore.fetchBadges()
-      }, 2000)
+      // Initialize WebSocket connection
+      this.badgeStore.initWebSocket(this.$echo)
     }
   },
 
   beforeUnmount() {
-    if (this.badgeInterval) {
-      clearInterval(this.badgeInterval)
-    }
+    // Clean up WebSocket connection
+    this.badgeStore.destroyWebSocket()
   },
+  
 }
 </script>
