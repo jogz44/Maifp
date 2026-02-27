@@ -1152,6 +1152,10 @@ async function handlePrint() {
   letter-spacing: 0.5px;
 }
 
+.preparer-name {
+  text-transform: uppercase;
+}
+
 .signature-line {
   font-size: 10pt;
   margin-bottom: 5px;

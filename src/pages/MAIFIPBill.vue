@@ -1271,6 +1271,10 @@ async function handlePrint() {
   gap: 10px;
 }
 
+.preparer-name {
+  text-transform: uppercase;
+}
+
 .assistance-table-container {
   margin-bottom: 15px;
 }
