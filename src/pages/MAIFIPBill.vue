@@ -131,6 +131,7 @@
                         :options="getAvailableFundSources(props.rowIndex)"
                         dense
                         outlined
+                        readonly
                         :rules="[(val) => !!val || 'Fund source is required']"
                         @update:model-value="onFundSourceChange"
                       />

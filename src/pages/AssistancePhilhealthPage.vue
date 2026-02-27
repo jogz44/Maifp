@@ -667,7 +667,7 @@ function closeCompleteConfirmDialog() {
 
 function cancelAssistance() {
   assistanceForm.value = {
-    assistanceItems: [{ fundSource: 'Select Funds Source', amount: 0, id: 1 }],
+    assistanceItems: [{ fundSource: 'PHIC-Case Rate', amount: 0, id: 1 }],
     remarks: '',
   }
   showAssistanceDialog.value = false
@@ -753,7 +753,7 @@ async function applyAssistance() {
       // Close dialog and reset form
       showAssistanceDialog.value = false
       assistanceForm.value = {
-        assistanceItems: [{ fundSource: 'Select Funds Source', amount: null, id: 1 }],
+        assistanceItems: [{ fundSource: 'PHIC - Case Rate', amount: null, id: 1 }],
         remarks: '',
       }
 
