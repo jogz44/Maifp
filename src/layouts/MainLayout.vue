@@ -417,5 +417,6 @@ export default {
     // Clean up WebSocket connection
     this.badgeStore.destroyWebSocket()
   },
+  
 }
 </script>

@@ -60,14 +60,13 @@ export const usePatientBadgeStore = defineStore('patientBadge', {
       }
 
       this.echoInstance = echo
-      console.log('Connecting to badge-updates channel...')
+      console.log('Connecting to badge-channel...')
 
-      // Listen to the public channel for badge updates
       this.channel = echo
         .channel('badge-channel')
-        .listen('badge.updated', (event) => {
+        .listen('.badge.updated', (event) => {   // ✅ dot prefix
           console.log('BadgeUpdated event received:', event)
-          this.updateBadges(event.badges)
+          this.updateBadges(event.data)           // ✅ event.data not event.badges
         })
         .error((error) => {
           console.error('WebSocket channel error:', error)
@@ -80,7 +79,7 @@ export const usePatientBadgeStore = defineStore('patientBadge', {
     destroyWebSocket() {
       if (this.echoInstance && this.channel) {
         console.log('Disconnecting from badge-updates channel...')
-        this.echoInstance.leave('badge-updates')
+        this.echoInstance.leave('badge-channel')
         this.channel = null
         this.echoInstance = null
       }

@@ -16,12 +16,14 @@ export default boot(({ app }) => {
   const echo = new Echo({
     broadcaster: 'reverb',
     key: 'wuvces4jyukj1gunkgcv',
-    wsHost: '192.168.8.182',
+  wsHost: '192.168.8.182',
     wsPort: 8080,
     wssPort: 8080,
     forceTLS: false,
+
+  disableStats: true,
     enabledTransports: ['ws', 'wss'],
-    authEndpoint: 'http://192.168.8.182:8000/broadcasting/auth',
+    // authEndpoint: 'http://192.168.8.182:8000/broadcasting/auth',
     auth: {
       headers: {
         Authorization: `Bearer ${getToken()}`,
@@ -29,7 +31,18 @@ export default boot(({ app }) => {
       },
     },
   })
+// ✅ Add this to see connection status
+echo.connector.pusher.connection.bind('connected', () => {
+  console.log('✅ Reverb connected!')
+})
 
+echo.connector.pusher.connection.bind('error', (err) => {
+  console.log('❌ Reverb error:', err)
+})
+
+echo.connector.pusher.connection.bind('disconnected', () => {
+  console.log('❌ Reverb disconnected')
+})
   app.config.globalProperties.$echo = echo
   window.Echo = echo
 
