@@ -738,7 +738,6 @@
         <div class="q-mt-md flex justify-end q-gutter-sm" v-if="isLatest">
           <!-- Return -->
           <q-btn
-            v-if="transaction.transaction_type === 'Consultation'"
             color="blue"
             label="Return"
             icon="ios_share"
@@ -749,7 +748,6 @@
 
           <!-- Done -->
           <q-btn
-            v-if="transaction.transaction_type === 'Laboratory'"
             color="green"
             label="Done"
             icon="check_circle"
@@ -762,10 +760,13 @@
         <!-- Return Confirmation Dialog -->
         <q-dialog v-model="showReturnConfirm" persistent>
           <q-card style="min-width: 450px; position: relative">
-
             <!-- Close Button -->
             <q-btn
-              dense flat round icon="close" color="grey"
+              dense
+              flat
+              round
+              icon="close"
+              color="grey"
               style="position: absolute; top: 8px; right: 8px; z-index: 10"
               @click="showReturnConfirm = false"
               :disable="isReturning"
@@ -777,25 +778,35 @@
             </q-card-section>
 
             <q-card-actions align="right">
-              <q-btn flat label="Cancel" color="negative"
+              <q-btn
+                flat
+                label="Cancel"
+                color="negative"
                 @click="showReturnConfirm = false"
-                :disable="isReturning"/>
-              <q-btn flat label="Return" color="primary"
+                :disable="isReturning"
+              />
+              <q-btn
+                flat
+                label="Return"
+                color="primary"
                 @click="confirmReturn"
                 :loading="isReturning"
-                :disable="isReturning"/>
+                :disable="isReturning"
+              />
             </q-card-actions>
           </q-card>
         </q-dialog>
 
-
         <!-- Done Confirmation Dialog -->
         <q-dialog v-model="showDoneConfirm" persistent>
           <q-card style="min-width: 450px; position: relative">
-
             <!-- Close Button -->
             <q-btn
-              dense flat round icon="close" color="grey"
+              dense
+              flat
+              round
+              icon="close"
+              color="grey"
               style="position: absolute; top: 8px; right: 8px; z-index: 10"
               @click="showDoneConfirm = false"
               :disable="isMarkingDone"
@@ -807,17 +818,24 @@
             </q-card-section>
 
             <q-card-actions align="right">
-              <q-btn flat label="Cancel" color="negative"
+              <q-btn
+                flat
+                label="Cancel"
+                color="negative"
                 @click="showDoneConfirm = false"
-                :disable="isMarkingDone"/>
-              <q-btn flat label="Done" color="primary"
+                :disable="isMarkingDone"
+              />
+              <q-btn
+                flat
+                label="Done"
+                color="primary"
                 @click="confirmDone"
                 :loading="isMarkingDone"
-                :disable="isMarkingDone"/>
+                :disable="isMarkingDone"
+              />
             </q-card-actions>
           </q-card>
         </q-dialog>
-
       </q-card>
     </div>
   </q-page>
@@ -1681,22 +1699,22 @@ export default {
       }).format(date)
     },
 
-    async handleMarkReturn() {
-      await this.safeAction(this.markReturn, 'isReturning')
-    },
+    // async handleMarkReturn(transaction) {
+    //   await this.safeAction(() => this.markReturn(transaction), 'isReturning')
+    // },
 
-    async handleMarkDone() {
-      await this.safeAction(this.markDone, 'isMarkingDone')
-    },
+    // async handleMarkDone(transaction) {
+    //   await this.safeAction(() => this.markDone(transaction), 'isMarkingDone')
+    // },
 
     async confirmReturn() {
       this.showReturnConfirm = false
-      await this.safeAction(this.markReturn, 'isReturning')
+      await this.safeAction(() => this.markReturn(this.transaction), 'isReturning')
     },
 
     async confirmDone() {
       this.showDoneConfirm = false
-      await this.safeAction(this.markDone, 'isMarkingDone')
+      await this.safeAction(() => this.markDone(this.transaction), 'isMarkingDone')
     },
 
     // Centralized async safe-action handler

@@ -2,9 +2,9 @@ import { defineBoot } from '#q-app/wrappers'
 import axios from 'axios'
 
 const api = axios.create({
-  //baseURL: 'http://192.168.8.182:8000/api', // Home
+  baseURL: 'http://192.168.8.182:5000/api', // Home
   // baseURL: 'http://10.0.1.35:5000/api', // Office
-  baseURL: 'https://tagumcity.gov.ph/champ_backend/public/api', //Champ
+  // baseURL: 'https://tagumcity.gov.ph/champ_backend/public/api', //Champ
   // baseURL: process.env.API_URL,
   withCredentials: true,
 })

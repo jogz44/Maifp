@@ -12,7 +12,6 @@
 
         <q-card-section>
           <q-table
-            v-if="!loading"
             flat
             bordered
             :filter="search"
@@ -21,15 +20,18 @@
             row-key="id"
             binary-state-sort
             no-data-label="No data available"
-            title="Patient Logs"
+            title="RE-CONSULTATION"
             title-class="text-bold text-subtitle1 text-green-9"
             square
             :rows-per-page-options="[0]"
             style="height: 600px"
+            :loading="loading"
           >
-            <!-- <template v-slot:top-right>
-              <q-btn color="green-9" label="New Patient" to="/customer" icon="add" flat />
-            </template> -->
+            <template #loading>
+              <q-inner-loading showing>
+                <q-spinner size="50px" color="primary" />
+              </q-inner-loading>
+            </template>
 
             <template #body="props">
               <q-tr v-bind="props">
@@ -53,7 +55,6 @@
                 </q-td>
               </q-tr>
             </template>
-
           </q-table>
         </q-card-section>
       </q-card>
@@ -159,8 +160,7 @@ export default {
       Selected_ID: 0,
       DeleteClient: false,
       search: '',
-      rows: [
-      ],
+      rows: [],
 
       loading: false,
 
@@ -191,7 +191,7 @@ export default {
       this.loading = true
       try {
         const patients = await this.Patients.fetchReturnedPatients()
-        this.rows = Array.isArray(patients) ? patients.map(p => ({ ...p })) : []
+        this.rows = Array.isArray(patients) ? patients.map((p) => ({ ...p })) : []
         console.log('Fetched qualified patients:', this.rows)
       } catch (error) {
         console.error('Error fetching qualified patients:', error)

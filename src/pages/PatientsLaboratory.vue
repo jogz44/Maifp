@@ -18,7 +18,6 @@
 
           <!-- Table only displays once loading is done -->
           <q-table
-            v-if="!loading"
             flat
             bordered
             :filter="search"
@@ -27,12 +26,19 @@
             row-key="id"
             binary-state-sort
             no-data-label="No data available"
-            title="Patient Logs"
+            title="LABORATORY"
             title-class="text-bold text-subtitle1 text-green-9"
             square
             :rows-per-page-options="[0]"
             style="height: 600px"
+            :loading="loading"
           >
+            <template #loading>
+              <q-inner-loading showing>
+                <q-spinner size="50px" color="primary" />
+              </q-inner-loading>
+            </template>
+
             <template #body="props">
               <q-tr :v-bind="props">
                 <q-td key="lastname" style="font-size: 11px" align="left">
@@ -176,9 +182,7 @@ export default {
       Selected_ID: 0,
       DeleteClient: false,
       search: '',
-      rows: [
-
-      ],
+      rows: [],
       loading: false,
 
       CustomerInfo: {
@@ -209,8 +213,11 @@ export default {
       try {
         await this.Patients.fetchLaboratoryPatients()
 
-        if (Array.isArray(this.Patients.laboratoryPatients) && this.Patients.laboratoryPatients.length > 0) {
-          this.rows = this.Patients.laboratoryPatients.map(p => ({
+        if (
+          Array.isArray(this.Patients.laboratoryPatients) &&
+          this.Patients.laboratoryPatients.length > 0
+        ) {
+          this.rows = this.Patients.laboratoryPatients.map((p) => ({
             id: p.id,
             firstname: p.firstname,
             lastname: p.lastname,
