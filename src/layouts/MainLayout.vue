@@ -45,22 +45,43 @@
     <!-- DRAWER -->
     <q-drawer v-model="leftDrawerOpen" show-if-above bordered class="bg-green-10 text-white">
       <q-list>
-        <q-item></q-item>
+        <!-- First item with refresh icon in top right -->
+        <q-item class="relative-position">
+          <q-item-section></q-item-section>
+          <q-item-section side>
+            <q-btn
+              flat
+              dense
+              round
+              icon="refresh"
+              color="white"
+              @click="refreshBadges"
+              :loading="refreshing"
+              size="sm"
+            >
+              <q-tooltip>Refresh notifications</q-tooltip>
+            </q-btn>
+          </q-item-section>
+        </q-item>
 
         <!-- Dashboard - Available to all roles -->
         <q-item clickable v-ripple :to="dashboardRoute">
-          <div class="row items-center">
-            <q-icon name="dashboard" size="24px" class="q-mr-md" />
-            <span class="text-sm" style="padding-left: 16px">Dashboard</span>
-          </div>
+          <q-item-section>
+            <div class="row items-center">
+              <q-icon name="dashboard" size="24px" class="q-mr-md" />
+              <span class="text-sm" style="padding-left: 16px">Dashboard</span>
+            </div>
+          </q-item-section>
         </q-item>
 
         <!-- Patient Info - Available to admin and coder -->
         <q-item v-if="canAccessPatientInfo" clickable v-ripple to="/customers">
-          <div class="row items-center">
-            <q-icon name="person" size="24px" class="q-mr-md" />
-            <span class="text-sm" style="padding-left: 16px">Patient Info</span>
-          </div>
+          <q-item-section>
+            <div class="row items-center">
+              <q-icon name="person" size="24px" class="q-mr-md" />
+              <span class="text-sm" style="padding-left: 16px">Patient Info</span>
+            </div>
+          </q-item-section>
         </q-item>
 
         <!-- MAIFIP MENU - Available to admin and social -->
@@ -71,6 +92,7 @@
           icon-class="q-mr-xs"
           header-class="row items-center"
           v-model="expanded"
+          text-color="white"
         >
           <q-item clickable v-ripple to="/assessment">
             <q-item-section class="q-ml-sm">
@@ -85,7 +107,6 @@
                 :label="badgeStore.assessed"
                 color="red-9"
                 rounded
-                class="q-ml-sm"
               />
             </q-item-section>
           </q-item>
@@ -98,13 +119,7 @@
               </q-item-label>
             </q-item-section>
             <q-item-section side>
-              <q-badge
-                v-if="badgeStore.gl > 0"
-                :label="badgeStore.gl"
-                color="red-9"
-                rounded
-                class="q-ml-sm"
-              />
+              <q-badge v-if="badgeStore.gl > 0" :label="badgeStore.gl" color="red-9" rounded />
             </q-item-section>
           </q-item>
         </q-expansion-item>
@@ -117,6 +132,7 @@
           icon-class="q-mr-xs"
           header-class="row items-center"
           v-model="expandedConsultation"
+          text-color="white"
         >
           <q-item clickable v-ripple to="/customers/newconsultation">
             <q-item-section class="q-ml-sm">
@@ -131,7 +147,6 @@
                 :label="badgeStore.qualified"
                 color="red-9"
                 rounded
-                class="q-ml-sm"
               />
             </q-item-section>
           </q-item>
@@ -149,90 +164,108 @@
                 :label="badgeStore.returned"
                 color="red-9"
                 rounded
-                class="q-ml-sm"
               />
             </q-item-section>
           </q-item>
         </q-expansion-item>
 
         <q-item v-if="canAccessLaboratory" clickable v-ripple to="/customers/laboratory">
-          <div class="row items-center">
-            <q-icon name="science" size="24px" class="q-mr-md" />
-            <span class="text-sm" style="padding-left: 16px">Laboratory</span>
+          <q-item-section>
+            <div class="row items-center">
+              <q-icon name="science" size="24px" class="q-mr-md" />
+              <span class="text-sm" style="padding-left: 16px">Laboratory</span>
+            </div>
+          </q-item-section>
+          <q-item-section side>
             <q-badge
               v-if="badgeStore.laboratory > 0"
               :label="badgeStore.laboratory"
               color="red-9"
               rounded
-              class="q-ml-sm"
             />
-          </div>
+          </q-item-section>
         </q-item>
 
         <!-- PhilHealth MENU - Available to admin and assessor -->
         <q-item v-if="canAccessPhilHealth" clickable v-ripple to="/philhealth">
-          <div class="row items-center">
-            <q-icon name="diversity_1" size="24px" class="q-mr-md" />
-            <span class="text-sm" style="padding-left: 16px">PhilHealth</span>
+          <q-item-section>
+            <div class="row items-center">
+              <q-icon name="diversity_1" size="24px" class="q-mr-md" />
+              <span class="text-sm" style="padding-left: 16px">PhilHealth</span>
+            </div>
+          </q-item-section>
+          <q-item-section side>
             <q-badge
               v-if="badgeStore.philhealth > 0"
               :label="badgeStore.philhealth"
               color="red-9"
               rounded
-              class="q-ml-sm"
             />
-          </div>
+          </q-item-section>
         </q-item>
 
         <q-item v-if="canAccessBilling" clickable v-ripple to="/billing">
-          <div class="row items-center">
-            <q-icon name="receipt_long" size="24px" class="q-mr-md" />
-            <span class="text-sm" style="padding-left: 16px">Billing</span>
+          <q-item-section>
+            <div class="row items-center">
+              <q-icon name="receipt_long" size="24px" class="q-mr-md" />
+              <span class="text-sm" style="padding-left: 16px">Billing</span>
+            </div>
+          </q-item-section>
+          <q-item-section side>
             <q-badge
               v-if="badgeStore.billing > 0"
               :label="badgeStore.billing"
               color="red-9"
               rounded
-              class="q-ml-sm"
             />
-          </div>
+          </q-item-section>
         </q-item>
 
         <q-item v-if="canAccessBilling" clickable v-ripple to="/billinglog">
-          <div class="row items-center">
-            <q-icon name="description" size="24px" class="q-mr-md" />
-            <span class="text-sm" style="padding-left: 16px">Billing Record</span>
-          </div>
+          <q-item-section>
+            <div class="row items-center">
+              <q-icon name="description" size="24px" class="q-mr-md" />
+              <span class="text-sm" style="padding-left: 16px">Billing Record</span>
+            </div>
+          </q-item-section>
         </q-item>
 
         <!-- Master List - Available to admin only -->
         <q-item v-if="canAccessMasterList" clickable v-ripple to="/masterlist">
-          <div class="row items-center">
-            <q-icon name="list" size="24px" class="q-mr-md" />
-            <span class="text-sm" style="padding-left: 16px">Master List</span>
-          </div>
+          <q-item-section>
+            <div class="row items-center">
+              <q-icon name="list" size="24px" class="q-mr-md" />
+              <span class="text-sm" style="padding-left: 16px">Master List</span>
+            </div>
+          </q-item-section>
         </q-item>
 
         <q-item v-if="canAccessMasterList" clickable v-ripple to="/reports">
-          <div class="row items-center">
-            <q-icon name="bar_chart" size="24px" class="q-mr-md" />
-            <span class="text-sm" style="padding-left: 16px">Reports</span>
-          </div>
+          <q-item-section>
+            <div class="row items-center">
+              <q-icon name="bar_chart" size="24px" class="q-mr-md" />
+              <span class="text-sm" style="padding-left: 16px">Reports</span>
+            </div>
+          </q-item-section>
         </q-item>
 
         <q-item v-if="canAccessMasterList" clickable v-ripple to="/activity">
-          <div class="row items-center">
-            <q-icon name="history" size="24px" class="q-mr-md" />
-            <span class="text-sm" style="padding-left: 16px">Activity Log</span>
-          </div>
+          <q-item-section>
+            <div class="row items-center">
+              <q-icon name="history" size="24px" class="q-mr-md" />
+              <span class="text-sm" style="padding-left: 16px">Activity Log</span>
+            </div>
+          </q-item-section>
         </q-item>
 
         <!-- User Management - Available to admin only -->
         <q-item v-if="canAccessUserManagement" clickable v-ripple to="/users/list">
-          <div class="row items-center">
-            <q-icon name="supervisor_account" size="24px" class="q-mr-md" />
-            <span class="text-sm" style="padding-left: 16px">User Management</span>
-          </div>
+          <q-item-section>
+            <div class="row items-center">
+              <q-icon name="supervisor_account" size="24px" class="q-mr-md" />
+              <span class="text-sm" style="padding-left: 16px">User Management</span>
+            </div>
+          </q-item-section>
         </q-item>
       </q-list>
 
@@ -255,7 +288,7 @@
 import auth from 'src/services/auth'
 import { useUserStore } from 'src/stores/userStore'
 import { usePatientBadgeStore } from 'src/stores/badgeStore'
-import { LocalStorage } from 'quasar'
+import { LocalStorage, Notify } from 'quasar'
 import packageInfo from '../../package.json'
 
 export default {
@@ -279,6 +312,7 @@ export default {
       expanded: true,
       expandedConsultation: false,
       userRole: null,
+      refreshing: false,
       appVersion: packageInfo.version,
       rolePermissions: {
         admin: [
@@ -370,12 +404,37 @@ export default {
       this.leftDrawerOpen = !this.leftDrawerOpen
     },
 
+    async refreshBadges() {
+      this.refreshing = true
+
+      try {
+        await this.badgeStore.fetchBadges()
+
+        Notify.create({
+          type: 'positive',
+          message: 'Notifications refreshed',
+          position: 'top',
+          timeout: 1500,
+          icon: 'refresh',
+        })
+      } catch (error) {
+        console.error('Failed to refresh badges:', error)
+
+        Notify.create({
+          type: 'negative',
+          message: 'Failed to refresh notifications',
+          position: 'top',
+          timeout: 2000,
+        })
+      } finally {
+        this.refreshing = false
+      }
+    },
+
     async logout() {
       try {
-        // Disconnect WebSocket
-        this.badgeStore.destroyWebSocket()
-
         await this.ausSrvc.logout()
+        this.badgeStore.clearBadges()
         this.$router.push('/')
       } catch (error) {
         console.log(error)
@@ -408,15 +467,9 @@ export default {
       this.GetUserID()
       this.setUserRole()
 
-      // Initialize WebSocket connection
-      this.badgeStore.initWebSocket(this.$echo)
+      // Initial badge fetch on mount
+      await this.badgeStore.fetchBadges()
     }
   },
-
-  beforeUnmount() {
-    // Clean up WebSocket connection
-    this.badgeStore.destroyWebSocket()
-  },
-  
 }
 </script>
