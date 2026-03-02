@@ -620,7 +620,7 @@ export const usePatientStore = defineStore('patient', {
       }
 
       try {
-        const response = await api.put(`/patients/update/${id}`, patientData)
+        const response = await api.post(`/patients/update/${id}`, patientData)
 
         // Update patient in the list
         const index = this.patients.findIndex((p) => p.id === id)
@@ -643,7 +643,7 @@ export const usePatientStore = defineStore('patient', {
       this.error = null
 
       try {
-        const response = await api.put(`/transactions/update/${id}`, transactionData)
+        const response = await api.post(`/transactions/update/${id}`, transactionData)
 
         // Update the current patient's transactions if they exist
         if (this.currentPatient && this.currentPatient.transaction) {
@@ -670,7 +670,7 @@ export const usePatientStore = defineStore('patient', {
         console.log(`Updating transaction ${id} status to: ${status}`)
 
         // Send only the status field to the API
-        const response = await api.put(`/transactions/${id}/update/status`, {
+        const response = await api.post(`/transactions/${id}/update/status`, {
           status: status,
         })
 
@@ -737,7 +737,7 @@ export const usePatientStore = defineStore('patient', {
         console.log('Payload being sent:', payload)
 
         // Send the payload to the API
-        const response = await api.put(`/transactions/${id}/update/philhealth`, payload)
+        const response = await api.post(`/transactions/${id}/update/philhealth`, payload)
 
         console.log('Transaction status update response:', response.data)
 
@@ -808,7 +808,7 @@ export const usePatientStore = defineStore('patient', {
       this.error = null
 
       try {
-        const response = await api.put(`/vital/update/${id}`, vital)
+        const response = await api.post(`/vital/update/${id}`, vital)
 
         // Update the current patient's transactions if they exist
         if (this.currentPatient && this.currentPatient.Vital) {
@@ -832,7 +832,7 @@ export const usePatientStore = defineStore('patient', {
       this.error = null
 
       try {
-        const response = await api.put(`/transactions/representative/${id}`, representative)
+        const response = await api.post(`/transactions/representative/${id}`, representative)
 
         // Update the current patient's transactions if they exist
         if (this.currentPatient && this.currentPatient.Vital) {
