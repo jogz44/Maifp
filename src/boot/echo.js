@@ -16,7 +16,7 @@ export default boot(({ app }) => {
   const echo = new Echo({
     broadcaster: 'reverb',
     key: 'wuvces4jyukj1gunkgcv',
-  wsHost: '192.168.8.182',
+  wsHost: '10.0.1.13',
     wsPort: 8080,
     wssPort: 8080,
     forceTLS: false,
