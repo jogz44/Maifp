@@ -101,7 +101,7 @@ export const useTransactionStore = defineStore('transactions', {
 
     async updateDailyInvetory(id, payload) {
       try {
-        const response = await api.put('/daily/' + id, payload)
+        const response = await api.post('/daily/' + id, payload)
         console.log(response.data)
       } catch (error) {
         Notify.create({

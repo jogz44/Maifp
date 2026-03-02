@@ -75,7 +75,7 @@ export const useServicesLibraryStore = defineStore('servicesLibrary', {
     async updateExamination(id, payload) {
       this.loading = true
       try {
-        const response = await api.put(`/laboratory/exam/update/${id}`, payload)
+        const response = await api.post(`/laboratory/exam/update/${id}`, payload)
         await this.fetchExaminations()
         return response.data
       } catch (error) {
@@ -136,7 +136,7 @@ export const useServicesLibraryStore = defineStore('servicesLibrary', {
     async updateRadiology(id, payload) {
       this.loading = true
       try {
-        const response = await api.put(`/laboratory/radiology/update/${id}`, payload)
+        const response = await api.post(`/laboratory/radiology/update/${id}`, payload)
         await this.fetchRadiologies()
         return response.data
       } catch (error) {
@@ -195,7 +195,7 @@ export const useServicesLibraryStore = defineStore('servicesLibrary', {
     async updateUltrasound(id, payload) {
       this.loading = true
       try {
-        const response = await api.put(`/laboratory/ultrasound/update/${id}`, payload)
+        const response = await api.post(`/laboratory/ultrasound/update/${id}`, payload)
         await this.fetchUltrasounds()
         return response.data
       } catch (error) {
@@ -254,7 +254,7 @@ export const useServicesLibraryStore = defineStore('servicesLibrary', {
     async updateMammogram(id, payload) {
       this.loading = true
       try {
-        const response = await api.put(`/laboratory/mammogram/update/${id}`, payload)
+        const response = await api.post(`/laboratory/mammogram/update/${id}`, payload)
         await this.fetchMammograms()
         return response.data
       } catch (error) {

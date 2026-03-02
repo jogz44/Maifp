@@ -23,7 +23,7 @@ export const useIndicatorStore = defineStore('indicator', {
     async open_status() {
       try {
         await api.post('/indicators/open')
-    
+
       } catch (error) {
         throw error.response?.data?.message || error.message || 'An unexpected error occurred'
       }
@@ -31,7 +31,7 @@ export const useIndicatorStore = defineStore('indicator', {
 
     async close_status() {
       try {
-      await api.put('/indicators/close')
+      await api.post('/indicators/close')
 
       } catch (error) {
         throw error.response?.data?.message || error.message || 'An unexpected error occurred'

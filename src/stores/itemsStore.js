@@ -146,7 +146,7 @@ export const useItemStore = defineStore('items', {
     async UpdateTempPO(id,request ) {
       try {
         console.log('temp => ', id, 'new po => ', request)
-        const response = await api.put('/items/temp/po/' + id, {'po_no': request})
+        const response = await api.post('/items/temp/po/' + id, {'po_no': request})
           Notify.create({
           type: 'positive',
           message: response.data.message,
@@ -218,7 +218,7 @@ export const useItemStore = defineStore('items', {
 
     async updateItem(id, payload) {
       try {
-        const response = await api.put('/items/' + id, payload)
+        const response = await api.post('/items/' + id, payload)
         this.item = response.data.item[0]
       } catch (error) {
         console.log(error)
