@@ -64,7 +64,7 @@ export const useUnitStore = defineStore('units', {
 
     async updateUnit(id,payload) {
       try {
-        await api.put('/system/library/units/'+ id, payload)
+        await api.post('/system/library/units/'+ id, payload)
         this.getUnits()
         Notify.create({
           type: 'positive',

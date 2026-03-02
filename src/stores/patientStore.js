@@ -779,7 +779,7 @@ export const usePatientStore = defineStore('patient', {
         this.loading = false
       }
     },
-    
+
     // Get transaction details
     async getTransactionDetails(id) {
       this.loading = true
@@ -871,7 +871,7 @@ export const usePatientStore = defineStore('patient', {
       patientData = this.updateBMI(patientData)
 
       try {
-        const response = await api.put(`/patients/update/${id}`, patientData)
+        const response = await api.post(`/patients/update/${id}`, patientData)
 
         // Update patient in the list
         const index = this.patients.findIndex((p) => p.id === id)
@@ -894,7 +894,7 @@ export const usePatientStore = defineStore('patient', {
       this.error = null
 
       try {
-        const response = await api.put(`/transaction/update/${id}`, transactionData)
+        const response = await api.post(`/transaction/update/${id}`, transactionData)
 
         // Update the current patient's transactions if they exist
         if (this.currentPatient && this.currentPatient.transaction) {
@@ -921,7 +921,7 @@ export const usePatientStore = defineStore('patient', {
         console.log(`Updating transaction ${id} status to: ${status}`)
 
         // Send only the status field to the API
-        const response = await api.put(`/transaction/${id}/update/status`, {
+        const response = await api.post(`/transaction/${id}/update/status`, {
           status: status,
         })
 
@@ -976,7 +976,7 @@ export const usePatientStore = defineStore('patient', {
       this.error = null
 
       try {
-        const response = await api.put(`/vital/update/${id}`, vital)
+        const response = await api.post(`/vital/update/${id}`, vital)
 
         // Update the current patient's transactions if they exist
         if (this.currentPatient && this.currentPatient.Vital) {

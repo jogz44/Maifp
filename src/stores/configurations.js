@@ -22,7 +22,7 @@ export const useConfigurationsStore = defineStore('configurations', {
     async updateConfiguration(payload) {
       try {
 
-        const response = await api.put('/system/configuration/'+ this.selected_ID +'/config', payload)
+        const response = await api.post('/system/configuration/'+ this.selected_ID +'/config', payload)
 
         if (response == null) {
           Notify.create({
