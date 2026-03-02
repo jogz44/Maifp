@@ -31,14 +31,14 @@ export default defineRouter(function (/* { store, ssrContext } */) {
     // Leave this as is and make changes in quasar.conf.js instead!
     // quasar.conf.js -> build -> vueRouterMode
     // quasar.conf.js -> build -> publicPath
-    history: createHistory(process.env.VUE_ROUTER_BASE),
+    history: createHistory('/chopa'),
   })
 
   // Check all matched routes (including parent layout)
   // const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
 
   Router.beforeEach((to, from, next) => {
-    if (to.path === '/') {
+    if (to.path === '/chopa') {
       next()
       return
     }
