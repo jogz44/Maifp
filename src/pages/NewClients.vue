@@ -716,7 +716,8 @@
         </q-card-actions> -->
 
         <q-card-actions align="right">
-          <q-btn unelevated label="MAIFIP" color="positive" @click="confirmMAIFIP('pending')" />
+          <q-btn unelevated label="Yes" color="positive" @click="confirmMAIFIP('pending')" />
+          <q-btn flat label="Cancel" color="negative" @click="showMAIFIPDialog = false" />
         </q-card-actions>
       </q-card>
     </q-dialog>
