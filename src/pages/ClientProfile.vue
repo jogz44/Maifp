@@ -761,7 +761,7 @@
           <div class="text-subtitle1">Do you want this patient to proceed in MAIFIP?</div>
         </q-card-section>
 
-        <q-card-actions align="right">
+        <!-- <q-card-actions align="right">
           <q-btn flat label="No" color="negative" @click="confirmMAIFIPChoice('pending')" />
           <q-btn
             unelevated
@@ -769,6 +769,10 @@
             color="positive"
             @click="confirmMAIFIPChoice('assessment')"
           />
+        </q-card-actions> -->
+
+        <q-card-actions align="right">
+          <q-btn unelevated label="Yes" color="positive" @click="confirmMAIFIPChoice('pending')" />
         </q-card-actions>
       </q-card>
     </q-dialog>
