@@ -755,6 +755,7 @@
         <q-card-section class="row items-center q-pb-none">
           <div class="text-h6">MAIFIP Confirmation</div>
           <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
         </q-card-section>
 
         <q-card-section>
@@ -762,18 +763,17 @@
         </q-card-section>
 
         <!-- <q-card-actions align="right">
-          <q-btn flat label="No" color="negative" @click="confirmMAIFIPChoice('pending')" />
-          <q-btn
-            unelevated
-            label="Yes"
-            color="positive"
-            @click="confirmMAIFIPChoice('assessment')"
-          />
-        </q-card-actions> -->
+      <q-btn flat label="No" color="negative" @click="confirmMAIFIPChoice('pending')" />
+      <q-btn
+        unelevated
+        label="Yes"
+        color="positive"
+        @click="confirmMAIFIPChoice('assessment')"
+      />
+    </q-card-actions> -->
 
         <q-card-actions align="right">
           <q-btn unelevated label="Yes" color="positive" @click="confirmMAIFIPChoice('pending')" />
-          <q-btn flat label="Cancel" color="negative" @click="showMAIFIPConfirmation = false" />
         </q-card-actions>
       </q-card>
     </q-dialog>
