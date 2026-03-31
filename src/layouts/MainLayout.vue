@@ -238,7 +238,7 @@
           </div>
         </q-item>
 
-        <q-item v-if="canAccessMasterList" clickable v-ripple to="/reports">
+        <q-item v-if="canAccessReport" clickable v-ripple to="/reports">
           <div class="row items-center">
             <q-icon name="bar_chart" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Reports</span>
@@ -335,10 +335,11 @@ export default {
           'laboratory',
           'billing',
           'masterlist',
+          'report',
           'user-management',
           'philhealth',
         ],
-        social: ['dashboard', 'maifip'],
+        social: ['dashboard', 'maifip', 'report'],
         coder: ['dashboard', 'patient-info'],
         doctor: ['dashboard', 'consultation'],
         laboratory: ['dashboard', 'laboratory'],
@@ -379,6 +380,10 @@ export default {
 
     canAccessMasterList() {
       return this.allowedModules.includes('masterlist')
+    },
+
+    canAccessReport() {
+      return this.allowedModules.includes('report')
     },
 
     canAccessUserManagement() {

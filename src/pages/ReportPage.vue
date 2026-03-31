@@ -1,14 +1,20 @@
 <template>
   <q-page class="q-pa-md">
-    <q-dialog v-model="isGenerating" persistent full-width full-height>
-      <q-card class="loading-card">
+    <q-dialog v-model="isGenerating" persistent>
+      <q-card class="loading-card" style="min-width: 300px">
         <q-card-section class="row items-center q-gutter-sm">
           <q-spinner-hourglass color="green-8" size="2em" />
           <div class="text-h6">{{ loadingMessage }}</div>
         </q-card-section>
-        <q-card-section>
+        <q-card-section v-if="loadingSubMessage">
           <div class="text-body2 text-grey-7">{{ loadingSubMessage }}</div>
         </q-card-section>
+        <q-linear-progress
+          v-if="isGenerating"
+          :value="progressValue"
+          color="green-8"
+          class="q-mt-md"
+        />
       </q-card>
     </q-dialog>
 
@@ -197,7 +203,7 @@
 
           <template v-slot:body-cell-patient_name="props">
             <q-td :props="props">
-              <div class="text-weight-medium">{{ props.value || 'N/A' }}</div>
+              <div class="text-weight-medium text-uppercase">{{ props.value || 'N/A' }}</div>
             </q-td>
           </template>
 
@@ -243,76 +249,6 @@
         </q-table>
       </q-card-section>
     </q-card>
-
-    <!-- PDF Content (Hidden) -->
-    <div id="pdfContent" style="display: none">
-      <div class="pdf-container">
-        <div class="header-container">
-          <table class="header-table">
-            <tbody>
-              <tr>
-                <td class="logo-cell" width="25%">
-                  <div class="logo-container">
-                    <img src="../assets/DOH.svg" alt="DOH" class="logo" />
-                    <img src="../assets/BP.png" alt="BP" class="logo" />
-                  </div>
-                </td>
-                <td class="header-text" width="50%">
-                  <div>Republic of the Philippines</div>
-                  <div>Province of Davao Del Norte</div>
-                  <div>City Government of Tagum</div>
-                  <div class="header-office">City Health Office</div>
-                </td>
-                <td class="logo-cell" width="25%">
-                  <div class="logo-container right">
-                    <img src="../assets/CHO-logo.png" alt="CHO Logo" class="logo" />
-                    <img src="../assets/logo.png" alt="City of Tagum Logo" class="logo" />
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="office-heading">
-          <h3>MAIFIP REPORT</h3>
-          <p class="date-range">{{ getDateRangeText() }}</p>
-          <p class="fund-source-range">{{ getFundSourceText() }}</p>
-        </div>
-
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Patient Name</th>
-              <th>GL Number</th>
-              <th>Fund Source</th>
-              <th>Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(row, index) in displayedData" :key="`pdf-${row.row_id}-${index}`">
-              <td>{{ formatReportDate(row.transaction_date) }}</td>
-              <td>{{ row.patient_name || 'N/A' }}</td>
-              <td>{{ row.gl_number || 'N/A' }}</td>
-              <td>{{ row.fund_source || 'N/A' }}</td>
-              <td>{{ formatCurrency(row.amount) }}</td>
-            </tr>
-            <tr v-if="displayedData.length > 0" class="total-row">
-              <td colspan="4" style="text-align: right; font-weight: bold">Total Amount:</td>
-              <td style="text-align: right; font-weight: bold">
-                {{ formatCurrency(totalAmount) }}
-              </td>
-            </tr>
-            <tr v-else>
-              <td colspan="5" style="text-align: center; font-style: italic">
-                No data available for the selected filters
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
   </q-page>
 </template>
 
@@ -320,31 +256,41 @@
 import { usemaifipStore } from 'stores/maifipStore'
 import * as XLSX from 'xlsx'
 
-const PDF_CONFIG = {
-  margin: [10, 10, 10, 10],
-  image: { type: 'jpeg', quality: 0.98 },
-  html2canvas: {
-    scale: 5,
-    useCORS: true,
-    allowTaint: true,
-    letterRendering: true,
-    logging: false,
-  },
-  jsPDF: {
-    unit: 'mm',
-    format: 'a4',
-    orientation: 'landscape',
-    compress: true,
-  },
-  pagebreak: {
-    mode: ['css', 'legacy'],
-    before: '.page-break-before',
-    after: '.page-break-after',
-  },
+let pdfMakeInstance = null
+
+// Pre-load pdfmake
+const initPdfMake = async () => {
+  if (pdfMakeInstance) return pdfMakeInstance
+
+  const pdfmakeModule = await import('pdfmake/build/pdfmake')
+  const pdfmakeFonts = await import('pdfmake/build/vfs_fonts')
+
+  pdfMakeInstance = pdfmakeModule.default
+  const fonts = pdfmakeFonts.default
+
+  // Set up fonts
+  if (fonts.pdfMake) {
+    pdfMakeInstance.vfs = fonts.pdfMake.vfs
+  } else if (fonts.vfs) {
+    pdfMakeInstance.vfs = fonts.vfs
+  }
+
+  // Register fonts
+  pdfMakeInstance.fonts = {
+    Roboto: {
+      normal: 'Roboto-Regular.ttf',
+      bold: 'Roboto-Medium.ttf',
+      italics: 'Roboto-Italic.ttf',
+      bolditalics: 'Roboto-MediumItalic.ttf',
+    },
+  }
+
+  return pdfMakeInstance
 }
 
 export default {
   name: 'ReportsPage',
+
   setup() {
     const maifipStore = usemaifipStore()
     return { maifipStore }
@@ -352,7 +298,6 @@ export default {
 
   data() {
     return {
-      // Fund Source Filter
       fundSource: 'all',
       fundSourceOptions: [
         { label: 'All Sources', value: 'all' },
@@ -360,13 +305,11 @@ export default {
         { label: 'MAIFIP-Congressman', value: 'MAIFIP-Congressman' },
       ],
 
-      // Date Filters
       isRange: false,
       singleDate: null,
       fromDate: null,
       toDate: null,
 
-      // Data Management
       allData: [],
       filteredData: [],
       searchText: '',
@@ -374,8 +317,18 @@ export default {
       isGenerating: false,
       loadingMessage: 'Processing...',
       loadingSubMessage: 'Please wait...',
+      progressValue: 0,
 
-      // Pagination
+      // Image data URLs
+      logoImages: {
+        doh: null,
+        bp: null,
+        cho: null,
+        city: null,
+      },
+
+      imagesReady: false,
+
       pagination: {
         sortBy: 'transaction_date',
         descending: true,
@@ -383,7 +336,6 @@ export default {
         rowsPerPage: 10,
       },
 
-      // Table Columns
       columns: [
         {
           name: 'transaction_date',
@@ -436,43 +388,90 @@ export default {
   },
 
   computed: {
-    /**
-     * Display data with search filter applied
-     */
     displayedData() {
       let data = [...this.filteredData]
-
-      if (this.searchText && this.searchText.trim() !== '') {
-        const searchLower = this.searchText.toLowerCase().trim()
-        data = data.filter((row) => {
-          const patientMatch =
-            row.patient_name && row.patient_name.toLowerCase().includes(searchLower)
-          const glMatch = row.gl_number && row.gl_number.toLowerCase().includes(searchLower)
-          return patientMatch || glMatch
-        })
+      if (this.searchText?.trim()) {
+        const s = this.searchText.toLowerCase().trim()
+        data = data.filter(
+          (row) =>
+            (row.patient_name && row.patient_name.toLowerCase().includes(s)) ||
+            (row.gl_number && row.gl_number.toLowerCase().includes(s)),
+        )
       }
-
       return data
     },
 
-    /**
-     * Calculate total amount from displayed data
-     */
     totalAmount() {
-      return this.displayedData.reduce((total, row) => {
-        return total + (parseFloat(row.amount) || 0)
-      }, 0)
+      return this.displayedData.reduce((sum, row) => sum + (parseFloat(row.amount) || 0), 0)
     },
   },
 
   async mounted() {
-    await this.fetchAllData()
+    await initPdfMake()
+    await Promise.all([this.loadImages(), this.fetchAllData()])
   },
 
   methods: {
     /**
-     * Date Option Validators
+     * Convert text to uppercase
      */
+    toUpperCase(text) {
+      if (!text || text === 'N/A') return 'N/A'
+      return text.toUpperCase()
+    },
+
+    /**
+     * Load images as PNG data URLs directly
+     */
+    async loadImageAsDataUrl(url) {
+      try {
+        const response = await fetch(url, { cache: 'force-cache' })
+        if (!response.ok) throw new Error(`HTTP ${response.status}`)
+        const blob = await response.blob()
+        return new Promise((resolve) => {
+          const reader = new FileReader()
+          reader.onloadend = () => resolve(reader.result)
+          reader.onerror = () => {
+            console.warn(`Failed to convert image: ${url}`)
+            resolve(null)
+          }
+          reader.readAsDataURL(blob)
+        })
+      } catch (error) {
+        console.warn(`Failed to load image: ${url}`, error)
+        return null
+      }
+    },
+
+    async loadImages() {
+      console.log('Loading images...')
+      const [doh, bp, cho, city] = await Promise.all([
+        this.loadImageAsDataUrl('/Doh.png'),
+        this.loadImageAsDataUrl('/BP.png'),
+        this.loadImageAsDataUrl('/CHO-logo.png'),
+        this.loadImageAsDataUrl('/logo.png'),
+      ])
+
+      this.logoImages = { doh, bp, cho, city }
+      this.imagesReady = true
+      console.log('Images loaded:', {
+        doh: !!doh,
+        bp: !!bp,
+        cho: !!cho,
+        city: !!city,
+      })
+    },
+
+    getCurrentDateTime() {
+      return new Date().toLocaleString('en-PH', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    },
+
     fromDateOptions(date) {
       return this.toDate ? date <= this.toDate : true
     },
@@ -481,251 +480,137 @@ export default {
       return this.fromDate ? date >= this.fromDate : true
     },
 
-    /**
-     * Fetch all data from store
-     */
     async fetchAllData() {
       this.loading = true
       try {
         const result = await this.maifipStore.getDate()
-
         if (result.success && Array.isArray(result.data)) {
           this.allData = this.transformData(result.data)
           this.filteredData = [...this.allData]
-          console.log('Data loaded:', this.allData.length, 'records')
         } else {
-          this.allData = []
-          this.filteredData = []
+          this.allData = this.filteredData = []
           this.showErrorNotification('Failed to load data')
         }
-      } catch (error) {
-        console.error('Fetch error:', error)
-        this.allData = []
-        this.filteredData = []
+      } catch (e) {
+        console.error('Fetch error:', e)
+        this.allData = this.filteredData = []
         this.showErrorNotification('Failed to load data')
       } finally {
         this.loading = false
       }
     },
 
-    /**
-     * Clean patient name by removing N/A patterns (case-insensitive)
-     */
     cleanPatientName(name) {
       if (!name || name === 'N/A') return 'N/A'
-
-      // Remove "NA" or "N/A" (case-insensitive) from the name
-      // Handles patterns like: "Tom NA Tom", "John N/A John", "na", "N/A", etc.
-      return (
-        name
-          .replace(/\s+n\s*\/?\s*a\s+/gi, ' ') // Remove " NA " or " N/A " in the middle
-          .replace(/^n\s*\/?\s*a\s+/gi, '') // Remove "NA " or "N/A " at the start
-          .replace(/\s+n\s*\/?\s*a$/gi, '') // Remove " NA" or " N/A" at the end
-          .replace(/\s+/g, ' ') // Clean up multiple spaces
-          .trim() || 'N/A'
-      ) // Return 'N/A' if empty after cleaning
+      const cleaned = name
+        .replace(/\s+n\s*\/?\s*a\s+/gi, ' ')
+        .replace(/^n\s*\/?\s*a\s+/gi, '')
+        .replace(/\s+n\s*\/?\s*a$/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+      return cleaned === '' ? 'N/A' : this.toUpperCase(cleaned)
     },
 
-    /**
-     * Transform raw data into display format
-     * Each fund record becomes a separate row
-     */
     transformData(data) {
-      const transformedRows = []
-      let rowCounter = 0
-
-      data.forEach((transaction) => {
-        // Clean the patient name once
-        const cleanedPatientName = this.cleanPatientName(transaction.patient_name)
-
-        // Process MAIFIP-LGU funds
-        if (Array.isArray(transaction.maifip_LGU) && transaction.maifip_LGU.length > 0) {
-          transaction.maifip_LGU.forEach((fund) => {
-            transformedRows.push({
-              row_id: `${transaction.transaction_id}-lgu-${rowCounter}`,
-              transaction_id: transaction.transaction_id,
-              transaction_date: transaction.transaction_date,
-              patient_name: cleanedPatientName,
-              gl_number: transaction.gl_lgu || 'N/A',
+      const rows = []
+      let c = 0
+      data.forEach((tx) => {
+        const name = this.cleanPatientName(tx.patient_name)
+        if (Array.isArray(tx.maifip_LGU) && tx.maifip_LGU.length) {
+          tx.maifip_LGU.forEach((fund) =>
+            rows.push({
+              row_id: `${tx.transaction_id}-lgu-${c++}`,
+              transaction_id: tx.transaction_id,
+              transaction_date: tx.transaction_date,
+              patient_name: name,
+              gl_number: tx.gl_lgu || 'N/A',
               fund_source: 'MAIFIP-LGU',
               amount: parseFloat(fund.fund_amount) || 0,
               fund_id: fund.id,
-            })
-            rowCounter++
-          })
+            }),
+          )
         }
-
-        // Process MAIFIP-Congressman funds
-        if (
-          Array.isArray(transaction.maifip_Congressman) &&
-          transaction.maifip_Congressman.length > 0
-        ) {
-          transaction.maifip_Congressman.forEach((fund) => {
-            transformedRows.push({
-              row_id: `${transaction.transaction_id}-cong-${rowCounter}`,
-              transaction_id: transaction.transaction_id,
-              transaction_date: transaction.transaction_date,
-              patient_name: cleanedPatientName,
-              gl_number: transaction.gl_cong || 'N/A',
+        if (Array.isArray(tx.maifip_Congressman) && tx.maifip_Congressman.length) {
+          tx.maifip_Congressman.forEach((fund) =>
+            rows.push({
+              row_id: `${tx.transaction_id}-cong-${c++}`,
+              transaction_id: tx.transaction_id,
+              transaction_date: tx.transaction_date,
+              patient_name: name,
+              gl_number: tx.gl_cong || 'N/A',
               fund_source: 'MAIFIP-Congressman',
               amount: parseFloat(fund.fund_amount) || 0,
               fund_id: fund.id,
-            })
-            rowCounter++
-          })
+            }),
+          )
         }
-
-        // Handle records with no funds
         if (
-          (!Array.isArray(transaction.maifip_LGU) || transaction.maifip_LGU.length === 0) &&
-          (!Array.isArray(transaction.maifip_Congressman) ||
-            transaction.maifip_Congressman.length === 0)
+          (!Array.isArray(tx.maifip_LGU) || !tx.maifip_LGU.length) &&
+          (!Array.isArray(tx.maifip_Congressman) || !tx.maifip_Congressman.length)
         ) {
-          transformedRows.push({
-            row_id: `${transaction.transaction_id}-none-${rowCounter}`,
-            transaction_id: transaction.transaction_id,
-            transaction_date: transaction.transaction_date,
-            patient_name: cleanedPatientName,
-            gl_number: transaction.gl_lgu || transaction.gl_cong || 'N/A',
+          rows.push({
+            row_id: `${tx.transaction_id}-none-${c++}`,
+            transaction_id: tx.transaction_id,
+            transaction_date: tx.transaction_date,
+            patient_name: name,
+            gl_number: tx.gl_lgu || tx.gl_cong || 'N/A',
             fund_source: 'No Fund',
             amount: 0,
             fund_id: null,
           })
-          rowCounter++
         }
       })
-
-      return transformedRows
+      return rows
     },
 
-    /**
-     * Parse date string to Date object
-     */
-    parseDate(dateString) {
-      if (!dateString) return null
-      try {
-        const date = new Date(dateString)
-        return date
-      } catch {
-        return null
-      }
-    },
-
-    /**
-     * Get date string without time (YYYY-MM-DD)
-     */
-    getDateOnly(date) {
-      if (!date) return null
-      const d = new Date(date)
-      const year = d.getFullYear()
-      const month = String(d.getMonth() + 1).padStart(2, '0')
-      const day = String(d.getDate()).padStart(2, '0')
-      return `${year}-${month}-${day}`
-    },
-
-    /**
-     * Check if date falls within range
-     */
-    isDateInRange(transactionDate, fromDate, toDate) {
-      const txDate = this.getDateOnly(transactionDate)
-      const from = this.getDateOnly(fromDate)
-      const to = this.getDateOnly(toDate)
-
-      if (!txDate || !from || !to) return false
-
-      return txDate >= from && txDate <= to
-    },
-
-    /**
-     * Check if date matches single date
-     */
-    isDateMatch(transactionDate, singleDate) {
-      const txDate = this.getDateOnly(transactionDate)
-      const single = this.getDateOnly(singleDate)
-
-      if (!txDate || !single) return false
-
-      return txDate === single
-    },
-
-    /**
-     * Apply date filter to data
-     */
     applyDateFilter(data) {
-      if (!this.isRange && !this.singleDate) {
-        return data
-      }
-
       if (this.isRange && this.fromDate && this.toDate) {
-        return data.filter((row) =>
-          this.isDateInRange(row.transaction_date, this.fromDate, this.toDate),
-        )
+        const from = this.getDateOnly(this.fromDate)
+        const to = this.getDateOnly(this.toDate)
+        return data.filter((r) => {
+          const d = this.getDateOnly(r.transaction_date)
+          return d >= from && d <= to
+        })
       }
-
       if (!this.isRange && this.singleDate) {
-        return data.filter((row) => this.isDateMatch(row.transaction_date, this.singleDate))
+        const single = this.getDateOnly(this.singleDate)
+        return data.filter((r) => this.getDateOnly(r.transaction_date) === single)
       }
-
       return data
     },
 
-    /**
-     * Apply fund source filter to data
-     */
     applyFundSourceFilter(data) {
-      if (this.fundSource === 'all') {
-        return data
-      }
-
-      return data.filter((row) => row.fund_source === this.fundSource)
+      return this.fundSource === 'all'
+        ? data
+        : data.filter((r) => r.fund_source === this.fundSource)
     },
 
-    /**
-     * Apply all filters to data
-     */
     applyAllFilters(data) {
-      let result = data
-
-      // Apply date filter
-      result = this.applyDateFilter(result)
-
-      // Apply fund source filter
-      result = this.applyFundSourceFilter(result)
-
-      return result
+      return this.applyFundSourceFilter(this.applyDateFilter(data))
     },
 
-    /**
-     * Apply filters and fetch data
-     */
+    getDateOnly(date) {
+      if (!date) return null
+      const d = new Date(date)
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+    },
+
     async onFilter() {
       if (!this.isFilterValid()) {
         this.showErrorNotification('Please select valid date(s) for filtering')
         return
       }
-
       this.loading = true
       try {
-        // Apply filters to all data (client-side filtering)
         const filtered = this.applyAllFilters(this.allData)
-
         this.filteredData = filtered
         this.pagination.page = 1
         this.searchText = ''
-
-        if (filtered.length > 0) {
-          this.showSuccessNotification(`Found ${filtered.length} filtered records`)
-        } else {
-          this.showErrorNotification('No data found for selected filters')
-        }
-
-        console.log('Filtered data:', {
-          dateRange: this.isRange ? `${this.fromDate} to ${this.toDate}` : this.singleDate,
-          fundSource: this.fundSource,
-          resultCount: filtered.length,
-        })
-      } catch (error) {
-        console.error('Filter error:', error)
+        filtered.length
+          ? this.showSuccessNotification(`Found ${filtered.length} filtered records`)
+          : this.showErrorNotification('No data found for selected filters')
+      } catch (e) {
+        console.error(e)
         this.filteredData = []
         this.showErrorNotification('Failed to filter data')
       } finally {
@@ -733,14 +618,9 @@ export default {
       }
     },
 
-    /**
-     * Clear all filters
-     */
     clearFilters() {
       this.isRange = false
-      this.singleDate = null
-      this.fromDate = null
-      this.toDate = null
+      this.singleDate = this.fromDate = this.toDate = null
       this.searchText = ''
       this.fundSource = 'all'
       this.filteredData = [...this.allData]
@@ -748,166 +628,307 @@ export default {
       this.showSuccessNotification('Filters cleared')
     },
 
-    /**
-     * Validate filter inputs
-     */
     isFilterValid() {
-      if (this.isRange) {
-        return this.fromDate && this.toDate
-      }
-      return this.singleDate
+      return this.isRange ? !!(this.fromDate && this.toDate) : !!this.singleDate
     },
 
-    /**
-     * Handle table request (pagination, sorting)
-     */
-    onRequest(props) {
-      const { page, rowsPerPage, sortBy, descending } = props.pagination
-
-      this.pagination.page = page
-      this.pagination.rowsPerPage = rowsPerPage
-      this.pagination.sortBy = sortBy
-      this.pagination.descending = descending
+    onRequest({ pagination: { page, rowsPerPage, sortBy, descending } }) {
+      Object.assign(this.pagination, { page, rowsPerPage, sortBy, descending })
     },
 
-    /**
-     * Generate report (PDF or Excel)
-     */
     async generateReport(type) {
-      if (this.displayedData.length === 0) {
+      if (!this.displayedData.length) {
         this.showErrorNotification('No data to generate report')
         return
       }
-
       this.isGenerating = true
-
       try {
         if (type === 'pdf') {
           this.loadingMessage = 'Generating PDF Report...'
-          this.loadingSubMessage = 'Please wait while we prepare your PDF report.'
+          this.loadingSubMessage = 'Building document...'
+          this.progressValue = 0.2
           await this.generatePDF()
-        } else if (type === 'excel') {
+        } else {
           this.loadingMessage = 'Generating Excel Report...'
-          this.loadingSubMessage = 'Please wait while we prepare your Excel report.'
+          this.loadingSubMessage = 'Preparing spreadsheet...'
+          this.progressValue = 0.5
           await this.generateExcel()
         }
-      } catch (error) {
-        console.error('Report generation error:', error)
+      } catch (e) {
+        console.error(e)
         this.showErrorNotification(`Failed to generate ${type.toUpperCase()} report`)
       } finally {
         this.isGenerating = false
+        this.progressValue = 0
       }
     },
 
-    /**
-     * Generate PDF report
-     */
     async generatePDF() {
-      let element = null
-
       try {
-        const html2pdf = (await import('html2pdf.js')).default
-        element = document.getElementById('pdfContent')
+        this.progressValue = 0.4
+        this.loadingSubMessage = 'Building document structure...'
 
-        const config = {
-          ...PDF_CONFIG,
-          filename: this.generateFilename('pdf'),
-        }
+        const docDefinition = this.buildPDFDocument()
 
-        element.style.display = 'block'
-        await this.delay(100)
+        this.progressValue = 0.7
+        this.loadingSubMessage = 'Generating PDF...'
 
-        const pdf = await html2pdf().set(config).from(element).toPdf().get('pdf')
-        const blob = pdf.output('blob')
-        const url = URL.createObjectURL(blob)
+        const pdf = pdfMakeInstance.createPdf(docDefinition)
+        pdf.download(this.generateFilename('pdf'))
 
-        window.open(url, '_blank')
+        this.progressValue = 1
         this.showSuccessNotification('PDF generated successfully!')
       } catch (error) {
         console.error('PDF generation error:', error)
         throw error
-      } finally {
-        if (element) element.style.display = 'none'
       }
     },
 
-    /**
-     * Generate Excel report
-     */
-    async generateExcel() {
-      try {
-        console.log('Starting Excel generation...')
+    buildPDFDocument() {
+      // Prepare table body - only ONE header row
+      const tableBody = []
 
-        const excelData = this.displayedData.map((row) => ({
-          Date: this.formatReportDateForExcel(row.transaction_date),
-          'Patient Name': row.patient_name || 'N/A',
-          'GL Number': row.gl_number || 'N/A',
-          'Fund Source': row.fund_source || 'N/A',
-          Amount: row.amount,
-        }))
+      // Add single header row
+      tableBody.push([
+        { text: 'DATE', style: 'tableHeader', alignment: 'center' },
+        { text: 'PATIENT NAME', style: 'tableHeader', alignment: 'left' },
+        { text: 'GL NUMBER', style: 'tableHeader', alignment: 'center' },
+        { text: 'FUND SOURCE', style: 'tableHeader', alignment: 'center' },
+        { text: 'AMOUNT', style: 'tableHeader', alignment: 'right' },
+      ])
 
-        excelData.push({
-          Date: '',
-          'Patient Name': '',
-          'GL Number': '',
-          'Fund Source': 'Total Amount:',
-          Amount: this.totalAmount,
+      // Add data rows with UPPERCASE patient names
+      this.displayedData.forEach((row) => {
+        tableBody.push([
+          { text: this.formatReportDate(row.transaction_date), alignment: 'center' },
+          { text: this.toUpperCase(row.patient_name || 'N/A'), alignment: 'left' },
+          { text: row.gl_number || 'N/A', alignment: 'center' },
+          { text: row.fund_source || 'N/A', alignment: 'center' },
+          { text: this.formatCurrencyForPDF(row.amount), alignment: 'right' },
+        ])
+      })
+
+      // Add total row
+      tableBody.push([
+        { text: 'TOTAL', colSpan: 4, alignment: 'right', style: 'totalRow' },
+        {},
+        {},
+        {},
+        {
+          text: this.formatCurrencyForPDF(this.totalAmount),
+          alignment: 'right',
+          style: 'totalRow',
+        },
+      ])
+
+      return {
+        pageOrientation: 'landscape',
+        pageSize: 'A4',
+        pageMargins: [40, 80, 40, 40],
+        defaultStyle: { fontSize: 9 },
+        header: () => this.buildPDFHeader(),
+        footer: (currentPage, pageCount) => this.buildPDFFooter(currentPage, pageCount),
+        content: [
+          // Title
+          { text: 'MAIFIP REPORT', style: 'title', alignment: 'center', margin: [0, 0, 0, 6] },
+          // Report info
+          {
+            text: this.getDateRangeText(),
+            style: 'reportInfo',
+            alignment: 'center',
+            margin: [0, 0, 0, 4],
+          },
+          {
+            text: this.getFundSourceText(),
+            style: 'reportInfo',
+            alignment: 'center',
+            margin: [0, 0, 0, 4],
+          },
+          // Data table
+          {
+            table: {
+              headerRows: 0,
+              widths: ['12%', '38%', '15%', '15%', '20%'],
+              body: tableBody,
+            },
+            layout: {
+              hLineWidth: () => 0.5,
+              vLineWidth: () => 0.5,
+              hLineColor: () => '#aaaaaa',
+              vLineColor: () => '#aaaaaa',
+              paddingLeft: () => 4,
+              paddingRight: () => 4,
+              paddingTop: () => 4,
+              paddingBottom: () => 4,
+            },
+          },
+        ],
+        styles: {
+          title: { fontSize: 12, bold: true, margin: [0, 0, 0, 5] },
+          reportInfo: { fontSize: 9, color: '#666666' },
+          tableHeader: { bold: true, fontSize: 10, fillColor: '#f5f5f5' },
+          totalRow: { bold: true, fillColor: '#e8f5e9', color: '#1b5e20' },
+        },
+      }
+    },
+
+    buildPDFHeader() {
+      // Left side images (DOH and BP) - horizontal
+      const leftImages = []
+
+      if (this.logoImages.doh) {
+        leftImages.push({
+          image: this.logoImages.doh,
+          width: 45,
         })
+      }
 
-        console.log('Excel data prepared:', excelData.length, 'rows')
+      if (this.logoImages.bp) {
+        leftImages.push({
+          image: this.logoImages.bp,
+          width: 45,
+        })
+      }
 
-        const wb = XLSX.utils.book_new()
-        const ws = XLSX.utils.json_to_sheet(excelData)
+      if (leftImages.length === 0) {
+        leftImages.push({ text: '' })
+      }
 
-        ws['!cols'] = [{ width: 15 }, { width: 30 }, { width: 15 }, { width: 18 }, { width: 15 }]
+      // Right side images (CHO and City logo) - horizontal
+      const rightImages = []
 
-        XLSX.utils.book_append_sheet(wb, ws, 'MAIFIP Report')
+      if (this.logoImages.cho) {
+        rightImages.push({
+          image: this.logoImages.cho,
+          width: 45,
+        })
+      }
 
-        const filename = this.generateFilename('xlsx')
-        console.log('Saving Excel file as:', filename)
+      if (this.logoImages.city) {
+        rightImages.push({
+          image: this.logoImages.city,
+          width: 45,
+        })
+      }
 
-        XLSX.writeFile(wb, filename)
+      if (rightImages.length === 0) {
+        rightImages.push({ text: '' })
+      }
 
-        this.showSuccessNotification('Excel file generated successfully!')
-        console.log('Excel generation completed successfully')
-      } catch (error) {
-        console.error('Excel generation error:', error)
-        this.showErrorNotification('Failed to generate Excel file. Please try again.')
-        throw error
+      return {
+        margin: [40, 20, 40, 10],
+        columns: [
+          {
+            width: 100,
+            columns: leftImages, // ← horizontal now
+            alignment: 'center',
+            columnGap: 5,
+          },
+          {
+            width: '*',
+            stack: [
+              {
+                text: 'REPUBLIC OF THE PHILIPPINES',
+                fontSize: 9,
+                color: '#00703c',
+                alignment: 'center',
+                margin: [0, 5, 0, 2],
+              },
+              {
+                text: 'PROVINCE OF DAVAO DEL NORTE',
+                fontSize: 9,
+                color: '#00703c',
+                alignment: 'center',
+                margin: [0, 0, 0, 2],
+              },
+              {
+                text: 'CITY OF TAGUM',
+                fontSize: 11,
+                color: '#00703c',
+                bold: true,
+                alignment: 'center',
+                margin: [0, 0, 0, 8],
+              },
+              {
+                text: 'CITY HEALTH OFFICE',
+                fontSize: 12,
+                color: '#ffffff',
+                bold: true,
+                alignment: 'center',
+                fillColor: '#008000',
+                margin: [0, 2, 0, 0],
+              },
+            ],
+          },
+          {
+            width: 100,
+            columns: rightImages, // ← horizontal now
+            alignment: 'center',
+            columnGap: 5,
+          },
+        ],
       }
     },
 
-    /**
-     * Generate filename with timestamp and fund source
-     */
-    generateFilename(extension) {
-      const timestamp = new Date().toISOString().split('T')[0]
-      let fundSourceSuffix = ''
-
-      if (this.fundSource !== 'all') {
-        fundSourceSuffix = `-${this.fundSource.replace('-', '')}`
+    buildPDFFooter(currentPage, pageCount) {
+      return {
+        columns: [
+          // {
+          //   text: `Generated on: ${this.getCurrentDateTime()}`,
+          //   alignment: 'left',
+          //   fontSize: 7,
+          //   color: '#999999',
+          // },
+          {
+            text: `Page ${currentPage} of ${pageCount}`,
+            alignment: 'right',
+            fontSize: 7,
+            color: '#999999',
+          },
+        ],
+        margin: [40, 10, 40, 20],
       }
-
-      if (!this.isRange && this.singleDate) {
-        const formattedDate = this.singleDate.replace(/-/g, '')
-        return `MAIFIPReport-${formattedDate}${fundSourceSuffix}.${extension}`
-      }
-      if (this.isRange && this.fromDate && this.toDate) {
-        const fromFormatted = this.fromDate.replace(/-/g, '')
-        const toFormatted = this.toDate.replace(/-/g, '')
-        return `MAIFIPReport-${fromFormatted}_to_${toFormatted}${fundSourceSuffix}.${extension}`
-      }
-      return `MAIFIPReport-${timestamp.replace(/-/g, '')}${fundSourceSuffix}.${extension}`
     },
 
-    /**
-     * Format date for display in reports
-     */
-    formatReportDate(dateString) {
-      if (!dateString) return 'N/A'
+    async generateExcel() {
+      const data = this.displayedData.map((row) => ({
+        Date: this.formatReportDateForExcel(row.transaction_date),
+        'Patient Name': this.toUpperCase(row.patient_name || 'N/A'),
+        'GL Number': row.gl_number || 'N/A',
+        'Fund Source': row.fund_source || 'N/A',
+        Amount: row.amount,
+      }))
+
+      data.push({
+        Date: '',
+        'Patient Name': '',
+        'GL Number': '',
+        'Fund Source': 'TOTAL AMOUNT:',
+        Amount: this.totalAmount,
+      })
+
+      const wb = XLSX.utils.book_new()
+      const ws = XLSX.utils.json_to_sheet(data)
+      ws['!cols'] = [{ width: 15 }, { width: 30 }, { width: 15 }, { width: 18 }, { width: 15 }]
+      XLSX.utils.book_append_sheet(wb, ws, 'MAIFIP Report')
+      XLSX.writeFile(wb, this.generateFilename('xlsx'))
+      this.showSuccessNotification('Excel file generated successfully!')
+    },
+
+    generateFilename(ext) {
+      const ts = new Date().toISOString().split('T')[0].replace(/-/g, '')
+      const fs = this.fundSource !== 'all' ? `-${this.fundSource.replace('-', '')}` : ''
+      if (!this.isRange && this.singleDate)
+        return `MAIFIPReport-${this.singleDate.replace(/-/g, '')}${fs}.${ext}`
+      if (this.isRange && this.fromDate && this.toDate)
+        return `MAIFIPReport-${this.fromDate.replace(/-/g, '')}_to_${this.toDate.replace(/-/g, '')}${fs}.${ext}`
+      return `MAIFIPReport-${ts}${fs}.${ext}`
+    },
+
+    formatReportDate(d) {
+      if (!d) return 'N/A'
       try {
-        const date = new Date(dateString)
-        return date.toLocaleDateString('en-US', {
+        return new Date(d).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
           day: 'numeric',
@@ -917,14 +938,10 @@ export default {
       }
     },
 
-    /**
-     * Format date for Excel export
-     */
-    formatReportDateForExcel(dateString) {
-      if (!dateString) return 'N/A'
+    formatReportDateForExcel(d) {
+      if (!d) return 'N/A'
       try {
-        const date = new Date(dateString)
-        return date.toLocaleDateString('en-US', {
+        return new Date(d).toLocaleDateString('en-US', {
           year: 'numeric',
           month: '2-digit',
           day: '2-digit',
@@ -934,14 +951,10 @@ export default {
       }
     },
 
-    /**
-     * Format date for display with full month name
-     */
-    formatDisplayDate(dateString) {
-      if (!dateString) return 'N/A'
+    formatDisplayDate(d) {
+      if (!d) return 'N/A'
       try {
-        const date = new Date(dateString)
-        return date.toLocaleDateString('en-US', {
+        return new Date(d).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'long',
           day: 'numeric',
@@ -951,52 +964,31 @@ export default {
       }
     },
 
-    /**
-     * Format amount as Philippine Peso currency
-     */
     formatCurrency(amount) {
-      const numAmount = Number(amount)
-      if (isNaN(numAmount)) return '₱0.00'
-
-      return new Intl.NumberFormat('en-PH', {
-        style: 'currency',
-        currency: 'PHP',
-      }).format(numAmount)
+      const n = Number(amount)
+      return isNaN(n)
+        ? '₱0.00'
+        : new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(n)
     },
 
-    /**
-     * Get date range text for display
-     */
+    formatCurrencyForPDF(amount) {
+      return this.formatCurrency(amount)
+    },
+
     getDateRangeText() {
-      if (!this.isRange && this.singleDate) {
+      if (!this.isRange && this.singleDate)
         return `Date: ${this.formatDisplayDate(this.singleDate)}`
-      }
-      if (this.isRange && this.fromDate && this.toDate) {
+      if (this.isRange && this.fromDate && this.toDate)
         return `Date Range: ${this.formatDisplayDate(this.fromDate)} to ${this.formatDisplayDate(this.toDate)}`
-      }
       return `All Records (${this.displayedData.length} entries)`
     },
 
-    /**
-     * Get fund source text for display
-     */
     getFundSourceText() {
-      if (this.fundSource === 'all') {
-        return 'Fund Source: All Sources'
-      }
-      return `Fund Source: ${this.fundSource}`
+      return this.fundSource === 'all'
+        ? 'Fund Source: All Sources'
+        : `Fund Source: ${this.fundSource}`
     },
 
-    /**
-     * Delay helper for async operations
-     */
-    delay(ms) {
-      return new Promise((resolve) => setTimeout(resolve, ms))
-    },
-
-    /**
-     * Show success notification
-     */
     showSuccessNotification(message) {
       this.$q.notify({
         message,
@@ -1007,9 +999,6 @@ export default {
       })
     },
 
-    /**
-     * Show error notification
-     */
     showErrorNotification(message) {
       this.$q.notify({
         message,
@@ -1024,201 +1013,25 @@ export default {
 </script>
 
 <style scoped>
-.filter-card {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
+.filter-card,
 .data-card {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .loading-card {
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  max-height: none;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  min-width: 300px;
 }
 
-.maifip-table {
-  .q-table__top {
-    padding: 16px;
-    background-color: #f5f5f5;
-  }
-
-  .q-table__bottom {
-    background-color: #f5f5f5;
-  }
-}
-
-/* PDF Styles */
-.pdf-container {
-  width: 100%;
-  font-family: Arial, sans-serif;
-  font-size: 10pt;
-  color: #000;
-  background: white;
-  padding: 20px;
-  letter-spacing: 1px;
-}
-
-.header-container {
-  border: 1px solid #000;
-  padding: 10px;
-  letter-spacing: 0.5px;
-  margin-bottom: 20px;
-}
-
-.header-table {
-  width: 100%;
-  border-collapse: collapse;
-  letter-spacing: 0.5px;
-}
-
-.logo-cell {
-  vertical-align: middle;
-  padding: 5px;
-}
-
-.logo-container {
-  display: flex;
-  align-items: center;
-}
-
-.logo-container.right {
-  justify-content: flex-end;
-}
-
-.logo {
-  width: 60px;
-  height: auto;
-  margin-right: 10px;
-  vertical-align: middle;
-}
-
-.logo-container.right .logo {
-  margin-right: 0;
-  margin-left: 10px;
-}
-
-.header-text {
-  text-align: center;
-  vertical-align: middle;
-  font-size: 9pt;
-  line-height: 1.3;
-  padding: 5px;
-  letter-spacing: 0.5px;
-}
-
-.header-office {
-  font-size: 11pt;
-  font-weight: bold;
-  letter-spacing: 0.5px;
-}
-
-.office-heading {
-  text-align: center;
-  letter-spacing: 0.5px;
-  margin-bottom: 20px;
-}
-
-.office-heading h3 {
-  font-size: 15pt;
-  font-weight: bold;
-  letter-spacing: 2px;
-  margin: 10px 0 5px 0;
-}
-
-.office-heading .date-range {
-  font-size: 10pt;
-  margin: 5px 0;
-  font-weight: normal;
-}
-
-.office-heading .fund-source-range {
-  font-size: 10pt;
-  margin: 5px 0;
-  font-weight: normal;
-}
-
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 20px;
-  font-size: 9pt;
-}
-
-.data-table th,
-.data-table td {
-  border: 1px solid #000;
-  padding: 6px 8px;
-  text-align: left;
-  vertical-align: middle;
-}
-
-.data-table th {
+.maifip-table :deep(.q-table__top) {
+  padding: 16px;
   background-color: #f5f5f5;
-  font-weight: bold;
-  text-align: center;
 }
 
-.data-table td:nth-child(1) {
-  text-align: center;
-  width: 12%;
+.maifip-table :deep(.q-table__bottom) {
+  background-color: #f5f5f5;
 }
 
-.data-table td:nth-child(2) {
-  width: 28%;
-}
-
-.data-table td:nth-child(3) {
-  text-align: center;
-  width: 15%;
-}
-
-.data-table td:nth-child(4) {
-  text-align: center;
-  width: 18%;
-}
-
-.data-table td:nth-child(5) {
-  text-align: right;
-  width: 27%;
-}
-
-.total-row {
-  background-color: #f8f9fa;
-  font-weight: bold;
-}
-
-@media print {
-  .pdf-container {
-    margin: 0;
-    padding: 0;
-  }
-
-  .header-container,
-  .office-heading {
-    page-break-inside: avoid;
-  }
-
-  .data-table thead {
-    display: table-header-group;
-  }
-
-  .data-table tbody tr {
-    page-break-inside: avoid;
-  }
-}
-
-.page-break-before {
-  page-break-before: always;
-}
-
-.page-break-after {
-  page-break-after: always;
+.text-uppercase {
+  text-transform: uppercase;
 }
 </style>
