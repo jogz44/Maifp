@@ -416,7 +416,7 @@ export default {
         } else {
           Notify.create({
             type: 'negative',
-            message: result.error || 'Invalid username or password',
+            message:  'Invalid username or password',
             position: 'top',
             timeout: 3000,
           })
