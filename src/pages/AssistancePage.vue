@@ -85,7 +85,7 @@
             </p>
           </q-card-section>
 
-          <q-card-actions align="right">
+          <!-- <q-card-actions align="right">
             <q-btn
               v-if="
                 (patient.maifip == 0 && patient.philhealth == 0) ||
@@ -122,6 +122,33 @@
               :loading="completing"
               :disable="completing"
             />
+          </q-card-actions> -->
+
+          <q-card-actions align="right">
+            <q-btn
+              flat
+              label="Send to MAIFIP"
+              color="blue"
+              @click="fromPhilHealth"
+              :loading="completing"
+              :disable="completing"
+            />
+            <q-btn
+              flat
+              label="Proceed with Cash"
+              color="blue"
+              @click="proceedWithCash"
+              :loading="completing"
+              :disable="completing"
+            />
+            <!-- <q-btn
+              flat
+              label="Yes, Proceed to GL"
+              color="green-9"
+              @click="completeTransaction"
+              :loading="completing"
+              :disable="completing"
+            /> -->
           </q-card-actions>
         </q-card>
       </q-dialog>
@@ -787,35 +814,35 @@ function closeCompleteConfirmDialog() {
 // }
 
 // GL Transaction
-async function completeTransaction() {
-  if (!store.transaction_id) {
-    $q.notify({ type: 'negative', message: 'Transaction ID not found', position: 'top' })
-    return
-  }
-  completing.value = true
-  try {
-    const result = await store.updateTransactionStatus(store.transaction_id, 'Complete')
-    if (result) {
-      $q.notify({
-        type: 'positive',
-        message: 'Transaction completed successfully and sent to GL!',
-        position: 'top',
-      })
-      setTimeout(() => router.push('/billing'), 1500)
-    } else {
-      throw new Error('Failed to update transaction status')
-    }
-  } catch {
-    $q.notify({
-      type: 'negative',
-      message: 'Failed to complete transaction. Please try again.',
-      position: 'top',
-    })
-  } finally {
-    completing.value = false
-    showGLConfirmDialog.value = false
-  }
-}
+// async function completeTransaction() {
+//   if (!store.transaction_id) {
+//     $q.notify({ type: 'negative', message: 'Transaction ID not found', position: 'top' })
+//     return
+//   }
+//   completing.value = true
+//   try {
+//     const result = await store.updateTransactionStatus(store.transaction_id, 'Complete')
+//     if (result) {
+//       $q.notify({
+//         type: 'positive',
+//         message: 'Transaction completed successfully and sent to GL!',
+//         position: 'top',
+//       })
+//       setTimeout(() => router.push('/billing'), 1500)
+//     } else {
+//       throw new Error('Failed to update transaction status')
+//     }
+//   } catch {
+//     $q.notify({
+//       type: 'negative',
+//       message: 'Failed to complete transaction. Please try again.',
+//       position: 'top',
+//     })
+//   } finally {
+//     completing.value = false
+//     showGLConfirmDialog.value = false
+//   }
+// }
 
 // Mark as Funded
 async function markAsFunded() {

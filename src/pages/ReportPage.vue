@@ -9,12 +9,7 @@
         <q-card-section v-if="loadingSubMessage">
           <div class="text-body2 text-grey-7">{{ loadingSubMessage }}</div>
         </q-card-section>
-        <q-linear-progress
-          v-if="isGenerating"
-          :value="progressValue"
-          color="green-8"
-          class="q-mt-md"
-        />
+        <q-linear-progress v-if="isGenerating" :value="progressValue" color="green-8" class="q-mt-md" />
       </q-card>
     </q-dialog>
 
@@ -28,16 +23,8 @@
           <div class="row q-col-gutter-md items-end">
             <!-- Fund Source Filter -->
             <div class="col-12 col-md-auto">
-              <q-select
-                v-model="fundSource"
-                :options="fundSourceOptions"
-                label="Fund Source"
-                outlined
-                dense
-                emit-value
-                map-options
-                color="green-8"
-              />
+              <q-select v-model="fundSource" :options="fundSourceOptions" label="Fund Source" outlined dense emit-value
+                map-options color="green-8" />
             </div>
 
             <!-- Date Range Toggle -->
@@ -50,17 +37,9 @@
               <q-input v-model="singleDate" label="Select Date" outlined dense clearable readonly>
                 <template v-slot:append>
                   <q-icon name="event" class="cursor-pointer">
-                    <q-popup-proxy
-                      ref="singlePickerProxy"
-                      cover
-                      transition-show="scale"
-                      transition-hide="scale"
-                    >
-                      <q-date
-                        v-model="singleDate"
-                        mask="YYYY-MM-DD"
-                        @update:model-value="() => $refs.singlePickerProxy.hide()"
-                      />
+                    <q-popup-proxy ref="singlePickerProxy" cover transition-show="scale" transition-hide="scale">
+                      <q-date v-model="singleDate" mask="YYYY-MM-DD"
+                        @update:model-value="() => $refs.singlePickerProxy.hide()" />
                     </q-popup-proxy>
                   </q-icon>
                 </template>
@@ -72,18 +51,9 @@
               <q-input v-model="fromDate" label="From Date" outlined dense clearable readonly>
                 <template v-slot:append>
                   <q-icon name="event" class="cursor-pointer">
-                    <q-popup-proxy
-                      ref="fromPickerProxy"
-                      cover
-                      transition-show="scale"
-                      transition-hide="scale"
-                    >
-                      <q-date
-                        v-model="fromDate"
-                        mask="YYYY-MM-DD"
-                        :options="fromDateOptions"
-                        @update:model-value="() => $refs.fromPickerProxy.hide()"
-                      />
+                    <q-popup-proxy ref="fromPickerProxy" cover transition-show="scale" transition-hide="scale">
+                      <q-date v-model="fromDate" mask="YYYY-MM-DD" :options="fromDateOptions"
+                        @update:model-value="() => $refs.fromPickerProxy.hide()" />
                     </q-popup-proxy>
                   </q-icon>
                 </template>
@@ -95,18 +65,9 @@
               <q-input v-model="toDate" label="To Date" outlined dense clearable readonly>
                 <template v-slot:append>
                   <q-icon name="event" class="cursor-pointer">
-                    <q-popup-proxy
-                      ref="toPickerProxy"
-                      cover
-                      transition-show="scale"
-                      transition-hide="scale"
-                    >
-                      <q-date
-                        v-model="toDate"
-                        mask="YYYY-MM-DD"
-                        :options="toDateOptions"
-                        @update:model-value="() => $refs.toPickerProxy.hide()"
-                      />
+                    <q-popup-proxy ref="toPickerProxy" cover transition-show="scale" transition-hide="scale">
+                      <q-date v-model="toDate" mask="YYYY-MM-DD" :options="toDateOptions"
+                        @update:model-value="() => $refs.toPickerProxy.hide()" />
                     </q-popup-proxy>
                   </q-icon>
                 </template>
@@ -115,20 +76,8 @@
 
             <!-- Action Buttons -->
             <div class="col-12 col-md q-gutter-sm row justify-end">
-              <q-btn
-                label="Filter"
-                type="submit"
-                color="primary"
-                icon="filter_list"
-                :loading="loading"
-              />
-              <q-btn
-                label="Clear"
-                color="grey-6"
-                icon="clear"
-                @click="clearFilters"
-                :disable="loading"
-              />
+              <q-btn label="Filter" type="submit" color="primary" icon="filter_list" :loading="loading" />
+              <q-btn label="Clear" color="grey-6" icon="clear" @click="clearFilters" :disable="loading" />
             </div>
           </div>
         </q-form>
@@ -139,37 +88,17 @@
       <q-card-section class="row items-center justify-between">
         <div class="text-h6">MAIFIP Data</div>
         <div class="row q-gutter-sm" v-if="displayedData.length > 0">
-          <q-btn
-            label="Generate PDF"
-            color="red-8"
-            icon="picture_as_pdf"
-            @click="generateReport('pdf')"
-            :loading="isGenerating"
-            :disable="isGenerating"
-          />
-          <q-btn
-            label="Generate Excel"
-            color="green-8"
-            icon="table_chart"
-            @click="generateReport('excel')"
-            :loading="isGenerating"
-            :disable="isGenerating"
-          />
+          <q-btn label="Generate PDF" color="red-8" icon="picture_as_pdf" @click="generateReport('pdf')"
+            :loading="isGenerating" :disable="isGenerating" />
+          <q-btn label="Generate Excel" color="green-8" icon="table_chart" @click="generateReport('excel')"
+            :loading="isGenerating" :disable="isGenerating" />
         </div>
       </q-card-section>
       <q-separator />
       <q-card-section class="q-pa-none">
-        <q-table
-          :rows="displayedData"
-          :columns="columns"
-          row-key="row_id"
-          :loading="loading"
-          v-model:pagination="pagination"
-          @request="onRequest"
-          binary-state-sort
-          :rows-per-page-options="[10, 25, 50, 100, 0]"
-          class="maifip-table"
-        >
+        <q-table :rows="displayedData" :columns="columns" row-key="row_id" :loading="loading"
+          v-model:pagination="pagination" @request="onRequest" binary-state-sort
+          :rows-per-page-options="[10, 25, 50, 100, 0]" class="maifip-table">
           <template v-slot:top>
             <div class="full-width row justify-between items-center">
               <div class="text-subtitle1">
@@ -177,15 +106,8 @@
                   Total Amount: {{ formatCurrency(totalAmount) }}
                 </q-chip>
               </div>
-              <q-input
-                v-model="searchText"
-                placeholder="Search by patient name or GL number..."
-                outlined
-                dense
-                debounce="300"
-                style="width: 300px"
-                clearable
-              >
+              <q-input v-model="searchText" placeholder="Search by patient name or GL number..." outlined dense
+                debounce="300" style="width: 300px" clearable>
                 <template v-slot:append>
                   <q-icon name="search" />
                 </template>
@@ -215,16 +137,12 @@
 
           <template v-slot:body-cell-fund_source="props">
             <q-td :props="props">
-              <q-badge
-                :color="
-                  props.value === 'MAIFIP-LGU'
-                    ? 'blue'
-                    : props.value === 'MAIFIP-Congressman'
-                      ? 'purple'
-                      : 'grey'
-                "
-                :label="props.value || 'N/A'"
-              />
+              <q-badge :color="props.value === 'MAIFIP-LGU'
+                  ? 'blue'
+                  : props.value === 'MAIFIP-Congressman'
+                    ? 'purple'
+                    : 'grey'
+                " :label="props.value || 'N/A'" />
             </q-td>
           </template>
 
@@ -446,7 +364,7 @@ export default {
     async loadImages() {
       console.log('Loading images...')
       const [doh, bp, cho, city] = await Promise.all([
-        this.loadImageAsDataUrl('/Doh.png'),
+        this.loadImageAsDataUrl('//chopa/doh.png'),
         this.loadImageAsDataUrl('/BP.png'),
         this.loadImageAsDataUrl('/CHO-logo.png'),
         this.loadImageAsDataUrl('/logo.png'),
