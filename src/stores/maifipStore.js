@@ -48,5 +48,23 @@ export const usemaifipStore = defineStore('maifip', {
         this.loading = false
       }
     },
+
+    async generateAnnexB(payload) {
+      this.loading = true
+      try {
+        const res = await api.post('/report/generate-doh', payload, {
+          responseType: 'blob',
+        })
+        return { success: true, data: res.data, headers: res.headers }
+      } catch (error) {
+        console.error('Error generating Annex B report:', error)
+        return {
+          success: false,
+          error: error?.response?.data?.message || error.message,
+        }
+      } finally {
+        this.loading = false
+      }
+    },
   },
 })

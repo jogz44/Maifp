@@ -345,6 +345,8 @@ export default {
         laboratory: ['dashboard', 'laboratory'],
         billing: ['dashboard', 'billing'],
         assessor: ['dashboard', 'philhealth'],
+        // NEW ROLE
+        'laboratory-assessor-billing': ['dashboard', 'laboratory', 'philhealth', 'billing'],
       },
     }
   },
@@ -410,6 +412,8 @@ export default {
           return '/dashboard-billing'
         case 'assessor':
           return '/dashboard-assessor'
+        case 'laboratory-assessor-billing':
+          return '/dashboard-billing'
         default:
           return '/:catchAll(.*)*'
       }

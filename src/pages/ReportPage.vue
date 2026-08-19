@@ -29,25 +29,15 @@
 
             <!-- Date Range Toggle -->
             <div class="col-12 col-md-auto">
-              <q-toggle v-model="isRange" label="Select Date Range" color="green-8" />
-            </div>
-
-            <!-- Single Date Picker -->
-            <div v-if="!isRange" class="col-12 col-md-auto">
-              <q-input v-model="singleDate" label="Select Date" outlined dense clearable readonly>
-                <template v-slot:append>
-                  <q-icon name="event" class="cursor-pointer">
-                    <q-popup-proxy ref="singlePickerProxy" cover transition-show="scale" transition-hide="scale">
-                      <q-date v-model="singleDate" mask="YYYY-MM-DD"
-                        @update:model-value="() => $refs.singlePickerProxy.hide()" />
-                    </q-popup-proxy>
-                  </q-icon>
-                </template>
-              </q-input>
+              <!-- Forcibly only date range -->
+              <q-banner dense class="q-mb-xs">
+                Please select <span class="text-bold">From Date</span> and
+                <span class="text-bold">To Date</span> to generate Annex B report.
+              </q-banner>
             </div>
 
             <!-- From Date Picker -->
-            <div v-else class="col-12 col-md-auto">
+            <div class="col-12 col-md-auto">
               <q-input v-model="fromDate" label="From Date" outlined dense clearable readonly>
                 <template v-slot:append>
                   <q-icon name="event" class="cursor-pointer">
@@ -61,7 +51,7 @@
             </div>
 
             <!-- To Date Picker -->
-            <div v-if="isRange" class="col-12 col-md-auto">
+            <div class="col-12 col-md-auto">
               <q-input v-model="toDate" label="To Date" outlined dense clearable readonly>
                 <template v-slot:append>
                   <q-icon name="event" class="cursor-pointer">
@@ -88,10 +78,22 @@
       <q-card-section class="row items-center justify-between">
         <div class="text-h6">MAIFIP Data</div>
         <div class="row q-gutter-sm" v-if="displayedData.length > 0">
-          <q-btn label="Generate PDF" color="red-8" icon="picture_as_pdf" @click="generateReport('pdf')"
-            :loading="isGenerating" :disable="isGenerating" />
-          <q-btn label="Generate Excel" color="green-8" icon="table_chart" @click="generateReport('excel')"
-            :loading="isGenerating" :disable="isGenerating" />
+          <q-btn
+            label="Generate PDF"
+            color="red-8"
+            icon="picture_as_pdf"
+            @click="generateReport('pdf')"
+            :loading="isGenerating"
+            :disable="isGenerating"
+          />
+          <q-btn
+            label="Generate Excel (Annex B)"
+            color="green-8"
+            icon="table_chart"
+            @click="generateReport('excel')"
+            :loading="isGenerating"
+            :disable="isGenerating"
+          />
         </div>
       </q-card-section>
       <q-separator />
@@ -172,28 +174,21 @@
 
 <script>
 import { usemaifipStore } from 'stores/maifipStore'
-import * as XLSX from 'xlsx'
 
 let pdfMakeInstance = null
 
 // Pre-load pdfmake
 const initPdfMake = async () => {
   if (pdfMakeInstance) return pdfMakeInstance
-
   const pdfmakeModule = await import('pdfmake/build/pdfmake')
   const pdfmakeFonts = await import('pdfmake/build/vfs_fonts')
-
   pdfMakeInstance = pdfmakeModule.default
   const fonts = pdfmakeFonts.default
-
-  // Set up fonts
   if (fonts.pdfMake) {
     pdfMakeInstance.vfs = fonts.pdfMake.vfs
   } else if (fonts.vfs) {
     pdfMakeInstance.vfs = fonts.vfs
   }
-
-  // Register fonts
   pdfMakeInstance.fonts = {
     Roboto: {
       normal: 'Roboto-Regular.ttf',
@@ -202,7 +197,6 @@ const initPdfMake = async () => {
       bolditalics: 'Roboto-MediumItalic.ttf',
     },
   }
-
   return pdfMakeInstance
 }
 
@@ -223,8 +217,7 @@ export default {
         { label: 'MAIFIP-Congressman', value: 'MAIFIP-Congressman' },
       ],
 
-      isRange: false,
-      singleDate: null,
+      // ONLY date range used (Annex B logic)
       fromDate: null,
       toDate: null,
 
@@ -237,7 +230,7 @@ export default {
       loadingSubMessage: 'Please wait...',
       progressValue: 0,
 
-      // Image data URLs
+      // Images
       logoImages: {
         doh: null,
         bp: null,
@@ -318,7 +311,6 @@ export default {
       }
       return data
     },
-
     totalAmount() {
       return this.displayedData.reduce((sum, row) => sum + (parseFloat(row.amount) || 0), 0)
     },
@@ -330,17 +322,10 @@ export default {
   },
 
   methods: {
-    /**
-     * Convert text to uppercase
-     */
     toUpperCase(text) {
       if (!text || text === 'N/A') return 'N/A'
       return text.toUpperCase()
     },
-
-    /**
-     * Load images as PNG data URLs directly
-     */
     async loadImageAsDataUrl(url) {
       try {
         const response = await fetch(url, { cache: 'force-cache' })
@@ -360,24 +345,15 @@ export default {
         return null
       }
     },
-
     async loadImages() {
-      console.log('Loading images...')
       const [doh, bp, cho, city] = await Promise.all([
         this.loadImageAsDataUrl('//chopa/doh.png'),
         this.loadImageAsDataUrl('/BP.png'),
         this.loadImageAsDataUrl('/CHO-logo.png'),
         this.loadImageAsDataUrl('/logo.png'),
       ])
-
       this.logoImages = { doh, bp, cho, city }
       this.imagesReady = true
-      console.log('Images loaded:', {
-        doh: !!doh,
-        bp: !!bp,
-        cho: !!cho,
-        city: !!city,
-      })
     },
 
     getCurrentDateTime() {
@@ -393,7 +369,6 @@ export default {
     fromDateOptions(date) {
       return this.toDate ? date <= this.toDate : true
     },
-
     toDateOptions(date) {
       return this.fromDate ? date >= this.fromDate : true
     },
@@ -409,8 +384,7 @@ export default {
           this.allData = this.filteredData = []
           this.showErrorNotification('Failed to load data')
         }
-      } catch (e) {
-        console.error('Fetch error:', e)
+      } catch {
         this.allData = this.filteredData = []
         this.showErrorNotification('Failed to load data')
       } finally {
@@ -482,17 +456,13 @@ export default {
     },
 
     applyDateFilter(data) {
-      if (this.isRange && this.fromDate && this.toDate) {
+      if (this.fromDate && this.toDate) {
         const from = this.getDateOnly(this.fromDate)
         const to = this.getDateOnly(this.toDate)
         return data.filter((r) => {
           const d = this.getDateOnly(r.transaction_date)
           return d >= from && d <= to
         })
-      }
-      if (!this.isRange && this.singleDate) {
-        const single = this.getDateOnly(this.singleDate)
-        return data.filter((r) => this.getDateOnly(r.transaction_date) === single)
       }
       return data
     },
@@ -510,12 +480,14 @@ export default {
     getDateOnly(date) {
       if (!date) return null
       const d = new Date(date)
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+        d.getDate(),
+      ).padStart(2, '0')}`
     },
 
     async onFilter() {
       if (!this.isFilterValid()) {
-        this.showErrorNotification('Please select valid date(s) for filtering')
+        this.showErrorNotification('Please select both From Date and To Date to filter.')
         return
       }
       this.loading = true
@@ -527,8 +499,7 @@ export default {
         filtered.length
           ? this.showSuccessNotification(`Found ${filtered.length} filtered records`)
           : this.showErrorNotification('No data found for selected filters')
-      } catch (e) {
-        console.error(e)
+      } catch {
         this.filteredData = []
         this.showErrorNotification('Failed to filter data')
       } finally {
@@ -537,8 +508,7 @@ export default {
     },
 
     clearFilters() {
-      this.isRange = false
-      this.singleDate = this.fromDate = this.toDate = null
+      this.fromDate = this.toDate = null
       this.searchText = ''
       this.fundSource = 'all'
       this.filteredData = [...this.allData]
@@ -547,7 +517,7 @@ export default {
     },
 
     isFilterValid() {
-      return this.isRange ? !!(this.fromDate && this.toDate) : !!this.singleDate
+      return !!(this.fromDate && this.toDate)
     },
 
     onRequest({ pagination: { page, rowsPerPage, sortBy, descending } }) {
@@ -566,14 +536,13 @@ export default {
           this.loadingSubMessage = 'Building document...'
           this.progressValue = 0.2
           await this.generatePDF()
-        } else {
-          this.loadingMessage = 'Generating Excel Report...'
-          this.loadingSubMessage = 'Preparing spreadsheet...'
+        } else if (type === 'excel') {
+          this.loadingMessage = 'Generating Annex B Excel Report...'
+          this.loadingSubMessage = 'Preparing and requesting Annex B report...'
           this.progressValue = 0.5
-          await this.generateExcel()
+          await this.generateAnnexBExcel()
         }
-      } catch (e) {
-        console.error(e)
+      } catch {
         this.showErrorNotification(`Failed to generate ${type.toUpperCase()} report`)
       } finally {
         this.isGenerating = false
@@ -581,32 +550,63 @@ export default {
       }
     },
 
-    async generatePDF() {
-      try {
-        this.progressValue = 0.4
-        this.loadingSubMessage = 'Building document structure...'
+    /**
+     * Generate the Annex B Excel report using backend/service.
+     * Requires valid date range filter
+     */
+    async generateAnnexBExcel() {
+      // Must have a valid date range for the Annex B report
+      if (!(this.fromDate && this.toDate)) {
+        this.showErrorNotification(
+          'Annex B Report requires a range of date (from/to) to generate report.',
+        )
+        throw new Error('No valid date range filter')
+      }
 
-        const docDefinition = this.buildPDFDocument()
+      const payload = {
+        fromDate: this.fromDate,
+        toDate: this.toDate,
+        fund_source: this.fundSource === 'all' ? undefined : this.fundSource,
+      }
+      const fileDesc = `${this.fromDate.replace(/-/g, '')}_to_${this.toDate.replace(/-/g, '')}`
 
-        this.progressValue = 0.7
-        this.loadingSubMessage = 'Generating PDF...'
-
-        const pdf = pdfMakeInstance.createPdf(docDefinition)
-        pdf.download(this.generateFilename('pdf'))
-
-        this.progressValue = 1
-        this.showSuccessNotification('PDF generated successfully!')
-      } catch (error) {
-        console.error('PDF generation error:', error)
-        throw error
+      this.loadingSubMessage = 'Requesting Annex B report...'
+      const result = await this.maifipStore.generateAnnexB(payload)
+      if (result && result.success && result.data) {
+        // Download the Excel (blob)
+        const blob = new Blob([result.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `AnnexBReport-${fileDesc}.xlsx`
+        document.body.appendChild(a)
+        a.click()
+        setTimeout(() => {
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+        }, 100)
+        this.showSuccessNotification('Annex B Excel report generated and downloaded successfully!')
+      } else {
+        this.showErrorNotification('Failed to generate Annex B report from the server')
       }
     },
 
-    buildPDFDocument() {
-      // Prepare table body - only ONE header row
-      const tableBody = []
+    async generatePDF() {
+      this.progressValue = 0.4
+      this.loadingSubMessage = 'Building document structure...'
+      const docDefinition = this.buildPDFDocument()
+      this.progressValue = 0.7
+      this.loadingSubMessage = 'Generating PDF...'
+      const pdf = pdfMakeInstance.createPdf(docDefinition)
+      pdf.download(this.generateFilename('pdf'))
+      this.progressValue = 1
+      this.showSuccessNotification('PDF generated successfully!')
+    },
 
-      // Add single header row
+    buildPDFDocument() {
+      const tableBody = []
       tableBody.push([
         { text: 'DATE', style: 'tableHeader', alignment: 'center' },
         { text: 'PATIENT NAME', style: 'tableHeader', alignment: 'left' },
@@ -614,8 +614,6 @@ export default {
         { text: 'FUND SOURCE', style: 'tableHeader', alignment: 'center' },
         { text: 'AMOUNT', style: 'tableHeader', alignment: 'right' },
       ])
-
-      // Add data rows with UPPERCASE patient names
       this.displayedData.forEach((row) => {
         tableBody.push([
           { text: this.formatReportDate(row.transaction_date), alignment: 'center' },
@@ -625,8 +623,6 @@ export default {
           { text: this.formatCurrencyForPDF(row.amount), alignment: 'right' },
         ])
       })
-
-      // Add total row
       tableBody.push([
         { text: 'TOTAL', colSpan: 4, alignment: 'right', style: 'totalRow' },
         {},
@@ -638,7 +634,6 @@ export default {
           style: 'totalRow',
         },
       ])
-
       return {
         pageOrientation: 'landscape',
         pageSize: 'A4',
@@ -647,9 +642,7 @@ export default {
         header: () => this.buildPDFHeader(),
         footer: (currentPage, pageCount) => this.buildPDFFooter(currentPage, pageCount),
         content: [
-          // Title
           { text: 'MAIFIP REPORT', style: 'title', alignment: 'center', margin: [0, 0, 0, 6] },
-          // Report info
           {
             text: this.getDateRangeText(),
             style: 'reportInfo',
@@ -662,7 +655,6 @@ export default {
             alignment: 'center',
             margin: [0, 0, 0, 4],
           },
-          // Data table
           {
             table: {
               headerRows: 0,
@@ -689,56 +681,33 @@ export default {
         },
       }
     },
-
     buildPDFHeader() {
-      // Left side images (DOH and BP) - horizontal
       const leftImages = []
-
       if (this.logoImages.doh) {
-        leftImages.push({
-          image: this.logoImages.doh,
-          width: 45,
-        })
+        leftImages.push({ image: this.logoImages.doh, width: 45 })
       }
-
       if (this.logoImages.bp) {
-        leftImages.push({
-          image: this.logoImages.bp,
-          width: 45,
-        })
+        leftImages.push({ image: this.logoImages.bp, width: 45 })
       }
-
       if (leftImages.length === 0) {
         leftImages.push({ text: '' })
       }
-
-      // Right side images (CHO and City logo) - horizontal
       const rightImages = []
-
       if (this.logoImages.cho) {
-        rightImages.push({
-          image: this.logoImages.cho,
-          width: 45,
-        })
+        rightImages.push({ image: this.logoImages.cho, width: 45 })
       }
-
       if (this.logoImages.city) {
-        rightImages.push({
-          image: this.logoImages.city,
-          width: 45,
-        })
+        rightImages.push({ image: this.logoImages.city, width: 45 })
       }
-
       if (rightImages.length === 0) {
         rightImages.push({ text: '' })
       }
-
       return {
         margin: [40, 20, 40, 10],
         columns: [
           {
             width: 100,
-            columns: leftImages, // ← horizontal now
+            columns: leftImages,
             alignment: 'center',
             columnGap: 5,
           },
@@ -780,23 +749,16 @@ export default {
           },
           {
             width: 100,
-            columns: rightImages, // ← horizontal now
+            columns: rightImages,
             alignment: 'center',
             columnGap: 5,
           },
         ],
       }
     },
-
     buildPDFFooter(currentPage, pageCount) {
       return {
         columns: [
-          // {
-          //   text: `Generated on: ${this.getCurrentDateTime()}`,
-          //   alignment: 'left',
-          //   fontSize: 7,
-          //   color: '#999999',
-          // },
           {
             text: `Page ${currentPage} of ${pageCount}`,
             alignment: 'right',
@@ -808,37 +770,10 @@ export default {
       }
     },
 
-    async generateExcel() {
-      const data = this.displayedData.map((row) => ({
-        Date: this.formatReportDateForExcel(row.transaction_date),
-        'Patient Name': this.toUpperCase(row.patient_name || 'N/A'),
-        'GL Number': row.gl_number || 'N/A',
-        'Fund Source': row.fund_source || 'N/A',
-        Amount: row.amount,
-      }))
-
-      data.push({
-        Date: '',
-        'Patient Name': '',
-        'GL Number': '',
-        'Fund Source': 'TOTAL AMOUNT:',
-        Amount: this.totalAmount,
-      })
-
-      const wb = XLSX.utils.book_new()
-      const ws = XLSX.utils.json_to_sheet(data)
-      ws['!cols'] = [{ width: 15 }, { width: 30 }, { width: 15 }, { width: 18 }, { width: 15 }]
-      XLSX.utils.book_append_sheet(wb, ws, 'MAIFIP Report')
-      XLSX.writeFile(wb, this.generateFilename('xlsx'))
-      this.showSuccessNotification('Excel file generated successfully!')
-    },
-
     generateFilename(ext) {
       const ts = new Date().toISOString().split('T')[0].replace(/-/g, '')
       const fs = this.fundSource !== 'all' ? `-${this.fundSource.replace('-', '')}` : ''
-      if (!this.isRange && this.singleDate)
-        return `MAIFIPReport-${this.singleDate.replace(/-/g, '')}${fs}.${ext}`
-      if (this.isRange && this.fromDate && this.toDate)
+      if (this.fromDate && this.toDate)
         return `MAIFIPReport-${this.fromDate.replace(/-/g, '')}_to_${this.toDate.replace(/-/g, '')}${fs}.${ext}`
       return `MAIFIPReport-${ts}${fs}.${ext}`
     },
@@ -855,20 +790,25 @@ export default {
         return 'Invalid Date'
       }
     },
-
-    formatReportDateForExcel(d) {
-      if (!d) return 'N/A'
-      try {
-        return new Date(d).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-        })
-      } catch {
-        return 'Invalid Date'
-      }
+    formatCurrency(amount) {
+      const n = Number(amount)
+      return isNaN(n)
+        ? '₱0.00'
+        : new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(n)
     },
-
+    formatCurrencyForPDF(amount) {
+      return this.formatCurrency(amount)
+    },
+    getDateRangeText() {
+      if (this.fromDate && this.toDate)
+        return `Date Range: ${this.formatDisplayDate(this.fromDate)} to ${this.formatDisplayDate(this.toDate)}`
+      return `All Records (${this.displayedData.length} entries)`
+    },
+    getFundSourceText() {
+      return this.fundSource === 'all'
+        ? 'Fund Source: All Sources'
+        : `Fund Source: ${this.fundSource}`
+    },
     formatDisplayDate(d) {
       if (!d) return 'N/A'
       try {
@@ -882,31 +822,6 @@ export default {
       }
     },
 
-    formatCurrency(amount) {
-      const n = Number(amount)
-      return isNaN(n)
-        ? '₱0.00'
-        : new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(n)
-    },
-
-    formatCurrencyForPDF(amount) {
-      return this.formatCurrency(amount)
-    },
-
-    getDateRangeText() {
-      if (!this.isRange && this.singleDate)
-        return `Date: ${this.formatDisplayDate(this.singleDate)}`
-      if (this.isRange && this.fromDate && this.toDate)
-        return `Date Range: ${this.formatDisplayDate(this.fromDate)} to ${this.formatDisplayDate(this.toDate)}`
-      return `All Records (${this.displayedData.length} entries)`
-    },
-
-    getFundSourceText() {
-      return this.fundSource === 'all'
-        ? 'Fund Source: All Sources'
-        : `Fund Source: ${this.fundSource}`
-    },
-
     showSuccessNotification(message) {
       this.$q.notify({
         message,
@@ -916,7 +831,6 @@ export default {
         actions: [{ icon: 'close', color: 'white' }],
       })
     },
-
     showErrorNotification(message) {
       this.$q.notify({
         message,
@@ -935,20 +849,16 @@ export default {
 .data-card {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
-
 .loading-card {
   min-width: 300px;
 }
-
 .maifip-table :deep(.q-table__top) {
   padding: 16px;
   background-color: #f5f5f5;
 }
-
 .maifip-table :deep(.q-table__bottom) {
   background-color: #f5f5f5;
 }
-
 .text-uppercase {
   text-transform: uppercase;
 }
