@@ -384,7 +384,7 @@ export default {
         case 'assessor':
           return '/dashboard-assessor'
         case 'laboratory-assessor-billing':
-          return '/dashboard-billing'
+          return '/dashboard-encoder'
         default:
           return '/:catchAll(.*)*'
       }
