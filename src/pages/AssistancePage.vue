@@ -369,7 +369,15 @@
                   <strong>PhilHealth Number:</strong> {{ patient.philhealth_id }}
                 </p>
                 <p><strong>Surname:</strong> {{ patient.lastname }}</p>
-                <p><strong>First Name:</strong> {{ patient.firstname }}</p>
+                <p>
+                  <strong>First Name:</strong>
+                  {{ patient.firstname }}
+                  <span
+                    v-if="patient.ext && !['N/A', 'NA'].includes(patient.ext.trim().toUpperCase())"
+                  >
+                    {{ patient.ext }}
+                  </span>
+                </p>
                 <p><strong>Middle Name:</strong> {{ patient.middlename || 'N/A' }}</p>
               </div>
               <div class="col-6">
