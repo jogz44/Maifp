@@ -9,7 +9,7 @@ const api = axios.create({
   // baseURL: 'http://192.168.8.182:5000/api', //Home
   // baseURL: 'http://127.0.0.1:8000/api',
   // baseURL: 'https://tagumcity.gov.ph/maifpbackend/public/api',
-  baseURL: 'https://tagumcity.gov.ph/maifpbackend/public/api',
+  baseURL: 'https://tagumcity.gov.ph/champ_backend/public/api',
 
   withCredentials: true,
 })

@@ -347,10 +347,10 @@ export default {
     },
     async loadImages() {
       const [doh, bp, cho, city] = await Promise.all([
-        this.loadImageAsDataUrl('//chopa/doh.png'),
-        this.loadImageAsDataUrl('/BP.png'),
-        this.loadImageAsDataUrl('/CHO-logo.png'),
-        this.loadImageAsDataUrl('/logo.png'),
+        this.loadImageAsDataUrl('/champ/doh.png'),
+        this.loadImageAsDataUrl('/champ/BP.png'),
+        this.loadImageAsDataUrl('/champ/CHO-logo.png'),
+        this.loadImageAsDataUrl('/champ/logo.png'),
       ])
       this.logoImages = { doh, bp, cho, city }
       this.imagesReady = true

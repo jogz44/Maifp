@@ -36,14 +36,14 @@ export default defineConfig((/* ctx */) => {
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#build
     build: {
-      publicPath: '/chopa/',
+      publicPath: '/champ/',
       target: {
         browser: ['es2022', 'firefox115', 'chrome115', 'safari14'],
         node: 'node20',
       },
 
       vueRouterMode: 'history', // available values: 'hash', 'history'
-      vueRouterBase: '/chopa/', // added for history mode
+      vueRouterBase: '/champ/', // added for history mode
       // vueDevtools,
       // vueOptionsAPI: false,
 
