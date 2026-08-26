@@ -480,6 +480,7 @@ const billingData = ref({
   lastname: '',
   middlename: '',
   birthdate: '',
+  ext: '',
   age: null,
   gender: '',
   category: '',
