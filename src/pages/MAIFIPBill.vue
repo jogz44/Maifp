@@ -295,7 +295,17 @@
                   {{ formatDate(billingData.transaction_date) }}
                 </p>
                 <p><strong>Surname:</strong> {{ billingData.lastname || 'N/A' }}</p>
-                <p><strong>First Name:</strong> {{ billingData.firstname || 'N/A' }}</p>
+                <p>
+                  <strong>First Name:</strong>
+                  {{ billingData.firstname }}
+                  <span
+                    v-if="
+                      patient.ext && !['N/A', 'NA'].includes(billingData.ext.trim().toUpperCase())
+                    "
+                  >
+                    {{ billingData.ext }}
+                  </span>
+                </p>
                 <p><strong>Middle Name:</strong> {{ billingData.middlename || 'N/A' }}</p>
               </div>
               <div class="col-6">

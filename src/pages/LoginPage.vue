@@ -409,7 +409,7 @@ export default {
             coder: '/dashboard-encoder',
             billing: '/dashboard-billing',
             assessor: '/dashboard-assessor',
-            'laboratory-assessor-billing':'/dashboard-encoder'
+            'laboratory-assessor-billing': '/dashboard-encoder',
           }
 
           const redirectPath = roleRoutes[role] || '/'
