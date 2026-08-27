@@ -7,11 +7,13 @@ export const useUserStore = defineStore('users', {
     user: {},
     users: [],
     selected_id: null,
-    authenticatedUser:0,
+    authenticatedUser: 0,
+    loading: false,
   }),
 
   actions: {
     async getUsers() {
+      this.loading = true
       try {
         const response = await api.get('/system/users')
         this.users = response.data.users
@@ -22,10 +24,13 @@ export const useUserStore = defineStore('users', {
           position: 'center',
           timeout: 5000,
         })
+      } finally {
+        this.loading = false
       }
     },
 
     async getUser(id) {
+      this.loading = true
       try {
         const response = await api.get('/system/user/profile/' + id)
         this.user = response.data.user[0]
@@ -37,10 +42,13 @@ export const useUserStore = defineStore('users', {
           position: 'center',
           timeout: 5000,
         })
+      } finally {
+        this.loading = false
       }
     },
 
     async newUser(payload) {
+      this.loading = true
       try {
         payload.status = 'Active'
         const response = await api.post('/system/user/new', payload)
@@ -61,21 +69,23 @@ export const useUserStore = defineStore('users', {
           position: 'center',
           timeout: 5000,
         })
+      } finally {
+        this.loading = false
       }
     },
 
     async updateUser(id, payload) {
+      this.loading = true
       try {
         console.log(payload)
         // Add password_confirmation if password is being updated
         if (payload.password) {
           payload.password_confirmation = payload.confirm_password
-
         }
         // Remove confirm_password from payload before sending to API
 
         console.log('Payload sent to API:', payload)
-        const response = await api.put('/system/user/profile-update/' + id, {
+        const response = await api.post('/system/user/profile-update/' + id, {
           ...payload,
           password_confirmation: payload.confirm_password,
         })
@@ -97,10 +107,13 @@ export const useUserStore = defineStore('users', {
           position: 'center',
           timeout: 5000,
         })
+      } finally {
+        this.loading = false
       }
     },
 
     async removeUser(id) {
+      this.loading = true
       try {
         const response = await api.post('/system/user/profile-remove/' + id)
         // console.log(response.data.success)
@@ -119,11 +132,15 @@ export const useUserStore = defineStore('users', {
           position: 'center',
           timeout: 5000,
         })
+      } finally {
+        this.loading = false
       }
     },
-   async deactivateUser(id){
+
+    async deactivateUser(id) {
+      this.loading = true
       try {
-        const response = await api.put('/system/user/profile-deactivate/' + id)
+        const response = await api.post('/system/user/profile-deactivate/' + id)
         // console.log(response.data.success)
         if (response.data.success) {
           Notify.create({
@@ -140,12 +157,15 @@ export const useUserStore = defineStore('users', {
           position: 'center',
           timeout: 5000,
         })
+      } finally {
+        this.loading = false
       }
-   },
+    },
 
-   async activateUser(id){
+    async activateUser(id) {
+      this.loading = true
       try {
-        const response = await api.put('/system/user/profile-activate/' + id)
+        const response = await api.post('/system/user/profile-activate/' + id)
         // console.log(response.data.success)
         if (response.data.success) {
           Notify.create({
@@ -162,44 +182,40 @@ export const useUserStore = defineStore('users', {
           position: 'center',
           timeout: 5000,
         })
+      } finally {
+        this.loading = false
       }
-   },
+    },
 
     async loginUser(payload) {
+      this.loading = true
       try {
-        // await api.get('/sanctum/csrf-cookie') // Get CSRF cookie first
         const response = await api.post('/user/login', payload)
         console.log(response.data)
 
-          if (response.data.success) {
-                // Store token in localStorage
-                LocalStorage.set('auth_token', response.data.data.token)
-                LocalStorage.set('user', response.data.data.user)
+        if (response.data.success) {
+          LocalStorage.set('auth_token', response.data.data.token)
+          LocalStorage.set('user', response.data.data.user)
+          LocalStorage.set('role_name', response.data.data.user.role_name)
 
-                // Set default authorization header
-                this.setAuthHeader(response.data.data.token)
-
-                return response.data
-              }
-        if (response.data.Login_Status) {
-          Notify.create({
-            type: 'positive',
-            message: 'User Logged-in.',
-            position: 'center',
-            timeout: 5000,
-          })
+          api.defaults.headers.common['Authorization'] = `Bearer ${response.data.data.token}`
         }
+
+        return response.data
       } catch (error) {
-        Notify.create({
-          type: 'negative',
-          message: error.response?.data?.message || error.message || 'An unexpected error occurred',
-          position: 'center',
-          timeout: 5000,
-        })
+        console.error('Login error:', error)
+
+        return {
+          success: false,
+          error: error.response?.data?.message || error.message || 'Login failed',
+        }
+      } finally {
+        this.loading = false
       }
     },
   },
 })
+
 if (import.meta.hot) {
   import.meta.hot.accept(acceptHMRUpdate(useUserStore, import.meta.hot))
 }

@@ -1,591 +1,1167 @@
 <template>
-  <q-page class="q-pa-sm q-ma-sm">
-    <q-card class="q-pa-sm" style="width: 100%; display: inline-block">
-      <div class="row q-gutter-md q-pb-sm">
-        <div class="col-12">
-          <div class="text-subtitle2 text-primary">Customer Information</div>
-        </div>
-      </div>
-      <q-separator />
-      <q-form @submit.prevent="submitCustomerForm" ref="customerForm">
-        <div class="row q-gutter-md q-pt-lg text-uppercase">
-          <div class="col-12 col-md-3 q-pa-sm">
-            <q-input
-              dense
-              v-model="CustomerInfo.lastname"
-              label="Lastname"
-              class="full-width text-caption"
-              lazy-rules
-              :rules="[(val) => !!val || 'Surname is required']"
-            />
-          </div>
-          <div class="col-12 col-md-3 q-pa-sm">
-            <q-input
-              dense
-              v-model="CustomerInfo.firstname"
-              label="Firstname"
-              class="full-width text-caption"
-              lazy-rules
-              :rules="[(val) => !!val || 'Firstname is required']"
-            />
-          </div>
-          <div class="col-12 col-md-3 q-pa-sm">
-            <q-input
-              dense
-              v-model="CustomerInfo.middlename"
-              label="Middlename"
-              class="full-width text-caption"
-            />
-          </div>
-          <div class="col-12 col-md-1 q-pa-sm">
-            <q-input
-              dense
-              v-model="CustomerInfo.ext"
-              label="Ext."
-              class="full-width text-caption"
-            />
-          </div>
-        </div>
+  <q-page class="q-pa-md">
+    <!-- Patient Information Card -->
+    <q-card flat bordered>
+      <q-card-section class="bg-green-9 text-white">
+        <div class="text-subtitle1 q-my-none">Patients Information</div>
+      </q-card-section>
 
-        <div class="row q-gutter-md q-pa-sm">
-          <div class="col-12 col-md-2 q-pa-sm">
-            <q-select
-              dense
-              v-model="CustomerInfo.gender"
-              :options="GenSelection"
-              label="Gender"
-              class="full-width text-caption text-uppercase"
-              lazy-rules
-              :rules="[(val) => !!val || 'Gender is required']"
-            />
+      <q-form @submit.prevent="submitPatientForm" ref="patientForm">
+        <q-card-section>
+          <!-- ID Numbers Section -->
+          <div class="row q-col-gutter-md">
+            <div class="col-12 col-md-6">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.philsys_id"
+                label="PhilSys ID"
+                class="text-caption"
+                mask="####-####-####-####"
+              />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.philhealth_id"
+                label="PhilHealth ID Number"
+                class="text-caption"
+                mask="##-#########-#"
+              />
+            </div>
           </div>
-          <div class="col-12 col-md-2 q-pa-sm text-caption">
-            <q-input
-              type="date"
-              dense
-              v-model="CustomerInfo.birthdate"
-              label="Birthdate"
-              class="full-width text-caption"
-              @change="calculateAge(CustomerInfo.birthdate)"
-              lazy-rules
-              :rules="[(val) => !!val || 'Birthdate is required']"
-            />
+          <!-- Personal Details Section -->
+          <div class="row q-col-gutter-md q-mt-sm">
+            <div class="col-12 col-md-3">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.lastname"
+                label="Lastname *"
+                class="text-caption"
+                lazy-rules
+                :rules="[(val) => !!val || 'Surname is required']"
+              />
+            </div>
+            <div class="col-12 col-md-3">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.firstname"
+                label="Firstname *"
+                class="text-caption"
+                lazy-rules
+                :rules="[(val) => !!val || 'Firstname is required']"
+              />
+            </div>
+            <div class="col-12 col-md-3">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.middlename"
+                label="Middlename"
+                class="text-caption"
+              />
+            </div>
+            <div class="col-12 col-md-3">
+              <q-input outlined dense v-model="patientData.ext" label="Ext." class="text-caption" />
+            </div>
           </div>
-          <div class="col-12 col-md-1 q-pa-sm">
-            <q-input
-              dense
-              v-model="CustomerInfo.age"
-              label="Age"
-              class="full-width text-caption"
-              readonly
-            />
-          </div>
-          <div class="col-12 col-md-3 q-pa-sm">
-            <q-input
-              dense
-              v-model="CustomerInfo.contact_number"
-              label="Contact Number"
-              class="full-width text-caption"
-              inputmode="numeric"
 
-            />
-             <!-- lazy-rules
-              :rules="[(val) => !!val || 'contact number is required']" -->
+          <!-- Personal Info Section -->
+          <div class="row q-col-gutter-md q-mt-sm">
+            <div class="col-12 col-md-3">
+              <q-select
+                outlined
+                dense
+                v-model="patientData.gender"
+                :options="patientStore.genderOptions"
+                label="Gender *"
+                class="text-caption"
+                lazy-rules
+                :rules="[(val) => !!val || 'Gender is required']"
+              />
+            </div>
+            <div class="col-12 col-md-3">
+              <q-input
+                outlined
+                dense
+                type="date"
+                v-model="patientData.birthdate"
+                label="Birthdate *"
+                class="text-caption"
+                @change="handleBirthdateChange"
+                lazy-rules
+                :rules="[(val) => !!val || 'Birthdate is required']"
+              />
+            </div>
+            <div class="col-12 col-md-2">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.age"
+                label="Age"
+                class="text-caption"
+                readonly
+              />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.contact_number"
+                label="Contact Number"
+                class="text-caption"
+                type="text"
+                maxlength="11"
+                :rules="[(val) => !val || val.length === 11 || 'Contact number must be 11 digits']"
+                mask="###########"
+              />
+            </div>
           </div>
-        </div>
 
-        <div class="row q-gutter-md">
-          <div class="col-12 col-md-3 q-pa-sm">
-            <q-checkbox
-              v-model="isChecked"
-              label="Not From This City"
-              @change="toggledCheckbox"
-              class="text-caption text-uppercase"
-              :style="{ fontSize: '11px' }"
-              @update:model-value="clearLocation"
-            />
+          <!-- Additional Personal Information -->
+          <div class="row q-col-gutter-md q-mt-sm">
+            <div class="col-12 col-md-4">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.place_of_birth"
+                label="Place of Birth"
+                class="text-caption"
+              />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-select
+                outlined
+                dense
+                v-model="patientData.civil_status"
+                :options="civilStatusOptions"
+                label="Civil Status"
+                class="text-caption"
+              />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-select
+                outlined
+                dense
+                v-model="patientData.religion"
+                :options="religionOptions"
+                label="Religion"
+                class="text-caption"
+                use-input
+                hide-selected
+                fill-input
+                input-debounce="0"
+              />
+            </div>
           </div>
-        </div>
 
-        <div class="row q-gutter-md" v-if="!isChecked">
-          <div class="col-12 col-md-3 q-pa-sm">
-            <q-select
-              dense
-              v-model="CustomerInfo.barangay"
-              :options="TagumBarangay.barangay"
-              label="Barangay"
-              class="full-width text-caption text-uppercase"
-              lazy-rules
-              :rules="[(val) => !!val || 'Barangay is required']"
-            />
+          <div class="row q-col-gutter-md q-mt-sm">
+            <div class="col-12 col-md-4">
+              <q-select
+                outlined
+                dense
+                v-model="patientData.education_attainment"
+                :options="educationOptions"
+                label="Highest Education Attainment"
+                class="text-caption"
+              />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.occupation"
+                label="Occupation"
+                class="text-caption"
+              />
+            </div>
+            <div class="col-12 col-md-4">
+              <q-select
+                outlined
+                dense
+                v-model="patientData.income"
+                :options="incomeOptions"
+                label="Monthly Income"
+                class="text-caption"
+              />
+            </div>
           </div>
-          <div class="col-12 col-md-3 q-pa-sm">
-            <q-input
-              dense
-              v-model="CustomerInfo.purok"
-              label="Purok"
-              class="full-width text-caption text-uppercase"
 
-            />
-                <!-- lazy-rules
-              :rules="[(val) => !!val || 'Purok is required']" -->
-          </div>
-          <div class="col-12 col-md-4 q-pa-sm">
-            <q-input
-              dense
-              v-model="CustomerInfo.street"
-              label="Street"
-              class="full-width text-caption text-uppercase"
+          <q-separator spaced inset />
 
-            />
-              <!-- lazy-rules
-              :rules="[(val) => !!val || 'street is required']" -->
-          </div>
-          <div class="col-12 col-md-3 q-pa-sm">
-            <q-input
-              dense
-              v-model="CustomerInfo.city"
-              label="City"
-              class="full-width text-caption text-uppercase"
-            />
-          </div>
-          <div class="col-12 col-md-3 q-pa-sm">
-            <q-input
-              dense
-              v-model="CustomerInfo.province"
-              label="Province"
-              class="full-width text-caption text-uppercase"
-            />
-          </div>
-        </div>
+          <!-- Permanent Address Section -->
+          <div class="q-mb-md">
+            <div class="row items-center">
+              <div class="text-subtitle2 q-mb-sm">Permanent Address</div>
+              <q-space />
+            </div>
 
-        <div class="row q-gutter-md" v-else-if="isChecked">
-          <div class="col-12 col-md-3 q-pa-sm">
-            <q-input
-              dense
-              v-model="CustomerInfo.barangay"
-              label="Barangay"
-              class="full-width text-caption"
-              lazy-rules
-              :rules="[(val) => !!val || 'barangay is required']"
-            />
+            <div class="row q-col-gutter-md">
+              <div class="col-12 col-md-4">
+                <q-select
+                  outlined
+                  dense
+                  v-model="patientData.perm_barangay"
+                  :options="TagumBarangay.barangay"
+                  label="Barangay *"
+                  class="text-caption"
+                  :input-debounce="0"
+                  use-input
+                  hide-selected
+                  fill-input
+                  lazy-rules
+                  :rules="[(val) => !!val || 'Barangay is required']"
+                />
+              </div>
+              <div class="col-12 col-md-4">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.perm_purok"
+                  label="Purok"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-4">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.perm_street"
+                  label="Street"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-6">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.perm_city"
+                  label="City"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-6">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.perm_province"
+                  label="Province"
+                  class="text-caption"
+                />
+              </div>
+            </div>
           </div>
-          <div class="col-12 col-md-2 q-pa-sm">
-            <q-input
-              dense
-              v-model="CustomerInfo.purok"
-              label="Purok"
-              class="full-width text-caption"
 
-            />
-               <!-- lazy-rules
-              :rules="[(val) => !!val || 'purok is required']" -->
-          </div>
-          <div class="col-12 col-md-4 q-pa-sm">
-            <q-input
-              dense
-              v-model="CustomerInfo.street"
-              label="Street"
-              class="full-width text-caption"
+          <q-separator spaced inset />
 
-            />
-                 <!-- lazy-rules
-              :rules="[(val) => !!val || 'street is required']" -->
-          </div>
-          <div class="col-12 col-md-2 q-pa-sm">
-            <q-input
-              dense
-              v-model="CustomerInfo.city"
-              label="City"
-              class="full-width text-caption"
-              lazy-rules
-              :rules="[(val) => !!val || 'City is required']"
-            />
-          </div>
-          <div class="col-12 col-md-3 q-pa-sm">
-            <q-input
-              dense
-              v-model="CustomerInfo.province"
-              label="Province"
-              class="full-width text-caption"
-              lazy-rules
-              :rules="[(val) => !!val || 'province is required']"
-            />
-          </div>
-        </div>
+          <!-- Present Address Section -->
+          <div class="q-mb-md">
+            <div class="row items-center">
+              <div class="text-subtitle2 q-mb-sm">Present Address</div>
+              <q-space />
+              <q-checkbox
+                v-model="sameAsPermanentAddress"
+                label="Same as Permanent Address"
+                class="text-caption"
+                @update:model-value="handleSamePermAddressChange"
+              />
+            </div>
 
-        <!-- <div class="row q-gutter-md">
-        <div class="col-12 col-md-3 q-pa-sm">
-          <q-input dense v-model="CustomerInfo.contact_number" label="Contact Number" class="full-width"
-            inputmode="numeric" />
-        </div>
-      </div> -->
+            <div class="row q-col-gutter-md" v-if="!sameAsPermanentAddress">
+              <div class="col-12 col-md-4">
+                <q-select
+                  outlined
+                  dense
+                  v-model="patientData.barangay"
+                  :options="TagumBarangay.barangay"
+                  label="Barangay *"
+                  class="text-caption"
+                  :input-debounce="0"
+                  use-input
+                  hide-selected
+                  fill-input
+                  lazy-rules
+                  :rules="[(val) => !!val || 'Barangay is required']"
+                />
+              </div>
+              <div class="col-12 col-md-4">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.purok"
+                  label="Purok"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-4">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.street"
+                  label="Street"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-6">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.city"
+                  label="City"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-6">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.province"
+                  label="Province"
+                  class="text-caption"
+                />
+              </div>
+            </div>
+          </div>
 
-        <div class="row q-gutter-md q-pt-lg">
-          <div class="col-12 col-md-1 q-pa-sm">
-            <q-checkbox
-              v-model="children"
-              :val="'Children'"
-              label="Children"
-              class="text-caption"
-              :style="{ fontSize: '11px' }"
-              disable
-            />
-          </div>
-          <div class="col-12 col-md-1 q-pa-sm">
-            <q-checkbox
-              v-model="adult"
-              :val="'Adult'"
-              label="Adult"
-              class="text-caption"
-              :style="{ fontSize: '11px' }"
-              disable
-            />
-          </div>
-          <div class="col-12 col-md-1 q-pa-sm">
-            <q-checkbox
-              v-model="senior"
-              :val="'Senior'"
-              label="Senior"
-              class="text-caption"
-              :style="{ fontSize: '11px' }"
-              disable
-            />
-          </div>
-        </div>
+          <q-separator spaced inset />
 
-        <div class="row q-gutter-sm">
-          <div class="col-12 col-md-1 q-pa-sm">
-            <q-checkbox
-              v-model="pwd"
-              :val="'PWD'"
-              label="PWD"
-              class="text-caption"
-              :style="{ fontSize: '11px' }"
-              @change="toggled_pwd"
-            />
+          <!-- Representative Section -->
+          <div>
+            <div class="row items-center">
+              <div class="text-subtitle2 q-mb-sm">Patient Representative</div>
+              <q-space />
+              <q-checkbox
+                v-model="hasRepresentative"
+                label="Has Patient Representative?"
+                class="text-caption"
+              />
+            </div>
+
+            <div v-if="hasRepresentative" class="row q-col-gutter-md q-mt-sm">
+              <div class="col-12 col-md-4">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.rep_name"
+                  label="Representative Name *"
+                  class="text-caption"
+                  lazy-rules
+                  :rules="[
+                    (val) => !hasRepresentative || !!val || 'Representative name is required',
+                  ]"
+                />
+              </div>
+              <div class="col-12 col-md-4">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.rep_relationship"
+                  label="Relationship to Patient *"
+                  class="text-caption"
+                  lazy-rules
+                  :rules="[(val) => !hasRepresentative || !!val || 'Relationship is required']"
+                />
+              </div>
+
+              <div class="col-12 col-md-4">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.rep_contact"
+                  label="Contact Number"
+                  class="text-caption"
+                  type="text"
+                  maxlength="11"
+                  mask="###########"
+                  :rules="[
+                    (val) => !val || val.length === 11 || 'Contact number must be 11 digits',
+                  ]"
+                />
+              </div>
+
+              <!-- Fix for address section header -->
+              <div class="col-12">
+                <div class="row items-center">
+                  <div class="text-subtitle2 q-mb-sm">Representative Address</div>
+                  <q-space />
+                  <q-checkbox
+                    v-model="sameAsPatientAddress"
+                    label="Same as Patient's Present Address"
+                    class="text-caption"
+                    @update:model-value="handleSameAddressChange"
+                  />
+                </div>
+              </div>
+
+              <div class="col-12 col-md-4" v-if="!sameAsPatientAddress">
+                <q-select
+                  outlined
+                  dense
+                  v-model="patientData.rep_barangay"
+                  :options="TagumBarangay.barangay"
+                  label="Barangay"
+                  class="text-caption"
+                  :input-debounce="0"
+                  use-input
+                  hide-selected
+                  fill-input
+                />
+              </div>
+              <div class="col-12 col-md-4" v-if="!sameAsPatientAddress">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.rep_purok"
+                  label="Purok"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-4" v-if="!sameAsPatientAddress">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.rep_street"
+                  label="Street"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-6" v-if="!sameAsPatientAddress">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.rep_city"
+                  label="City"
+                  class="text-caption"
+                />
+              </div>
+              <div class="col-12 col-md-6" v-if="!sameAsPatientAddress">
+                <q-input
+                  outlined
+                  dense
+                  v-model="patientData.rep_province"
+                  label="Province"
+                  class="text-caption"
+                />
+              </div>
+            </div>
           </div>
-          <div class="col-12 col-md-1 q-pa-sm">
-            <q-checkbox
-              v-model="solo"
-              :val="'Solo'"
-              label="Solo"
-              class="text-caption"
-              :style="{ fontSize: '11px' }"
-              @change="toggled_solo"
-            />
+
+          <q-separator spaced inset />
+
+          <!-- Category Section -->
+          <div>
+            <div class="text-subtitle2 q-mb-sm">Patients Category</div>
+            <div class="row q-gutter-md">
+              <q-checkbox
+                v-model="isChild"
+                :val="'Child'"
+                label="Child"
+                class="text-caption"
+                disable
+              />
+              <q-checkbox
+                v-model="isAdult"
+                :val="'Adult'"
+                label="Adult"
+                class="text-caption"
+                disable
+              />
+              <q-checkbox
+                v-model="isSenior"
+                :val="'Senior'"
+                label="Senior"
+                class="text-caption"
+                disable
+              />
+              <q-checkbox
+                v-model="patientData.is_pwd"
+                :val="'PWD'"
+                label="PWD"
+                class="text-caption"
+              />
+              <q-checkbox
+                v-model="patientData.is_solo"
+                :val="'Solo'"
+                label="Solo Parent"
+                class="text-caption"
+              />
+            </div>
           </div>
-        </div>
-        <!-- <pre>{{ CustomerInfo.category }}</pre> -->
+
+          <q-separator spaced inset />
+
+          <!-- Vital Signs Section -->
+          <div>
+            <div class="text-subtitle2 q-mb-sm">Vital Signs</div>
+          </div>
+          <div class="row q-col-gutter-md q-mt-sm">
+            <div class="col-12 col-md-3">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.height"
+                label="Height (cm)"
+                class="text-caption"
+                type="number"
+                @update:model-value="calculateBMI"
+              />
+            </div>
+            <div class="col-12 col-md-3">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.weight"
+                label="Weight (kg)"
+                class="text-caption"
+                type="number"
+                @update:model-value="calculateBMI"
+              />
+            </div>
+            <div class="col-12 col-md-3">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.bmi"
+                label="BMI"
+                class="text-caption"
+                readonly
+              />
+            </div>
+            <div class="col-12 col-md-3">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.waist"
+                label="Waist Circumference (cm)"
+                class="text-caption"
+                type="number"
+              />
+            </div>
+
+            <div class="col-12 col-md-2">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.heart_rate"
+                label="Heart Rate (bpm)"
+                class="text-caption"
+                type="number"
+              />
+            </div>
+            <div class="col-12 col-md-2">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.blood_pressure"
+                label="Blood Pressure (mmHg)"
+                class="text-caption"
+                placeholder="120/80"
+              />
+            </div>
+            <div class="col-12 col-md-2">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.respiratory_rate"
+                label="Respiratory Rate"
+                class="text-caption"
+                type="number"
+              />
+            </div>
+            <div class="col-12 col-md-2">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.pulse_rate"
+                label="Pulse Rate"
+                class="text-caption"
+                type="number"
+              />
+            </div>
+            <div class="col-12 col-md-2">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.temperature"
+                label="Temperature (°C)"
+                class="text-caption"
+                type="number"
+                step="0.1"
+              />
+            </div>
+            <div class="col-12 col-md-2">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.sp02"
+                label="SpO2 (%)"
+                class="text-caption"
+                type="number"
+              />
+            </div>
+
+            <div class="col-12 col-md-6" v-if="isFemale">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.LMP"
+                label="Last Menstrual Period (LMP)"
+                type="date"
+                class="text-caption"
+              />
+            </div>
+            <div class="col-12 col-md-6">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.medicine"
+                label="Maintenance Medicine"
+                class="text-caption"
+                type="textarea"
+                autogrow
+              />
+            </div>
+          </div>
+
+          <q-separator spaced inset />
+
+          <!-- Transaction Information Section -->
+          <div>
+            <div class="text-subtitle2 q-mb-sm">Transaction Information</div>
+          </div>
+          <div class="row q-col-gutter-md q-mt-sm">
+            <div class="col-12 col-md-6">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.transaction_date"
+                type="date"
+                label="Date"
+                class="text-caption"
+                lazy-rules
+                readonly
+                :rules="[(val) => !!val || 'Date is required']"
+              />
+            </div>
+            <div class="col-12">
+              <q-select
+                outlined
+                dense
+                v-model="patientData.transaction_type"
+                :options="patientStore.transaction_type"
+                label="Type of Transaction"
+                class="text-caption"
+                lazy-rules
+                :rules="[(val) => !!val || 'Type is required']"
+              />
+            </div>
+            <div class="col-12">
+              <q-input
+                outlined
+                dense
+                v-model="patientData.purpose"
+                label="Purpose"
+                type="textarea"
+                class="text-caption"
+                autogrow
+              />
+            </div>
+          </div>
+        </q-card-section>
+
+        <!-- Action Buttons -->
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" color="grey" to="/customers" @click="clearInputs" />
+          <q-btn
+            label="Save"
+            color="green-9"
+            @click="submitPatientForm"
+            :loading="patientStore.loading"
+          />
+        </q-card-actions>
       </q-form>
-
-      <div class="row q-gutter-md q-pt-md" style="display: flex; justify-content: space-between">
-        <!-- <div class="col-12 flex justify-start q-pa-md-lg"> -->
-        <q-btn
-          type="submit"
-          label="Cancel"
-          class="q-mr-md q-ml-md text-caption"
-          color="red"
-          to="/customers"
-          @click="clearInputs()"
-        />
-        <!-- </div> -->
-        <!-- <div class="col-12 flex justify-end q-pa-md-lg" v-if="Customer.isSave"> -->
-        <q-btn
-          type="submit"
-          label="Save"
-          class="q-mr-sm q-ml-md text-caption"
-          color="primary"
-          @click="submitCustomerForm()"
-          v-if="Customer.isSave"
-          style="width: 100px"
-        />
-        <!-- </div> -->
-        <!-- <div class="col-12 flex justify-end q-pa-md-lg"  v-else-if="Customer.isEdit" > -->
-        <q-btn
-          type="submit"
-          label="Update"
-          class="q-mr-sm q-ml-md text-caption"
-          color="primary"
-          @click="submitCustomerForm()"
-          v-else-if="Customer.isEdit"
-        />
-        <!-- </div> -->
-      </div>
     </q-card>
 
+    <!-- Error Dialog -->
     <q-dialog v-model="showError" persistent>
-      <q-card class="q-pa-sm" style="max-width: 900px; width: 100%">
+      <q-card class="q-pa-md">
         <q-card-section>
-          <pre>{{ this.errorMsg[0] }}</pre>
+          <div class="text-h6">Error</div>
+          <pre class="text-negative">{{ errorMessage }}</pre>
         </q-card-section>
         <q-card-actions align="right">
-          <!-- Button to close dialog -->
-          <q-btn flat label="Close" color="primary" @click="showError = false" />
+          <q-btn flat label="Close" color="primary" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- MAIFIP Confirmation Dialog -->
+    <q-dialog v-model="showMAIFIPDialog" persistent>
+      <q-card style="min-width: 400px">
+        <q-card-section class="row items-center q-pb-none">
+          <div class="text-h6">MAIFIP Confirmation</div>
+          <q-space />
+          <q-btn icon="close" flat round dense v-close-popup />
+        </q-card-section>
+
+        <q-card-section>
+          <div class="text-subtitle1">Do you want this patient to proceed in MAIFIP?</div>
+        </q-card-section>
+
+        <!-- <q-card-actions align="right">
+          <q-btn flat label="No" color="negative" @click="confirmMAIFIP('pending')" />
+          <q-btn unelevated label="Yes" color="positive" @click="confirmMAIFIP('assessment')" />
+        </q-card-actions> -->
+
+        <q-card-actions align="right">
+          <q-btn unelevated label="Yes" color="positive" @click="confirmMAIFIP('pending')" />
         </q-card-actions>
       </q-card>
     </q-dialog>
   </q-page>
 </template>
+
 <script>
+import { defineComponent, ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useTagumStore } from '../stores/TagumStore'
-import { useCustomerStore } from '../stores/customersStore'
-import { useLoginStore } from '../stores/loginSessionStore'
+import { usePatientStore } from '../stores/patientStore'
+import { useQuasar } from 'quasar'
+import { date } from 'quasar'
+import { useRouter } from 'vue-router'
 
-export default {
+export default defineComponent({
+  name: 'PatientRegistration',
+
   setup() {
-    const UserStore = useLoginStore()
+    const $q = useQuasar()
+    const router = useRouter()
     const TagumBarangay = useTagumStore()
-    const Customer = useCustomerStore()
+    const patientStore = usePatientStore()
+    const patientForm = ref(null)
 
-    return {
-      UserStore,
-      Customer,
-      TagumBarangay,
-      GenSelection: ['Male', 'Female', 'LGBTQ'],
+    // Form data
+    const patientData = ref({
+      ...patientStore.patientInfoDefault,
+      // Add new fields with default values
+      philsys_id: '',
+      philhealth_id: '',
+      place_of_birth: '',
+      civil_status: '',
+      religion: '',
+      education_attainment: '',
+      occupation: '',
+      income: '',
+      // Permanent address fields
+      perm_barangay: '',
+      perm_purok: '',
+      perm_street: '',
+      perm_city: 'Tagum City',
+      perm_province: 'Davao del Norte',
+      // Status field for MAIFIP
+      status: '',
+    })
+    const hasRepresentative = ref(false)
+    const sameAsPatientAddress = ref(true)
+    const sameAsPermanentAddress = ref(true)
 
-      CustomerInfoDefault: {
-        firstname: '',
-        lastname: '',
-        middlename: '',
-        ext: '',
-        birthdate: '',
-        contact_number: '',
-        age: 0,
-        gender: '',
-        is_not_tagum: false,
-        street: '',
-        purok: '',
-        barangay: '',
-        city: 'Tagum City',
-        province: 'Davao del Norte',
-        category: '',
-        is_pwd: false,
-        is_solo: false,
-        user_id: 0,
+    // UI state
+    const showError = ref(false)
+    const showMAIFIPDialog = ref(false)
+    const isChild = ref(false)
+    const isAdult = ref(false)
+    const isSenior = ref(false)
+
+    // Options for new dropdown fields
+    const civilStatusOptions = ['Single', 'Married', 'Widow/er', 'Separated']
+
+    const religionOptions = [
+      'Islam',
+      'Roman Catholic',
+      'Iglesia ni Cristo',
+      'Born Again Christian',
+      'Protestant Christian',
+      'Baptist',
+      'Evangelical',
+      "Jehovah's Witnesses",
+      'Other Christian',
+      'No Religion',
+      'Indigenous Beliefs',
+      'Other',
+    ]
+
+    const educationOptions = [
+      'Elementary Education',
+      'Highschool Education',
+      'College',
+      'Postgraduate Program',
+      'No Formal Education',
+    ]
+
+    const incomeOptions = [
+      'At least ₱190,400',
+      'Between ₱114,240 - ₱190,400',
+      'Between ₱66,640 - ₱114,240',
+      'Between ₱38,080 - ₱66,640',
+      'Between ₱9,520 - ₱38,080',
+      'Less than ₱9,520',
+    ]
+
+    // Computed properties
+    const errorMessage = computed(() => {
+      if (Array.isArray(patientStore.error)) {
+        return patientStore.error.join('\n')
+      }
+      return patientStore.error
+    })
+
+    const isFemale = computed(() => {
+      return patientData.value.gender === 'Female'
+    })
+
+    // Initialize component
+    onMounted(() => {
+      // Set default values
+      patientData.value.transaction_date = date.formatDate(new Date(), 'YYYY-MM-DD')
+      patientStore.patient_id = null
+      patientStore.isSave = true
+
+      // Set fixed city and province for all addresses
+      patientData.value.city = 'Tagum City'
+      patientData.value.province = 'Davao del Norte'
+      patientData.value.perm_city = 'Tagum City'
+      patientData.value.perm_province = 'Davao del Norte'
+      patientData.value.rep_city = 'Tagum City'
+      patientData.value.rep_province = 'Davao del Norte'
+
+      // Reset representative values
+      resetRepresentativeData()
+
+      // Initialize present address same as permanent
+      updatePresentAddressFromPermanent()
+    })
+
+    onUnmounted(() => {
+      patientStore.resetStore()
+    })
+
+    // Set patient category based on age
+    watch(
+      () => patientData.value.age,
+      (newAge) => {
+        if (newAge < 18) {
+          patientData.value.category = 'Child'
+          isChild.value = true
+          isAdult.value = false
+          isSenior.value = false
+        } else if (newAge >= 18 && newAge < 60) {
+          patientData.value.category = 'Adult'
+          isAdult.value = true
+          isChild.value = false
+          isSenior.value = false
+        } else if (newAge >= 60) {
+          patientData.value.category = 'Senior'
+          isSenior.value = true
+          isChild.value = false
+          isAdult.value = false
+        }
       },
-    }
-  },
-  data() {
-    return {
-      user_id: 0,
-      showError: false,
-      errorMsg: [],
-      isChecked: false,
-      children: false,
-      adult: false,
-      senior: false,
-      pwd: false,
-      solo: false,
-      customer_id: 0,
-      selected_id: 0,
+    )
 
-      CustomerInfo: {
-        firstname: '',
-        lastname: '',
-        middlename: '',
-        ext: '',
-        birthdate: '',
-        contact_number: '',
-        age: 0,
-        gender: '',
-        is_not_tagum: false,
-        street: '',
-        purok: '',
-        barangay: '',
-        city: 'Tagum City',
-        province: 'Davao del Norte',
-        category: '',
-        is_pwd: false,
-        is_solo: false,
-        user_id: 0,
+    // Watch representative checkbox
+    watch(
+      () => hasRepresentative.value,
+      (hasRep) => {
+        if (!hasRep) {
+          resetRepresentativeData()
+        } else {
+          sameAsPatientAddress.value = true
+          updateRepAddressFromPatient()
+        }
       },
+    )
+
+    // Methods
+    const resetRepresentativeData = () => {
+      patientData.value.rep_name = ''
+      patientData.value.rep_relationship = ''
+      patientData.value.rep_barangay = ''
+      patientData.value.rep_purok = ''
+      patientData.value.rep_street = ''
+      patientData.value.rep_contact = ''
+      patientData.value.rep_city = 'Tagum City'
+      patientData.value.rep_province = 'Davao del Norte'
+      sameAsPatientAddress.value = true
     }
-  },
-  methods: {
-    GetUserID() {
-      const unsanitized_object = localStorage.getItem('user')
-      const sanitized_object = unsanitized_object.replace('__q_objt|', '')
-      const user = JSON.parse(sanitized_object)
-      return user.id
-    },
 
-    async submitCustomerForm() {
-      const isValid = await this.$refs.customerForm.validate()
+    const updatePresentAddressFromPermanent = () => {
+      if (sameAsPermanentAddress.value) {
+        patientData.value.barangay = patientData.value.perm_barangay
+        patientData.value.purok = patientData.value.perm_purok
+        patientData.value.street = patientData.value.perm_street
+        patientData.value.city = patientData.value.perm_city
+        patientData.value.province = patientData.value.perm_province
+      }
+    }
 
-      if (!isValid) {
-        this.$q.notify({ type: 'negative', message: 'Please complete all required fields' })
+    const handleSamePermAddressChange = () => {
+      if (sameAsPermanentAddress.value) {
+        updatePresentAddressFromPermanent()
+      } else {
+        // Clear present address fields when unchecked
+        patientData.value.barangay = ''
+        patientData.value.purok = ''
+        patientData.value.street = ''
+        patientData.value.city = 'Tagum City'
+        patientData.value.province = 'Davao del Norte'
+      }
+    }
+
+    const updateRepAddressFromPatient = () => {
+      if (sameAsPatientAddress.value) {
+        patientData.value.rep_barangay = patientData.value.barangay
+        patientData.value.rep_purok = patientData.value.purok
+        patientData.value.rep_street = patientData.value.street
+        patientData.value.rep_city = patientData.value.city
+        patientData.value.rep_province = patientData.value.province
+      }
+    }
+
+    const handleSameAddressChange = () => {
+      if (sameAsPatientAddress.value) {
+        updateRepAddressFromPatient()
+      } else {
+        patientData.value.rep_barangay = ''
+        patientData.value.rep_purok = ''
+        patientData.value.rep_street = ''
+        patientData.value.rep_city = 'Tagum City'
+        patientData.value.rep_province = 'Davao del Norte'
+      }
+    }
+
+    const handleBirthdateChange = () => {
+      if (patientData.value.birthdate) {
+        patientData.value.age = patientStore.calculateAge(patientData.value.birthdate)
+      }
+    }
+
+    const calculateBMI = () => {
+      const height = parseFloat(patientData.value.height)
+      const weight = parseFloat(patientData.value.weight)
+
+      if (!height || !weight || height <= 0 || weight <= 0) {
+        patientData.value.bmi = ''
         return
       }
 
-      if (this.Customer.isSave) {
-        this.Insert_Customer(this.CustomerInfo)
-      } else if (this.Customer.isEdit) {
-        this.updateCustomer(this.Customer.customer_id, this.CustomerInfo)
+      const heightInMeters = height / 100
+      const bmi = weight / (heightInMeters * heightInMeters)
+      patientData.value.bmi = (Math.round(bmi * 100) / 100).toString()
+    }
+
+    const getCurrentDate = () => {
+      return date.formatDate(new Date(), 'YYYY-MM-DD')
+    }
+
+    const clearInputs = () => {
+      if (patientForm.value) {
+        patientForm.value.resetValidation()
       }
-    },
 
-    clearInputs() {
-      this.$refs.customerForm.resetValidation()
-      this.Customer.customer_id = 0
-      // this.CustomerInfo =JSON.parse(JSON.stringify(this.CustomerInfoDefault))
-      this.CustomerInfo = JSON.parse(JSON.stringify(this.CustomerInfoDefault))
-      this.Customer.closeNewCustomer = false
-    },
-    calculateAge(birthdate) {
-      if (!birthdate) return 0
-
-      const today = new Date()
-      const birthDate = new Date(birthdate)
-
-      let age = today.getFullYear() - birthDate.getFullYear()
-      const monthDifference = today.getMonth() - birthDate.getMonth()
-
-      // Adjust for cases where the birthday hasn't occurred yet this year
-      if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
-        age--
+      patientData.value = {
+        ...patientStore.patientInfoDefault,
+        // Reset new fields
+        philsys_id: '',
+        philhealth_id: '',
+        place_of_birth: '',
+        civil_status: '',
+        religion: '',
+        education_attainment: '',
+        occupation: '',
+        income: '',
+        // Reset permanent address fields
+        perm_barangay: '',
+        perm_purok: '',
+        perm_street: '',
+        perm_city: 'Tagum City',
+        perm_province: 'Davao del Norte',
+        // Reset status
+        status: '',
       }
-      return age
-    },
+      patientData.value.transaction_date = getCurrentDate()
+      patientData.value.city = 'Tagum City'
+      patientData.value.province = 'Davao del Norte'
+      patientData.value.rep_city = 'Tagum City'
+      patientData.value.rep_province = 'Davao del Norte'
 
-    clearLocation() {
-      if (this.isChecked) {
-        this.CustomerInfo.city = ''
-        this.CustomerInfo.province = ''
-      } else {
-        this.CustomerInfo.city = 'Tagum City'
-        this.CustomerInfo.province = 'Davao del Norte'
-      }
-    },
-    toggledCheckbox() {
-      this.isChecked = !this.isChecked
-      this.CustomerInfo.is_not_tagum = this.isChecked
-    },
-    toggled_pwd() {
-      this.pwd = !this.pwd
-      this.CustomerInfo.is_pwd = this.pwd
-    },
-    toggled_solo() {
-      this.solo = !this.solo
-      this.CustomerInfo.is_solo = this.solo
-    },
+      hasRepresentative.value = false
+      sameAsPatientAddress.value = true
+      sameAsPermanentAddress.value = true
+      isChild.value = false
+      isAdult.value = false
+      isSenior.value = false
+    }
 
-    async Insert_Customer(payload) {
-      payload.user_id = this.GetUserID()
+    const confirmMAIFIP = async (status) => {
+      showMAIFIPDialog.value = false
+
+      // Set the status based on user choice
+      patientData.value.status = status
+
+      // Format data for submission
+      const formattedData = formatDataForSubmission()
+
       try {
-        this.errorMsg = []
-        this.us
-        await this.Customer.newCustomer(payload)
-        this.$q.notify({
+        await patientStore.newPatient(formattedData)
+        $q.notify({
           type: 'positive',
-          message: 'Customer registration successful!',
-          position: 'center',
+          message: 'Patient registration successful!',
+          position: 'top',
           timeout: 1200,
         })
-        this.CustomerInfo = { ...this.CustomerInfoDefault }
-        this.Customer.closeNewCustomer = false
-      } catch (error) {
-        if (error.response) {
-          const { data } = error.response
-          if (data.errors) {
-            this.errorMsg.push(data.errors)
-          } else {
-            this.errorMsg.push(data.message)
-          }
-        } else {
-          this.errorMsg.push(error.message)
-        }
-        this.showError = true
-        console.error(this.errorMsg[0])
-      }
-    },
+        clearInputs()
 
-    async Select_Customer(id) {
-      try {
-        await this.Customer.getCustomer(id)
-        this.CustomerInfo = { ...this.Customer.customer }
-      } catch (error) {
-        if (error.response) {
-          const { data } = error.response
-          if (data.errors) {
-            this.errorMsg.push(data.errors)
-          } else {
-            this.errorMsg.push(data.message)
-          }
-        } else {
-          this.errorMsg.push(error.message)
-        }
-        this.showError = true
-        console.log(error)
+        router.push('/customers')
+      } catch {
+        showError.value = true
       }
-    },
+    }
 
-    async updateCustomer(id, payload) {
-      console.table(payload)
-      try {
-        await this.Customer.updateCustomer(id, payload)
-        this.$q.notify({
-          type: 'positive',
-          message: 'Updating records successful!',
-          position: 'center',
-          timeout: 1200,
+    const submitPatientForm = async () => {
+      const isValid = await patientForm.value.validate()
+
+      if (!isValid) {
+        $q.notify({
+          type: 'negative',
+          message: 'Please complete all required fields',
+          position: 'top',
         })
-      } catch (error) {
-        if (error.response) {
-          const { data } = error.response
-          if (data.errors) {
-            this.errorMsg.push(data.errors)
-          } else {
-            this.errorMsg.push(data.message)
-          }
-        } else {
-          this.errorMsg.push(error.message)
+        return
+      }
+
+      // Calculate BMI again to ensure latest value
+      calculateBMI()
+
+      // Update addresses if needed
+      if (sameAsPermanentAddress.value) {
+        updatePresentAddressFromPermanent()
+      }
+
+      if (hasRepresentative.value && sameAsPatientAddress.value) {
+        updateRepAddressFromPatient()
+      }
+
+      // Show MAIFIP confirmation dialog
+      showMAIFIPDialog.value = true
+    }
+
+    // Format data before submission
+    const formatDataForSubmission = () => {
+      const formattedData = { ...patientData.value }
+
+      // Ensure address data is properly set
+      if (sameAsPermanentAddress.value) {
+        formattedData.barangay = formattedData.perm_barangay
+        formattedData.purok = formattedData.perm_purok
+        formattedData.street = formattedData.perm_street
+        formattedData.city = formattedData.perm_city
+        formattedData.province = formattedData.perm_province
+      }
+
+      if (hasRepresentative.value && sameAsPatientAddress.value) {
+        formattedData.rep_barangay = formattedData.barangay
+        formattedData.rep_purok = formattedData.purok
+        formattedData.rep_street = formattedData.street
+        formattedData.rep_city = formattedData.city
+        formattedData.rep_province = formattedData.province
+      }
+
+      // Convert numeric values to strings
+      const numericFields = [
+        'height',
+        'weight',
+        'age',
+        'heart_rate',
+        'respiratory_rate',
+        'pulse_rate',
+        'temperature',
+        'sp02',
+        'waist',
+      ]
+
+      numericFields.forEach((field) => {
+        if (formattedData[field]) {
+          formattedData[field] = formattedData[field].toString()
         }
-        this.showError = true
-        console.log(error)
-      }
-    },
-  },
+      })
 
-  mounted() {
-    this.CustomerInfo = JSON.parse(JSON.stringify(this.CustomerInfoDefault))
-    this.user_id = this.GetUserID()
-    this.selected_id = this.Customer.customer_id
-    // this.Select_Customer(this.Customer.customer_id)
-  },
-  unmounted() {
-    this.Customer.customer_id = 0
-    this.Customer.isEdit = false
-    this.Customer.isSave = true
-    this.CustomerInfo = JSON.parse(JSON.stringify(this.CustomerInfoDefault))
-  },
+      return formattedData
+    }
 
-  watch: {
-    'selected_id'(has_id) {
-      this.Select_Customer(has_id)
-    },
-    'CustomerInfo.birthdate'(newBirthdate) {
-      this.CustomerInfo.age = this.calculateAge(newBirthdate)
-    },
+    // Watch permanent address fields to update present address if same
+    watch(
+      [
+        () => patientData.value.perm_barangay,
+        () => patientData.value.perm_purok,
+        () => patientData.value.perm_street,
+        () => patientData.value.perm_city,
+        () => patientData.value.perm_province,
+      ],
+      () => {
+        if (sameAsPermanentAddress.value) {
+          updatePresentAddressFromPermanent()
+        }
+      },
+    )
 
-    'CustomerInfo.age'(age) {
-      if (age < 18) {
-        this.CustomerInfo.category = 'Child'
-        this.children = true
-        this.adult = false
-        this.senior = false
-      } else if (age >= 18 && age < 60) {
-        this.CustomerInfo.category = 'Adult'
-        this.adult = true
-        this.children = false
-        this.senior = false
-      } else if (age >= 60) {
-        this.CustomerInfo.category = 'Senior'
-        this.senior = true
-        this.children = false
-        this.adult = false
-      }
-    },
+    // Watch present address fields to update rep address if same
+    watch(
+      [
+        () => patientData.value.barangay,
+        () => patientData.value.purok,
+        () => patientData.value.street,
+        () => patientData.value.city,
+        () => patientData.value.province,
+      ],
+      () => {
+        if (sameAsPatientAddress.value && hasRepresentative.value) {
+          updateRepAddressFromPatient()
+        }
+      },
+    )
+
+    return {
+      TagumBarangay,
+      patientStore,
+      patientForm,
+      patientData,
+      showError,
+      showMAIFIPDialog,
+      errorMessage,
+      isChild,
+      isAdult,
+      isSenior,
+      isFemale,
+      hasRepresentative,
+      sameAsPatientAddress,
+      sameAsPermanentAddress,
+      civilStatusOptions,
+      religionOptions,
+      educationOptions,
+      incomeOptions,
+
+      handleBirthdateChange,
+      calculateBMI,
+      clearInputs,
+      submitPatientForm,
+      confirmMAIFIP,
+      handleSameAddressChange,
+      handleSamePermAddressChange,
+      updateRepAddressFromPatient,
+      updatePresentAddressFromPermanent,
+    }
   },
-}
+})
 </script>

@@ -98,8 +98,8 @@ export default {
     return {
       steps: [
         { name: 'Services', patients: [], route: '#', loading: false },
-        { name: 'PhilHealth', patients: [], route: '/philhealth', loading: false },
-        { name: 'Billing', patients: [], route: '/billing', loading: false },
+        { name: 'PhilHealth', patients: [], route: '#', loading: false },
+        { name: 'Billing', patients: [], route: '#', loading: false },
         { name: 'MAIFIP', patients: [], route: '/assessment', loading: false },
         { name: 'GL', patients: [], route: '/gl', loading: false },
       ],

@@ -1,3 +1,36 @@
 {
-  "extends": "./.quasar/tsconfig.json"
+  "extends": "./.quasar/tsconfig.json",
+  "exclude": [
+    "src/pages/ConsultNewPatient.vue",
+    "src/pages/ConsultReturnPatient.vue",
+    "src/pages/LaboratoryResults.vue",
+    "src/pages/LaboratoryTransactions.vue",
+    "src/pages/NewConsultation.vue",
+    "src/pages/PatientsLaboratory.vue",
+    "src/pages/ReturnConsultation.vue",
+    "src/pages/ReturnedPatientDetails.vue",
+    "src/pages/ClientOrderHistory.vue",
+    "src/pages/ClientProfile_current.vue",
+    "src/pages/ItemReports.vue",
+    "src/pages/ItemsAdjustmentList.vue",
+    "src/pages/ItemsEmptyStocksList.vue",
+    "src/pages/ItemsExpiredList.vue",
+    "src/pages/ItemsInventory.vue",
+    "src/pages/ItemsList.vue",
+    "src/pages/ItemsLowStockList.vue",
+    "src/pages/ItemsMonthlyDispenseReport.vue",
+    "src/pages/ItemsMovementList.vue",
+    "src/pages/ItemsStockCard.vue",
+    "src/pages/ItemsTemporaryPO.vue",
+    "src/pages/NewClientsReleasing.vue",
+    "src/pages/NewItems.vue",
+    "src/pages/NewItemsBatchUpload.vue",
+    "src/pages/NewRIS.vue",
+    "src/pages/RISListing.vue",
+    "src/pages/RISinfo.vue",
+    "src/pages/RegisteredUsersAccess.vue",
+    "src/pages/SystemConfiguration.vue",
+    "src/pages/UserCredentials.vue",
+    "src/pages/otherData.vue"
+  ]
 }

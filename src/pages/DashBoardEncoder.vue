@@ -4,8 +4,7 @@
     <div class="text-h6 text-green-9 font-bold q-mt-none q-mb-md">Patient Monitoring</div>
 
     <!-- Header Fund Cards by Source -->
-    <div class="row q-col-gutter-md q-mb-lg">
-      <!-- Loading skeleton for fund cards -->
+    <!-- <div class="row q-col-gutter-md q-mb-lg">
       <template v-if="fundLoading">
         <div v-for="i in 6" :key="`skeleton-${i}`" class="col-xs-12 col-sm-4 col-md-2">
           <q-card>
@@ -18,7 +17,7 @@
         </div>
       </template>
 
-      <!-- Actual fund cards -->
+
       <template v-else>
         <div
           v-for="(fundSource, index) in fundStore.releasedFundsBySource"
@@ -40,7 +39,7 @@
           </q-card>
         </div>
       </template>
-    </div>
+    </div> -->
 
     <!-- Steps -->
     <div class="row q-col-gutter-md">
@@ -98,10 +97,10 @@ export default {
     return {
       steps: [
         { name: 'Services', patients: [], route: '#', loading: false },
-        { name: 'PhilHealth', patients: [], route: '/philhealth', loading: false },
-        { name: 'Billing', patients: [], route: '/billing', loading: false },
-        { name: 'MAIFIP', patients: [], route: '/assessment', loading: false },
-        { name: 'GL', patients: [], route: '/gl', loading: false },
+        { name: 'PhilHealth', patients: [], route: '#', loading: false },
+        { name: 'Billing', patients: [], route: '#', loading: false },
+        { name: 'MAIFIP', patients: [], route: '#', loading: false },
+        { name: 'GL', patients: [], route: '#', loading: false },
       ],
       intervalId: null,
       fundStore: null,

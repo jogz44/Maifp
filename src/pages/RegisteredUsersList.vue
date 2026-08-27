@@ -25,7 +25,21 @@
             @click="$router.push('/users/new')"
           />
         </div>
-        <q-table :rows="rows" :columns="columns" row-key="id" flat bordered>
+        <q-table
+          :rows="filteredRows"
+          :columns="columns"
+          :loading="isLoading"
+          row-key="id"
+          flat
+          bordered
+        >
+          <template v-slot:loading>
+            <q-inner-loading showing color="green-9">
+              <q-spinner-gears size="50px" color="green-9" />
+              <div class="q-mt-md text-green-9">Loading users...</div>
+            </q-inner-loading>
+          </template>
+
           <template #body="props">
             <q-tr :v-bind="props">
               <!-- <q-td key="id" style="font-size: 11px" align="left">
@@ -39,8 +53,8 @@
               <q-td key="username" style="font-size: 11px" align="left">
                 {{ props.row.username }}
               </q-td>
-              <q-td key="position" style="font-size: 11px" align="left">
-                {{ props.row.position }}
+              <q-td key="role_name" style="font-size: 11px" align="left">
+                {{ props.row.role.role_name }}
               </q-td>
               <q-td key="office" style="font-size: 11px" align="left">
                 {{ props.row.office }}
@@ -63,12 +77,7 @@
                     icon="person_off"
                     class="q-mr-sm"
                     color="amber"
-                    @click="
-                      () => {
-                        dialogInactive = true
-                        getUser(props.row.id)
-                      }
-                    "
+                    @click="openDeactivateDialog(props.row.id)"
                   >
                     <q-tooltip> Deactivate </q-tooltip>
                   </q-btn>
@@ -80,12 +89,7 @@
                     icon="person"
                     class="q-mr-sm"
                     color="amber"
-                    @click="
-                      () => {
-                        dialogActive = true
-                        getUser(props.row.id)
-                      }
-                    "
+                    @click="openActivateDialog(props.row.id)"
                   >
                     <q-tooltip>Activate </q-tooltip>
                   </q-btn>
@@ -98,25 +102,8 @@
                   class="q-mr-sm"
                   color="primary"
                   @click="getUser(props.row.id)"
-                  to="/users/user/"
                 >
                   <q-tooltip> Edit </q-tooltip>
-                </q-btn>
-
-                <q-btn
-                  dense
-                  flat
-                  icon="badge"
-                  class="q-mr-sm"
-                  color="green"
-                  @click="
-                    () => {
-                      getUser(props.row.id)
-                      $router.push('/users/credentials')
-                    }
-                  "
-                >
-                  <q-tooltip> Credentials </q-tooltip>
                 </q-btn>
               </q-td>
             </q-tr>
@@ -175,7 +162,7 @@
 </template>
 
 <script>
-
+import { computed } from 'vue'
 import { useUserStore } from 'src/stores/userStore'
 import { useUserCredentialstore } from 'src/stores/userCredentialStore'
 export default {
@@ -183,16 +170,18 @@ export default {
   setup() {
     const userStore = useUserStore()
     const UserCredentialstore = useUserCredentialstore()
+    const isLoading = computed(() => userStore.loading)
     // You can use the Composition API here if needed
     return {
       userStore,
       UserCredentialstore,
+      isLoading,
       // Define any reactive properties or methods
       columns: [
         // { name: 'id', label: 'ID', align: 'left', field: 'id' },
         { name: 'name', label: 'Full Name', align: 'left', field: 'name' },
         { name: 'username', label: 'Username', align: 'left', field: 'username' },
-        { name: 'position', label: 'Position', align: 'left', field: 'position' },
+        { name: 'role_name', label: 'Role', align: 'left', field: 'role_name' },
         { name: 'office', label: 'Office', align: 'left', field: 'office' },
         { name: 'status', label: 'Status', align: 'left', field: 'status' },
         { name: 'actions', label: 'Actions', align: 'left' },
@@ -201,17 +190,52 @@ export default {
       ],
     }
   },
+  computed: {
+    filteredRows() {
+      if (!this.search) {
+        return this.rows
+      }
+
+      const searchTerm = this.search.toLowerCase()
+      return this.rows.filter((row) => {
+        const fullName = `${row.last_name}, ${row.first_name} ${row.middle_name}`.toLowerCase()
+        const username = (row.username || '').toLowerCase()
+        const position = (row.position || '').toLowerCase()
+        const office = (row.office || '').toLowerCase()
+        const status = (row.status || '').toLowerCase()
+
+        return (
+          fullName.includes(searchTerm) ||
+          username.includes(searchTerm) ||
+          position.includes(searchTerm) ||
+          office.includes(searchTerm) ||
+          status.includes(searchTerm)
+        )
+      })
+    },
+  },
   mounted() {
-    // Fetch data or perform any setup when the component is mounted
     this.getUsers()
   },
   methods: {
-    // Define any methods you need for your component
     getUser(id) {
       this.userStore.selected_id = id
-      this.UserCredentialstore.selected_id=id
-      console.log(id)
-      console.log(this.userStore.selected_id)
+      this.UserCredentialstore.selected_id = id
+      console.log('Setting selected ID:', id)
+
+      this.$router.push('/users/user/')
+    },
+    openDeactivateDialog(id) {
+      this.userStore.selected_id = id
+      this.UserCredentialstore.selected_id = id
+      console.log('Setting selected ID for deactivation:', id)
+      this.dialogInactive = true
+    },
+    openActivateDialog(id) {
+      this.userStore.selected_id = id
+      this.UserCredentialstore.selected_id = id
+      console.log('Setting selected ID for activation:', id)
+      this.dialogActive = true
     },
     async getUsers() {
       try {
@@ -249,7 +273,7 @@ export default {
         this.getUsers()
         this.dialogActive = false
       } catch (error) {
-        console.error('Error deactivating user:', error)
+        console.error('Error activating user:', error)
         this.$q.notify({
           type: 'negative',
           message: 'Unable to activate user',
@@ -270,6 +294,4 @@ export default {
 }
 </script>
 
-<style scoped>
-/* Add your styles here */
-</style>
+<style scoped></style>

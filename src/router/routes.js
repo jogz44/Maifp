@@ -4,210 +4,220 @@ const routes = [
     component: () => import('layouts/MainLayout.vue'),
 
     children: [
-      { path: '', component: () => import('pages/DashBoard.vue'), meta: { requiresAuth: true } }, //dashboard
+      //dashboard
       {
         path: '/dashboard',
         component: () => import('pages/DashBoard.vue'),
         meta: { requiresAuth: true },
-      }, //dashboard
+      },
+
+      {
+        path: '/dashboard-encoder',
+        component: () => import('pages/DashBoardEncoder.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      {
+        path: '/dashboard-social',
+        component: () => import('pages/DashBoardSocialWorker.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      {
+        path: '/dashboard-doctor',
+        component: () => import('pages/DashBoardDoctor.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      {
+        path: '/dashboard-lab',
+        component: () => import('pages/DashBoardLab.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      {
+        path: '/dashboard-billing',
+        component: () => import('pages/DashBoardBilling.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/dashboard-assessor',
+        component: () => import('pages/DashBoardAssessor.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      //patients
       {
         path: '/customer',
         component: () => import('pages/NewClients.vue'),
         meta: { requiresAuth: true },
-      }, //customers
-
-         {
-        path: '/customer/releasing',
-        component: () => import('pages/NewClientsReleasing.vue'),
-        meta: { requiresAuth: true },
-      }, //customers
+      },
 
       {
         path: '/customers',
         component: () => import('pages/ClientList.vue'),
         meta: { requiresAuth: true },
-      }, //customers  list
+      },
       {
         path: '/customers/profile',
         component: () => import('pages/ClientProfile.vue'),
         meta: { requiresAuth: true },
-      }, //customers  profile and order history
-      {
-        path: '/customers/profile/current',
-        component: () => import('pages/ClientProfile_current.vue'),
-        meta: { requiresAuth: true },
-      }, //customers  profile and order history
-      {
-        path: '/customer/orders',
-        component: () => import('pages/ClientOrderHistory.vue'),
-        meta: { requiresAuth: true },
-      }, // entire  customer from the beginning
-      {
-        path: '/customers/orders/new',
-        component: () => import('pages/ClientOrders.vue'),
-        meta: { requiresAuth: true },
       },
       {
-        path: '/ris/orders/new',
-        component: () => import('pages/NewRIS.vue'),
+        path: '/customers/profile/transaction',
+        component: () => import('pages/PatientDetails.vue'),
         meta: { requiresAuth: true },
       },
 
-        {
-        path: '/ris/orders',
-        component: () => import('pages/RISListing.vue'),
-        meta: { requiresAuth: true },
-      },
-
-
-        {
-        path: '/ris/orders/info',
-        component: () => import('pages/RISinfo.vue'),
-        meta: { requiresAuth: true },
-      },
-
-
+      //assessment
       {
-        path: '/customers/orders/transaction',
-        component: () => import('pages/ClientList.vue'),
-        meta: { requiresAuth: true },
-      }, // particular transaction order of a customer
-
-      {
-        path: '/items/list',
-        component: () => import('pages/ItemsList.vue'),
-        meta: { requiresAuth: true },
-      }, //get all items
-      {
-        path: '/items/new',
-        component: () => import('pages/NewItems.vue'),
-        meta: { requiresAuth: true },
-      }, //get all items
-
-      {
-        path: '/items/new/batch',
-        component: () => import('pages/NewItemsBatchUpload.vue'),
-        meta: { requiresAuth: true },
-      }, //get all items
-
-
-      {
-        path: '/items/po',
-        component: () => import('pages/ClientList.vue'),
-        meta: { requiresAuth: true },
-      }, // get items on a particular PO
-      {
-        path: '/items/expired',
-        component: () => import('pages/ItemsExpiredList.vue'),
-        meta: { requiresAuth: true },
-      }, // get expired items
-      {
-        path: '/items/low-quantity',
-        component: () => import('src/pages/ItemsLowStockList.vue'),
-        meta: { requiresAuth: true },
-      }, // get low quantity items
-      {
-        path: '/items/empty-quantity',
-        component: () => import('src/pages/ItemsEmptyStocksList.vue'),
+        path: '/assessment',
+        component: () => import('pages/AssessmentPage.vue'),
         meta: { requiresAuth: true },
       },
       {
-        path: '/items/movement',
-        component: () => import('pages/ItemsMovementList.vue'),
-        meta: { requiresAuth: true },
-      }, // get low quantity items
-      {
-        path: '/items/reports',
-        component: () => import('pages/ItemReports.vue'),
-        meta: { requiresAuth: true },
-      }, // get low quantity items
-
-      {
-        path: '/inventory',
-        component: () => import('pages/ItemsInventory.vue'),
-        meta: { requiresAuth: true },
-      }, // particular transaction order of a customer
-
-      {
-        path: '/items/temporary-po',
-        component: () => import('pages/ItemsTemporaryPO.vue'),
+        path: '/assessment/profile',
+        component: () => import('pages/AssessmentProfile.vue'),
         meta: { requiresAuth: true },
       },
       {
-        path: '/inventory/open',
-        component: () => import('pages/ClientList.vue'),
-        meta: { requiresAuth: true },
-      }, // particular transaction order of a customer
-      {
-        path: '/inventory/close',
-        component: () => import('pages/ClientList.vue'),
-        meta: { requiresAuth: true },
-      }, // particular transaction order of a customer
-      {
-        path: '/inventory/adjustment',
-        component: () => import('pages/ItemsAdjustmentList.vue'),
-        meta: { requiresAuth: true },
-      }, //get all items
-
-      {
-        path: '/inventory/stockcard',
-        component: () => import('pages/ItemsStockCard.vue'),
-        meta: { requiresAuth: true },
-      }, //get all items
-
-
-
-      {
-        path: '/reports/dispense/monthly',
-        component: () => import('pages/ItemsMonthlyDispenseReport.vue'),
+        path: '/assessment/profile/transaction',
+        component: () => import('pages/PatientDetailsAssessment.vue'),
         meta: { requiresAuth: true },
       },
 
+      //from philhealth
+      {
+        path: '/fromphilhealth',
+        component: () => import('pages/fromPhilHealthPage.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/fromphilhealth/profile',
+        component: () => import('pages/fromPhilHealthProfile.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      //philhealth
+      {
+        path: '/philhealth',
+        component: () => import('pages/PhilHealthPage.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/philhealth/profile',
+        component: () => import('pages/AssessmentProfile.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/philhealth/report',
+        component: () => import('pages/AssistancePhilhealthPage.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      //guaranteed letter
+      {
+        path: '/gl',
+        component: () => import('pages/GuaranteedPage.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/gl/report',
+        component: () => import('pages/MAIFIPBill.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/gl/detail',
+        component: () => import('pages/SWViewing.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/gl/letter',
+        component: () => import('pages/GuaranteedLetter.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      //billing
+      {
+        path: '/billing',
+        component: () => import('pages/BillingPage.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/billing/report',
+        component: () => import('pages/BillingStatement.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/bill/report',
+        component: () => import('pages/AssistancePage.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      //billing log
+      {
+        path: '/billinglog',
+        component: () => import('pages/BillingLog.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/billinglog/profile',
+        component: () => import('pages/ProfileBillingLog.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/billinglog/report',
+        component: () => import('pages/BillingLogReport.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      //masterlist
+      {
+        path: '/masterlist',
+        component: () => import('pages/MasterList.vue'),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: '/masterlist/detail',
+        component: () => import('pages/ClientProfileMasterlist.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      //reports
+      {
+        path: '/reports',
+        component: () => import('pages/ReportPage.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      //activity log
+      {
+        path: '/activity',
+        component: () => import('pages/ActivityLog.vue'),
+        meta: { requiresAuth: true },
+      },
+
+      //user management
       {
         path: '/users/new',
         component: () => import('pages/RegisterUsers.vue'),
         meta: { requiresAuth: true },
-      }, // particular transaction order of a customer
+      },
       {
         path: '/users/user/',
         component: () => import('pages/UpdateUsers.vue'),
         meta: { requiresAuth: true },
-      }, // particular transaction order of a customer
+      },
       {
         path: '/users/list',
         component: () => import('pages/RegisteredUsersList.vue'),
-        meta: { requiresAuth: true },
-      }, // particular transaction order of a customer
-      {
-        path: '/users/credentials',
-        component: () => import('pages/UserCredentials.vue'),
-        meta: { requiresAuth: true },
-      }, // particular transaction order of a customer
-
-      {
-        path: '/libraries/units',
-        component: () => import('src/pages/library/UnitsList.vue'),
-        meta: { requiresAuth: true },
-      }, // particular transaction order of a customer
-      {
-        path: '/libraries/list',
-        component: () => import('src/pages/library/LibraryPage.vue'),
-        meta: { requiresAuth: true },
-      }, // particular transaction order of a customer
-      {
-        path: '/libraries/config',
-        component: () => import('src/pages/SystemConfiguration.vue'),
-        meta: { requiresAuth: true },
-      },
-      {
-        path: '/libraries/catalog',
-        component: () => import('src/pages/library/libItemsList.vue'),
         meta: { requiresAuth: true },
       },
     ],
   },
   {
     path: '/',
+    name: 'login',
     component: () => import('pages/LoginPage.vue'),
   },
 
