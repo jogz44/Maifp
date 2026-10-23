@@ -317,7 +317,13 @@ export default {
         billing: ['dashboard', 'billing'],
         assessor: ['dashboard', 'philhealth'],
         // NEW ROLE
-        'laboratory-assessor-billing': ['dashboard', 'laboratory', 'philhealth', 'billing'],
+        'laboratory-assessor-billing': [
+          'dashboard',
+          'patient-info',
+          'laboratory',
+          'philhealth',
+          'billing',
+        ],
       },
     }
   },
