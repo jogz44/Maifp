@@ -383,9 +383,7 @@ export default {
     },
     sortedTransactions() {
       return [...this.transactions].sort((a, b) => {
-        const dateA = new Date(a.transaction_date || a.created_at)
-        const dateB = new Date(b.transaction_date || b.created_at)
-        return dateB - dateA // newest first
+        return Number(b.id) - Number(a.id)
       })
     },
   },

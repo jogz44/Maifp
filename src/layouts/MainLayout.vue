@@ -259,8 +259,8 @@
             <span class="text-sm" style="padding-left: 16px">User Management</span>
           </div>
         </q-item>
-
-        <q-item v-if="canAccessMasterList" clickable v-ripple to="/services">
+        <!-- add this before clickable on library line >> v-if="canAccessMasterList" -->
+        <q-item clickable v-ripple to="/services">
           <div class="row items-center">
             <q-icon name="archive" size="24px" class="q-mr-md" />
             <span class="text-sm" style="padding-left: 16px">Library</span>

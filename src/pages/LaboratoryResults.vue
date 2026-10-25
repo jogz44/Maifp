@@ -20,6 +20,34 @@
           <q-spinner-dots size="50px" color="primary" />
         </q-inner-loading>
 
+        <!-- Shown when the transaction already passed on billing -->
+        <q-banner
+          v-if="!loading && hasBilling"
+          dense
+          rounded
+          class="bg-orange-1 text-orange-9 q-mx-md q-mt-sm"
+        >
+          <template v-slot:avatar>
+            <q-icon name="lock" color="orange" />
+          </template>
+          Transaction already passed on billing
+        </q-banner>
+
+        <!-- Shown when the transaction is too old (no update for the aging limit) -->
+        <q-banner
+          v-if="!loading && isExpired && !hasBilling"
+          dense
+          rounded
+          class="bg-orange-1 text-orange-9 q-mx-md q-mt-sm"
+        >
+          <template v-slot:avatar>
+            <q-icon name="lock" color="orange" />
+          </template>
+          This transaction has been pending for {{ agingDays }} days with no update, so actions
+          are disabled.
+        </q-banner>
+
+
         <!-- Transaction Information Section -->
         <q-card-section v-if="!loading">
           <div class="row items-center justify-between">
@@ -282,7 +310,7 @@
               >
                 <!-- Lab Exam Tab -->
                 <q-tab-panel name="lab_exam" class="border-left q-pa-md">
-                  <div class="row items-center q-mb-md" v-if="isLatest">
+                  <div class="row items-center q-mb-md" v-if="canEdit">
                     <div class="col">
                       <q-btn
                         color="green"
@@ -303,7 +331,7 @@
                     class="q-mt-md"
                     :table-header-class="'bg-grey-3 text-black'"
                   >
-                    <template v-slot:body-cell-actions="props" v-if="isLatest">
+                    <template v-slot:body-cell-actions="props" v-if="canEdit">
                       <q-td align="center">
                         <q-btn
                           dense
@@ -393,7 +421,7 @@
 
                 <!-- Radiology Tab -->
                 <q-tab-panel name="radiology" class="border-left q-pa-md">
-                  <div class="row items-center q-mb-md" v-if="isLatest">
+                  <div class="row items-center q-mb-md" v-if="canEdit">
                     <div class="col">
                       <q-btn
                         color="green"
@@ -414,7 +442,7 @@
                     class="q-mt-md"
                     :table-header-class="'bg-grey-3 text-black'"
                   >
-                    <template v-slot:body-cell-actions="props" v-if="isLatest">
+                    <template v-slot:body-cell-actions="props" v-if="canEdit">
                       <q-td align="center">
                         <q-btn
                           dense
@@ -505,7 +533,7 @@
 
                 <!-- Mammogram Tab -->
                 <q-tab-panel name="mammogram" class="border-left q-pa-md">
-                  <div class="row items-center q-mb-md" v-if="isLatest">
+                  <div class="row items-center q-mb-md" v-if="canEdit">
                     <div class="col">
                       <q-btn
                         color="green"
@@ -526,7 +554,7 @@
                     class="q-mt-md"
                     :table-header-class="'bg-grey-3 text-black'"
                   >
-                    <template v-slot:body-cell-actions="props" v-if="isLatest">
+                    <template v-slot:body-cell-actions="props" v-if="canEdit">
                       <q-td align="center">
                         <q-btn
                           dense
@@ -617,7 +645,7 @@
 
                 <!-- Ultrasound Tab -->
                 <q-tab-panel name="ultrasound" class="border-left q-pa-md">
-                  <div class="row items-center q-mb-md" v-if="isLatest">
+                  <div class="row items-center q-mb-md" v-if="canEdit">
                     <div class="col">
                       <q-btn
                         color="green"
@@ -638,7 +666,7 @@
                     class="q-mt-md"
                     :table-header-class="'bg-grey-3 text-black'"
                   >
-                    <template v-slot:body-cell-actions="props" v-if="isLatest">
+                    <template v-slot:body-cell-actions="props" v-if="canEdit">
                       <q-td align="center">
                         <q-btn
                           dense
@@ -735,7 +763,7 @@
         <q-separator spaced inset v-if="!loading" />
 
         <!-- ACTION BUTTONS -->
-        <div class="q-mt-md flex justify-end q-gutter-sm" v-if="isLatest">
+        <div class="q-mt-md flex justify-end q-gutter-sm" v-if="canEdit">
           <!-- Return -->
           <q-btn
             color="blue"
@@ -857,7 +885,9 @@ export default {
       vitalSigns: {},
       loading: true,
 
-      isLatest: false,
+      // Aging rule: action buttons are locked once the transaction is this many days old
+      agingLimitDays: 14,
+
       isReturning: false,
       isMarkingDone: false,
       isSaving: false, // for spinner/loading state
@@ -979,6 +1009,43 @@ export default {
     patientStore() {
       return usePatientStore()
     },
+
+    // ---------- AGING RULE (2 weeks with no update) ----------
+    // Days since the transaction was last updated (falls back to created date)
+    agingDays() {
+      const raw =
+        this.transaction?.updated_at ||
+        this.transaction?.created_at ||
+        this.transaction?.transaction_date
+      if (!raw) return 0
+      const diffMs = Date.now() - new Date(raw).getTime()
+      return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)))
+    },
+
+    isExpired() {
+      return this.agingDays >= this.agingLimitDays
+    },
+
+    // True when this specific transaction has already been sent to billing
+    // (transactions.status === 'Billing')
+    hasBilling() {
+      const own = this.transaction?.status
+      const fromList = (this.patient?.transaction || []).find(
+        (t) => Number(t.id) === Number(this.transactionId),
+      )?.status
+      return (
+        String(own ?? fromList ?? '')
+          .trim()
+          .toLowerCase() === 'billing'
+      )
+    },
+
+    // Buttons show only if the transaction was updated within 2 weeks AND has no billing yet
+    canEdit() {
+      return !this.isExpired && !this.hasBilling
+    },
+    // ------------------------------------------------------------
+
     newServiceTotal() {
       const amount = parseFloat(this.newServiceFee) || 0
       const serviceFee = parseFloat(this.newServiceAdditionalFee) || 0
@@ -1875,23 +1942,6 @@ export default {
           const patientData = await this.patientStore.getPatient(this.patientId)
           if (patientData) {
             this.patient = patientData
-
-            if (patientData.transaction && Array.isArray(patientData.transaction)) {
-              const sorted = [...patientData.transaction].sort(
-                (a, b) =>
-                  new Date(b.transaction_date || b.created_at) -
-                  new Date(a.transaction_date || a.created_at),
-              )
-
-              const latest = sorted[0]
-              this.isLatest = Number(latest.id) === Number(this.transactionId)
-
-              console.log('Latest check:', {
-                latestId: latest.id,
-                currentId: this.transactionId,
-                isLatest: this.isLatest,
-              })
-            }
           }
         } else {
           this.$q.notify({
