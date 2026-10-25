@@ -300,7 +300,8 @@
                   {{ billingData.firstname }}
                   <span
                     v-if="
-                      patient.ext && !['N/A', 'NA'].includes(billingData.ext.trim().toUpperCase())
+                      billingData.ext &&
+                      !['N/A', 'NA'].includes(billingData.ext.trim().toUpperCase())
                     "
                   >
                     {{ billingData.ext }}
